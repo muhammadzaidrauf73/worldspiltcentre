@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 import { 
   Star, 
   Heart, 
@@ -149,6 +150,13 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={`${product.name} - ${product.brand}`}
+        description={product.description || `Buy ${product.name} by ${product.brand} at best price. ${product.categories?.name || 'Electronics'} available at World Spilt Centre Lahore.`}
+        keywords={`${product.name}, ${product.brand}, ${product.categories?.name || ''}, buy ${product.brand} pakistan, electronics lahore`}
+        image={product.image_url || undefined}
+        type="product"
+      />
       <Navbar />
       
       <div className="container mx-auto px-4 py-6">
