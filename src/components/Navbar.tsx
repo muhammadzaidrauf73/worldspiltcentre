@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
@@ -28,14 +29,43 @@ const Navbar = () => {
     { name: "Hot Deals", path: "/products?deals=true", highlight: true },
   ];
 
-  const categories = [
-    "Air Conditioner",
-    "LED TV",
-    "Refrigerator",
-    "Washing Machines",
-    "Microwave Oven",
-    "Water Dispenser",
-    "Small Electronics",
+  // Fetch categories from database
+  const { data: dbCategories = [] } = useQuery({
+    queryKey: ['navbar-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch featured products for mega menu
+  const { data: featuredProducts = [] } = useQuery({
+    queryKey: ['navbar-featured-products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, slug, price, original_price, image_url, discount_percentage')
+        .eq('is_featured', true)
+        .eq('is_active', true)
+        .limit(3);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fallback categories if database is empty
+  const categories = dbCategories.length > 0 ? dbCategories : [
+    { id: '1', name: "Air Conditioner", slug: "air-conditioner", image_url: null },
+    { id: '2', name: "LED TV", slug: "led-tv", image_url: null },
+    { id: '3', name: "Refrigerator", slug: "refrigerator", image_url: null },
+    { id: '4', name: "Washing Machines", slug: "washing-machines", image_url: null },
+    { id: '5', name: "Microwave Oven", slug: "microwave-oven", image_url: null },
+    { id: '6', name: "Water Dispenser", slug: "water-dispenser", image_url: null },
+    { id: '7', name: "Small Electronics", slug: "small-electronics", image_url: null },
   ];
 
   // Fetch announcement settings
@@ -84,6 +114,14 @@ const Navbar = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0,
+    }).format(price);
   };
 
   return (
@@ -256,48 +294,156 @@ const Navbar = () => {
           </form>
         </div>
 
-        {/* Categories Bar - Desktop */}
+        {/* Categories Bar - Desktop with Mega Menu */}
         <div className="hidden md:block bg-card border-t border-border shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center">
-              {/* Shop by Categories Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    className="flex items-center gap-3 h-12 px-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none font-semibold text-sm shadow-md"
-                  >
-                    <Menu className="h-5 w-5" />
-                    <span>Shop by Categories</span>
-                    <ChevronDown className="h-4 w-4 ml-1 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="start" 
-                  className="w-64 p-2 bg-card border border-border shadow-xl rounded-lg mt-0"
-                  sideOffset={0}
+              {/* Shop by Categories with Mega Menu */}
+              <div 
+                className="relative"
+                onMouseEnter={() => setIsMegaMenuOpen(true)}
+                onMouseLeave={() => setIsMegaMenuOpen(false)}
+              >
+                <Button 
+                  className="flex items-center gap-3 h-12 px-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none font-semibold text-sm shadow-md"
                 >
-                  {categories.map((cat, index) => (
-                    <DropdownMenuItem key={cat} asChild>
-                      <Link
-                        to={`/products?category=${encodeURIComponent(cat)}`}
-                        className="flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-all duration-200"
-                      >
-                        <span className="w-2 h-2 rounded-full bg-primary/40"></span>
-                        {cat}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/products"
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10 rounded-md cursor-pointer"
-                    >
-                      View All Products →
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Menu className="h-5 w-5" />
+                  <span>Shop by Categories</span>
+                  <ChevronDown className={`h-4 w-4 ml-1 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+                </Button>
+                
+                {/* Mega Menu */}
+                {isMegaMenuOpen && (
+                  <div className="absolute top-full left-0 w-[800px] bg-card border border-border rounded-b-xl shadow-2xl z-50 animate-fade-in">
+                    <div className="grid grid-cols-12 gap-0">
+                      {/* Categories List */}
+                      <div className="col-span-4 bg-secondary/30 p-4 border-r border-border">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2">
+                          All Categories
+                        </h3>
+                        <div className="space-y-1">
+                          {categories.slice(0, 8).map((cat) => (
+                            <Link
+                              key={cat.id}
+                              to={`/products?category=${encodeURIComponent(cat.name)}`}
+                              className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary rounded-lg transition-all duration-200 group"
+                              onClick={() => setIsMegaMenuOpen(false)}
+                            >
+                              {cat.image_url ? (
+                                <img 
+                                  src={cat.image_url} 
+                                  alt={cat.name}
+                                  className="w-8 h-8 rounded-lg object-cover border border-border"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                  <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
+                                </div>
+                              )}
+                              <span className="flex-1">{cat.name}</span>
+                              <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-primary" />
+                            </Link>
+                          ))}
+                        </div>
+                        <Link
+                          to="/products"
+                          className="flex items-center gap-2 mt-4 px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          onClick={() => setIsMegaMenuOpen(false)}
+                        >
+                          Browse All Categories
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                      
+                      {/* Featured Products */}
+                      <div className="col-span-8 p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          <h3 className="text-sm font-bold text-foreground">Featured Products</h3>
+                        </div>
+                        
+                        {featuredProducts.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-4">
+                            {featuredProducts.map((product) => (
+                              <Link
+                                key={product.id}
+                                to={`/products/${product.slug}`}
+                                className="group"
+                                onClick={() => setIsMegaMenuOpen(false)}
+                              >
+                                <div className="relative bg-secondary/30 rounded-xl p-3 border border-border hover:border-primary/30 transition-all duration-200 hover:shadow-lg">
+                                  {product.discount_percentage && product.discount_percentage > 0 && (
+                                    <span className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                                      -{product.discount_percentage}%
+                                    </span>
+                                  )}
+                                  <div className="aspect-square rounded-lg overflow-hidden bg-background mb-3">
+                                    <img 
+                                      src={product.image_url || '/placeholder.svg'} 
+                                      alt={product.name}
+                                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                  </div>
+                                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                                    {product.name}
+                                  </h4>
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <span className="text-sm font-bold text-primary">
+                                      {formatPrice(product.price)}
+                                    </span>
+                                    {product.original_price && product.original_price > product.price && (
+                                      <span className="text-xs text-muted-foreground line-through">
+                                        {formatPrice(product.original_price)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-4">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className="bg-secondary/30 rounded-xl p-3 border border-border">
+                                <div className="aspect-square rounded-lg bg-muted animate-pulse mb-3" />
+                                <div className="h-4 bg-muted rounded animate-pulse mb-2" />
+                                <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Quick Links */}
+                        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                          <div className="flex items-center gap-6">
+                            <Link 
+                              to="/products?deals=true" 
+                              className="text-sm font-medium text-destructive hover:underline flex items-center gap-1"
+                              onClick={() => setIsMegaMenuOpen(false)}
+                            >
+                              🔥 Hot Deals
+                            </Link>
+                            <Link 
+                              to="/products?sort=newest" 
+                              className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-1"
+                              onClick={() => setIsMegaMenuOpen(false)}
+                            >
+                              ✨ New Arrivals
+                            </Link>
+                          </div>
+                          <Link 
+                            to="/products" 
+                            className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
+                            onClick={() => setIsMegaMenuOpen(false)}
+                          >
+                            View All Products <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               {/* Navigation Links */}
               <nav className="flex items-center ml-1">
@@ -398,12 +544,12 @@ const Navbar = () => {
                   <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">Categories</p>
                   {categories.map((cat) => (
                     <Link
-                      key={cat}
-                      to={`/products?category=${encodeURIComponent(cat)}`}
+                      key={cat.id}
+                      to={`/products?category=${encodeURIComponent(cat.name)}`}
                       className="block py-2 px-4 text-foreground hover:bg-secondary rounded-lg transition-smooth"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {cat}
+                      {cat.name}
                     </Link>
                   ))}
                 </div>
