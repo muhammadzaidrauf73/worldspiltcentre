@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, ArrowRight, Sparkles } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/hooks/useAdmin";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,7 @@ const Navbar = () => {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   
   const navigate = useNavigate();
 
@@ -206,6 +208,17 @@ const Navbar = () => {
                         My Account
                       </Link>
                     </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="cursor-pointer text-primary">
+                            <Shield className="h-4 w-4 mr-2" />
+                            Admin Panel
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />
