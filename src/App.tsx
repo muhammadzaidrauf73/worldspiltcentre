@@ -10,6 +10,7 @@ import Account from "./pages/Account";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
@@ -18,6 +19,7 @@ import AdminBrands from "./pages/admin/Brands";
 import AdminBanners from "./pages/admin/Banners";
 import AdminOrders from "./pages/admin/Orders";
 import AdminNewsletter from "./pages/admin/Newsletter";
+import AdminShipping from "./pages/admin/Shipping";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,7 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/products" element={<AdminProducts />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
@@ -42,6 +45,7 @@ const App = () => (
             <Route path="/admin/banners" element={<AdminBanners />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/newsletter" element={<AdminNewsletter />} />
+            <Route path="/admin/shipping" element={<AdminShipping />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
