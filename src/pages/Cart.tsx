@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
@@ -92,6 +93,11 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Shopping Cart - World Spilt Centre"
+        description="Review your cart and checkout. Free delivery on orders above threshold. Secure payment options available."
+        keywords="shopping cart, checkout, buy electronics lahore, online shopping pakistan"
+      />
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">

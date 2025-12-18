@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Truck, Clock, MapPin, Package } from "lucide-react";
 
 const Shipping = () => {
@@ -20,6 +21,11 @@ const Shipping = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Shipping Information - World Spilt Centre"
+        description="Fast and reliable delivery across Pakistan. Free shipping on orders above threshold. Track your electronics order in real-time."
+        keywords="shipping pakistan, delivery lahore, free shipping electronics, order tracking, nationwide delivery pakistan"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { MapPin, Phone, Clock } from "lucide-react";
 
 const StoreLocations = () => {
@@ -22,6 +23,11 @@ const StoreLocations = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Store Locations - Visit World Spilt Centre"
+        description="Visit World Spilt Centre in Model Town, Lahore. Find our address, phone number, and business hours. Best electronics store in Lahore."
+        keywords="world spilt centre location, electronics store model town, lahore electronics shop address, visit store lahore"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

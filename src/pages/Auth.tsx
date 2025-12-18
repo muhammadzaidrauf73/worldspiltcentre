@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
@@ -112,7 +113,13 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <>
+      <SEO 
+        title={isLogin ? "Login - World Spilt Centre" : "Sign Up - World Spilt Centre"}
+        description="Sign in or create an account at World Spilt Centre to track orders, save favorites, and get exclusive deals on electronics."
+        keywords="login, sign up, create account, world spilt centre account, electronics store login"
+      />
+      <div className="min-h-screen bg-background flex">
       {/* Left Side - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
@@ -245,7 +252,8 @@ const Auth = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
