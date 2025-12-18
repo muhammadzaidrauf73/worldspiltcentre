@@ -1,0 +1,88 @@
+import { Link } from "react-router-dom";
+import { Sparkles, ArrowRight } from "lucide-react";
+import ProductCard from "./ProductCard";
+import { Button } from "@/components/ui/button";
+
+const newProducts = [
+  {
+    id: "na1",
+    name: "Samsung Bespoke AI Refrigerator",
+    brand: "Samsung",
+    price: 2499,
+    image: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=300",
+    rating: 4.8,
+    reviews: 89,
+    badge: "New",
+  },
+  {
+    id: "na2",
+    name: "LG InstaView Door-in-Door",
+    brand: "LG",
+    price: 1899,
+    image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=300",
+    rating: 4.7,
+    reviews: 156,
+    badge: "New",
+  },
+  {
+    id: "na3",
+    name: "Sony WH-1000XM5 Headphones",
+    brand: "Sony",
+    price: 349,
+    originalPrice: 399,
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300",
+    rating: 4.9,
+    reviews: 2341,
+    badge: "New",
+  },
+  {
+    id: "na4",
+    name: "Samsung Galaxy Watch 6 Pro",
+    brand: "Samsung",
+    price: 449,
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300",
+    rating: 4.6,
+    reviews: 567,
+    badge: "New",
+  },
+];
+
+const NewArrivals = () => {
+  return (
+    <section className="py-12">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground">
+                New Arrivals
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Fresh products just landed
+              </p>
+            </div>
+          </div>
+          <Link to="/products?sort=newest">
+            <Button variant="ghost" className="text-primary hover:text-primary/80">
+              View All
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {newProducts.map((product, index) => (
+            <Link key={product.id} to={`/product/${product.id}`}>
+              <ProductCard {...product} index={index} />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default NewArrivals;
