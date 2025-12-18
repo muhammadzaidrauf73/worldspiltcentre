@@ -21,8 +21,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, Zap } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Zap, Link2 } from "lucide-react";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 interface FlashDeal {
@@ -36,6 +43,14 @@ interface FlashDeal {
   ends_at: string;
   display_order: number;
   product_id: string | null;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  image_url: string | null;
 }
 
 const AdminFlashDeals = () => {
@@ -52,6 +67,7 @@ const AdminFlashDeals = () => {
     is_active: true,
     ends_at: "",
     display_order: "0",
+    product_id: "",
   });
 
   const { data: deals, isLoading } = useQuery({
@@ -67,8 +83,22 @@ const AdminFlashDeals = () => {
     },
   });
 
+  const { data: products } = useQuery({
+    queryKey: ["products-for-deals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, price, original_price, image_url")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
+
   const createMutation = useMutation({
-    mutationFn: async (data: Omit<FlashDeal, "id" | "product_id">) => {
+    mutationFn: async (data: Omit<FlashDeal, "id">) => {
       const { error } = await supabase.from("flash_deals").insert([data]);
       if (error) throw error;
     },
@@ -124,6 +154,7 @@ const AdminFlashDeals = () => {
       is_active: true,
       ends_at: "",
       display_order: "0",
+      product_id: "",
     });
     setEditingDeal(null);
     setIsDialogOpen(false);
@@ -140,8 +171,25 @@ const AdminFlashDeals = () => {
       is_active: deal.is_active,
       ends_at: deal.ends_at ? new Date(deal.ends_at).toISOString().slice(0, 16) : "",
       display_order: deal.display_order.toString(),
+      product_id: deal.product_id || "",
     });
     setIsDialogOpen(true);
+  };
+
+  const handleProductSelect = (productId: string) => {
+    const product = products?.find((p) => p.id === productId);
+    if (product) {
+      setFormData({
+        ...formData,
+        product_id: productId,
+        name: product.name,
+        original_price: (product.original_price || product.price).toString(),
+        deal_price: product.price.toString(),
+        image_url: product.image_url || "",
+      });
+    } else {
+      setFormData({ ...formData, product_id: "" });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -156,6 +204,7 @@ const AdminFlashDeals = () => {
       is_active: formData.is_active,
       ends_at: formData.ends_at,
       display_order: parseInt(formData.display_order),
+      product_id: formData.product_id || null,
     };
 
     if (editingDeal) {
@@ -207,6 +256,32 @@ const AdminFlashDeals = () => {
                 <DialogTitle>{editingDeal ? "Edit Flash Deal" : "Add New Flash Deal"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product">Link to Product (Optional)</Label>
+                  <Select
+                    value={formData.product_id}
+                    onValueChange={handleProductSelect}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a product or create custom deal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Custom Deal (No Link)</SelectItem>
+                      {products?.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name} - Rs.{product.price.toLocaleString()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.product_id && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Link2 className="h-3 w-3" />
+                      Linked to product - details auto-filled
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="name">Product Name *</Label>
                   <Input
@@ -327,6 +402,7 @@ const AdminFlashDeals = () => {
                 <TableHead>Discount</TableHead>
                 <TableHead>Sold %</TableHead>
                 <TableHead>Ends At</TableHead>
+                <TableHead>Linked</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -334,7 +410,7 @@ const AdminFlashDeals = () => {
             <TableBody>
               {deals?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                     No flash deals yet. Add your first deal!
                   </TableCell>
                 </TableRow>
@@ -367,6 +443,13 @@ const AdminFlashDeals = () => {
                       <TableCell>{deal.sold_percentage}%</TableCell>
                       <TableCell className="text-sm">
                         {new Date(deal.ends_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {deal.product_id ? (
+                          <Link2 className="h-4 w-4 text-primary" />
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Switch
