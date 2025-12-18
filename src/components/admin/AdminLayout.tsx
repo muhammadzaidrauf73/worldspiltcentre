@@ -9,7 +9,8 @@ import {
   ShoppingCart, 
   ArrowLeft,
   Loader2,
-  Tags
+  Tags,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/brands", label: "Brands", icon: Tags },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
 ];
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
