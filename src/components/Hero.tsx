@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ interface Banner {
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50;
 
   const { data: banners = [] } = useQuery({
     queryKey: ["promotional-banners"],
@@ -51,13 +54,44 @@ const Hero = () => {
     setCurrentSlide((prev) => (prev + 1) % banners.length);
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   if (banners.length === 0) {
     return null;
   }
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px]">
+      <div 
+        className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px]"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         {banners.map((banner, index) => (
           <Link
             key={banner.id}
