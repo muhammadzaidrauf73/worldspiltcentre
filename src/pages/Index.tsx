@@ -17,6 +17,7 @@ import FlashDeal from "@/components/FlashDeal";
 import Newsletter from "@/components/Newsletter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PullToRefresh } from "@/components/PullToRefresh";
+import SEO from "@/components/SEO";
 
 const iconMap: Record<string, LucideIcon> = {
   "AirVent": AirVent,
@@ -74,6 +75,7 @@ const Index = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
+      <SEO />
       <div className="min-h-screen bg-background">
         <Navbar />
       <Hero />

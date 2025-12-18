@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const Products = () => {
   const [searchParams] = useSearchParams();
@@ -86,8 +87,17 @@ const Products = () => {
 
   const hasFilters = selectedCategory || selectedBrand || searchQuery;
 
+  const categoryName = selectedCategory 
+    ? categories.find(c => c.slug === selectedCategory)?.name || "Products"
+    : "All Products";
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={`${categoryName} - Shop Electronics`}
+        description={`Browse our collection of ${categoryName.toLowerCase()}. Best prices on air conditioners, LED TVs, refrigerators, washing machines and home appliances in Lahore.`}
+        keywords={`${categoryName.toLowerCase()}, electronics lahore, buy ${categoryName.toLowerCase()} pakistan, world spilt centre`}
+      />
       <Navbar />
       
       <div className="container mx-auto px-4 py-6">
