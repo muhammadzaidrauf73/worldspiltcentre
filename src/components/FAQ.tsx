@@ -10,7 +10,7 @@ const faqs = [
   {
     question: "What is your return policy?",
     answer:
-      "We offer a 30-day return policy for all products in their original condition. Electronics must be unopened or defective for full refund. Contact our support team to initiate a return.",
+      "We offer a 7-day return policy for all products in their original condition. Electronics must be unopened or defective for full refund. Contact our support team to initiate a return.",
   },
   {
     question: "Do you offer installation services?",
@@ -25,7 +25,7 @@ const faqs = [
   {
     question: "How long does delivery take?",
     answer:
-      "Standard delivery takes 3-5 business days. Express delivery (1-2 days) is available for select areas. Large appliances may require scheduled delivery.",
+      "Standard delivery takes 3-5 business days nationwide. Express delivery (1-2 days) is available for major cities. Large appliances may require scheduled delivery.",
   },
   {
     question: "Do you price match competitors?",
@@ -35,38 +35,38 @@ const faqs = [
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major credit/debit cards, PayPal, Apple Pay, Google Pay, and offer EMI options on select products. Cash on delivery is available in select areas.",
+      "We accept all major credit/debit cards, bank transfers, JazzCash, Easypaisa, and Cash on Delivery (COD). EMI options are available on select products.",
   },
 ];
 
 const FAQ = () => {
   return (
-    <section className="py-12 bg-secondary/30" id="faq">
+    <section className="py-10 bg-secondary/30" id="faq">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <HelpCircle className="h-6 w-6 text-primary" />
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <HelpCircle className="h-5 w-5 text-primary" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground mb-2">
+            <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground mb-2">
               Frequently Asked Questions
             </h2>
-            <p className="text-muted-foreground">
-              Find answers to common questions about our products and services
+            <p className="text-sm text-muted-foreground">
+              Find answers to common questions
             </p>
           </div>
 
-          <Accordion type="single" collapsible className="space-y-3">
+          <Accordion type="single" collapsible className="space-y-2">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-card rounded-lg border border-border px-6 shadow-sm"
+                className="bg-card rounded-lg border border-border px-4"
               >
-                <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary py-4">
+                <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-4 text-sm">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-4">
+                <AccordionContent className="text-muted-foreground pb-4 text-sm">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

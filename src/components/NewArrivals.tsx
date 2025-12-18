@@ -8,7 +8,7 @@ const newProducts = [
     id: "na1",
     name: "Samsung Bespoke AI Refrigerator",
     brand: "Samsung",
-    price: 2499,
+    price: 499999,
     image: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=300",
     rating: 4.8,
     reviews: 89,
@@ -18,7 +18,7 @@ const newProducts = [
     id: "na2",
     name: "LG InstaView Door-in-Door",
     brand: "LG",
-    price: 1899,
+    price: 379999,
     image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=300",
     rating: 4.7,
     reviews: 156,
@@ -28,8 +28,8 @@ const newProducts = [
     id: "na3",
     name: "Sony WH-1000XM5 Headphones",
     brand: "Sony",
-    price: 349,
-    originalPrice: 399,
+    price: 69999,
+    originalPrice: 79999,
     image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300",
     rating: 4.9,
     reviews: 2341,
@@ -39,7 +39,7 @@ const newProducts = [
     id: "na4",
     name: "Samsung Galaxy Watch 6 Pro",
     brand: "Samsung",
-    price: 449,
+    price: 89999,
     image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300",
     rating: 4.6,
     reviews: 567,
@@ -49,15 +49,15 @@ const newProducts = [
 
 const NewArrivals = () => {
   return (
-    <section className="py-12">
+    <section className="py-10 bg-secondary/30">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-primary" />
+            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground">
+              <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground">
                 New Arrivals
               </h2>
               <p className="text-sm text-muted-foreground">
@@ -66,14 +66,14 @@ const NewArrivals = () => {
             </div>
           </div>
           <Link to="/products?sort=newest">
-            <Button variant="ghost" className="text-primary hover:text-primary/80">
+            <Button variant="ghost" className="text-primary hover:text-primary/80 text-sm">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {newProducts.map((product, index) => (
             <Link key={product.id} to={`/product/${product.id}`}>
               <ProductCard {...product} index={index} />
