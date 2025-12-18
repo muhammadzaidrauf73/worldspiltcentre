@@ -257,51 +257,87 @@ const Navbar = () => {
         </div>
 
         {/* Categories Bar - Desktop */}
-        <div className="hidden md:block bg-secondary/50 border-t border-border">
+        <div className="hidden md:block bg-card border-t border-border shadow-sm">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
               {/* Shop by Categories Dropdown */}
-              <div className="relative group">
-                <Button 
-                  variant="ghost" 
-                  className="flex items-center gap-2 h-11 px-4 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground rounded-none"
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    className="flex items-center gap-3 h-12 px-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none font-semibold text-sm shadow-md"
+                  >
+                    <Menu className="h-5 w-5" />
+                    <span>Shop by Categories</span>
+                    <ChevronDown className="h-4 w-4 ml-1 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="start" 
+                  className="w-64 p-2 bg-card border border-border shadow-xl rounded-lg mt-0"
+                  sideOffset={0}
                 >
-                  <Menu className="h-4 w-4" />
-                  Shop by Categories
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-                <div className="absolute top-full left-0 bg-card border border-border rounded-b-lg shadow-lg min-w-[220px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat}
-                      to={`/products?category=${encodeURIComponent(cat)}`}
-                      className="block px-4 py-2.5 text-sm text-foreground hover:bg-secondary hover:text-primary transition-smooth"
-                    >
-                      {cat}
-                    </Link>
+                  {categories.map((cat, index) => (
+                    <DropdownMenuItem key={cat} asChild>
+                      <Link
+                        to={`/products?category=${encodeURIComponent(cat)}`}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-all duration-200"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-primary/40"></span>
+                        {cat}
+                      </Link>
+                    </DropdownMenuItem>
                   ))}
-                </div>
-              </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/products"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10 rounded-md cursor-pointer"
+                    >
+                      View All Products →
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
-              {navLinks.map((link) => (
+              {/* Navigation Links */}
+              <nav className="flex items-center ml-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    className={`relative px-5 py-4 text-sm font-medium transition-all duration-200 hover:bg-secondary/50 ${
+                      link.highlight 
+                        ? "text-primary" 
+                        : "text-foreground hover:text-primary"
+                    }`}
+                  >
+                    {link.name}
+                    {link.highlight && (
+                      <span className="absolute top-2 right-1 w-1.5 h-1.5 bg-destructive rounded-full animate-pulse"></span>
+                    )}
+                  </Link>
+                ))}
                 <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`px-4 py-3 text-sm font-medium transition-smooth ${
-                    link.highlight 
-                      ? "text-primary hover:text-primary/80" 
-                      : "text-foreground hover:text-primary"
-                  }`}
+                  to="/products"
+                  className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
                 >
-                  {link.name}
+                  All Products
                 </Link>
-              ))}
+                <Link
+                  to="/contact"
+                  className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
+                >
+                  Contact
+                </Link>
+              </nav>
               
+              {/* Right Side - Login */}
               {!user && (
                 <Link
                   to="/auth"
-                  className="ml-auto px-4 py-3 text-sm font-medium text-primary hover:text-primary/80"
+                  className="ml-auto flex items-center gap-2 px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-full transition-all duration-200"
                 >
+                  <User className="h-4 w-4" />
                   Login / Register
                 </Link>
               )}
