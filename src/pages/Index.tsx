@@ -72,20 +72,20 @@ const Index = () => {
       <FeaturesBar />
 
       {/* Top Categories */}
-      <section className="py-8 bg-secondary/30" id="categories">
+      <section className="py-6 sm:py-8 bg-secondary/30" id="categories">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
                 Top Categories
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Browse our wide range of electronics
               </p>
             </div>
             <Link
               to="/products"
-              className="text-primary text-sm font-semibold hover:underline transition-smooth hidden md:block"
+              className="text-primary text-xs sm:text-sm font-semibold hover:underline transition-smooth hidden sm:block"
             >
               View All →
             </Link>
@@ -93,19 +93,19 @@ const Index = () => {
 
           {/* Horizontal Scroll Container */}
           <div className="relative">
-            <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide scroll-smooth">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-hide scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0">
               {categoriesLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="shrink-0">
-                    <Skeleton className="w-24 h-24 rounded-full" />
-                    <Skeleton className="w-20 h-4 mt-2 mx-auto" />
+                    <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
+                    <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
                   </div>
                 ))
               ) : (
                 categories.map((category, index) => (
                   <div
                     key={category.id}
-                    className="animate-fade-in"
+                    className="animate-fade-in shrink-0"
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <CategoryCard
@@ -119,41 +119,51 @@ const Index = () => {
               )}
             </div>
           </div>
+          
+          {/* Mobile View All Link */}
+          <div className="flex justify-center mt-2 sm:hidden">
+            <Link
+              to="/products"
+              className="text-primary text-xs font-semibold hover:underline"
+            >
+              View All Categories →
+            </Link>
+          </div>
         </div>
       </section>
 
       <FlashDeal />
 
       {/* Hot Deals - Featured Products */}
-      <section className="py-10 bg-card">
+      <section className="py-8 sm:py-10 bg-card">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="bg-primary text-primary-foreground px-3 py-1 rounded text-xs font-bold">
+                <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold">
                   Hot Deals
                 </span>
               </div>
-              <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
                 Featured Products
               </h2>
             </div>
             <Link
               to="/products"
-              className="text-primary font-semibold hover:underline transition-smooth text-sm"
+              className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
             >
               View All →
             </Link>
           </div>
 
           {productsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {displayFeatured.map((product, index) => (
                 <Link key={product.id} to={`/product/${product.id}`}>
                   <ProductCard
@@ -177,21 +187,21 @@ const Index = () => {
 
       {/* Washing Machines Section */}
       {washingMachines.length > 0 && (
-        <section className="py-10 bg-secondary/30">
+        <section className="py-8 sm:py-10 bg-secondary/30">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-              <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
                 Washing Machines
               </h2>
               <Link
                 to="/products?category=Washing%20Machines"
-                className="text-primary font-semibold hover:underline transition-smooth text-sm"
+                className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
               >
                 View All →
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {washingMachines.map((product, index) => (
                 <Link key={product.id} to={`/product/${product.id}`}>
                   <ProductCard
@@ -214,22 +224,22 @@ const Index = () => {
       )}
 
       {/* Promo Banner */}
-      <section className="py-8">
+      <section className="py-6 sm:py-8">
         <div className="container mx-auto px-4">
-          <div className="relative overflow-hidden rounded-xl gradient-hero p-8 md:p-10">
+          <div className="relative overflow-hidden rounded-lg sm:rounded-xl gradient-hero p-5 sm:p-8 md:p-10">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
             <div className="relative z-10 max-w-lg">
-              <span className="inline-block px-3 py-1 rounded bg-primary-foreground/20 text-primary-foreground text-sm font-semibold mb-3">
+              <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary-foreground/20 text-primary-foreground text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
                 Limited Time Offer
               </span>
-              <h2 className="text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-3">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-2 sm:mb-3">
                 Best Price Guaranteed!
               </h2>
-              <p className="text-primary-foreground/80 mb-5 text-sm md:text-base">
-                Found a lower price elsewhere? We'll match it! Shop with confidence at Ayan & Co Electronics.
+              <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
+                Found a lower price elsewhere? We'll match it! Shop with confidence at World Spilt Centre.
               </p>
               <Link to="/products">
-                <button className="bg-primary-foreground text-primary font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-sm">
+                <button className="bg-primary-foreground text-primary font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-xs sm:text-sm">
                   Shop Now
                 </button>
               </Link>

@@ -56,56 +56,56 @@ const Footer = () => {
 
   return (
     <footer className="bg-foreground text-card" id="contact">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+      <div className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8">
           {/* Brand Section */}
-          <div className="col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-4">
+          <div className="sm:col-span-2">
+            <Link to="/" className="flex items-center gap-2 mb-3 sm:mb-4">
               <img 
                 src="/logo.png" 
                 alt={getSetting('company_name', 'World Spilt Centre')} 
-                className="h-10 w-auto object-contain"
+                className="h-8 sm:h-10 w-auto object-contain"
               />
               <div>
-                <h3 className="font-heading font-bold text-lg">
+                <h3 className="font-heading font-bold text-base sm:text-lg">
                   {getSetting('company_name', 'World Spilt Centre').split(' ').map((word, i) => 
                     i === 1 ? <span key={i} className="text-primary">{word} </span> : word + ' '
                   )}
                 </h3>
-                <p className="text-xs text-card/60 uppercase tracking-wider">
+                <p className="text-[10px] sm:text-xs text-card/60 uppercase tracking-wider">
                   {getSetting('company_tagline', 'Electronics')}
                 </p>
               </div>
             </Link>
-            <p className="text-card/70 text-sm mb-4 max-w-xs">
+            <p className="text-card/70 text-xs sm:text-sm mb-3 sm:mb-4 max-w-xs">
               Your trusted destination for premium electronics and home appliances. 
               Quality products, lowest prices, exceptional service.
             </p>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
               <div className="flex items-center gap-2 text-card/70">
-                <Phone className="h-4 w-4 text-primary" />
+                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                 <span>{getSetting('phone', '0300-4649141')}</span>
               </div>
               <div className="flex items-center gap-2 text-card/70">
-                <Mail className="h-4 w-4 text-primary" />
-                <span>{getSetting('email', 'support@worldspiltcentre.com')}</span>
+                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                <span className="text-xs sm:text-sm break-all">{getSetting('email', 'support@worldspiltcentre.com')}</span>
               </div>
               <div className="flex items-start gap-2 text-card/70">
-                <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>{getSetting('address', 'Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore')}</span>
+                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-xs sm:text-sm">{getSetting('address', 'Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore')}</span>
               </div>
             </div>
           </div>
 
           {/* Shop Links */}
           <div>
-            <h4 className="font-semibold mb-4 text-primary">Shop</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold mb-3 sm:mb-4 text-primary text-sm sm:text-base">Shop</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {footerLinks.shop.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-sm text-card/70 hover:text-primary transition-smooth"
+                    className="text-xs sm:text-sm text-card/70 hover:text-primary transition-smooth"
                   >
                     {link.name}
                   </Link>
@@ -116,13 +116,13 @@ const Footer = () => {
 
           {/* Support Links */}
           <div>
-            <h4 className="font-semibold mb-4 text-primary">Support</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold mb-3 sm:mb-4 text-primary text-sm sm:text-base">Support</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-sm text-card/70 hover:text-primary transition-smooth"
+                    className="text-xs sm:text-sm text-card/70 hover:text-primary transition-smooth"
                   >
                     {link.name}
                   </Link>
@@ -133,13 +133,13 @@ const Footer = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold mb-4 text-primary">Company</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold mb-3 sm:mb-4 text-primary text-sm sm:text-base">Company</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-sm text-card/70 hover:text-primary transition-smooth"
+                    className="text-xs sm:text-sm text-card/70 hover:text-primary transition-smooth"
                   >
                     {link.name}
                   </Link>
@@ -150,11 +150,11 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-card/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-card/60">
+        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-card/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+          <p className="text-xs sm:text-sm text-card/60 text-center sm:text-left">
             © {new Date().getFullYear()} {getSetting('company_name', 'World Spilt Centre')}. All rights reserved.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {socialLinks.map((social) => (
               <a
                 key={social.label}
@@ -162,9 +162,9 @@ const Footer = () => {
                 aria-label={social.label}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-card/10 flex items-center justify-center hover:bg-primary transition-smooth"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-card/10 flex items-center justify-center hover:bg-primary transition-smooth"
               >
-                <social.icon className="h-4 w-4" />
+                <social.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </a>
             ))}
           </div>
@@ -176,9 +176,9 @@ const Footer = () => {
         href={`https://wa.me/${whatsappNumber}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-smooth z-50"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-smooth z-50"
       >
-        <MessageCircle className="h-7 w-7 text-white" />
+        <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
       </a>
     </footer>
   );
