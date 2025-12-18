@@ -135,11 +135,12 @@ const Checkout = () => {
     try {
       // Create order
       const orderItems = cartItems.map(item => ({
-        product_id: item.product_id,
-        product_name: item.products?.name,
+        id: item.product_id,
+        name: item.products?.name,
         quantity: item.quantity,
         price: item.products?.price,
         image_url: item.products?.image_url,
+        specifications: item.products?.specifications || {},
       }));
 
       const { error: orderError } = await supabase
