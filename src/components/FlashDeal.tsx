@@ -83,22 +83,38 @@ const FlashDeal = () => {
           </div>
 
           {/* Countdown Timer */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="text-xs sm:text-sm text-muted-foreground mr-1 sm:mr-2">Ends in:</span>
-            {[
-              { value: timeLeft.hours, label: "H" },
-              { value: timeLeft.minutes, label: "M" },
-              { value: timeLeft.seconds, label: "S" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-0.5 sm:gap-1">
-                <div className="bg-foreground text-card rounded px-1.5 sm:px-2 py-0.5 sm:py-1 min-w-[2rem] sm:min-w-[2.5rem] text-center">
-                  <span className="font-bold text-sm sm:text-lg">
-                    {String(item.value).padStart(2, "0")}
-                  </span>
+          <div className="flex flex-col items-center sm:items-end gap-1">
+            <span className="text-xs font-medium text-deal uppercase tracking-wider flex items-center gap-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-deal opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-deal"></span>
+              </span>
+              Ends in
+            </span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              {[
+                { value: timeLeft.hours, label: "HRS" },
+                { value: timeLeft.minutes, label: "MIN" },
+                { value: timeLeft.seconds, label: "SEC" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-1 sm:gap-2">
+                  <div className="flex flex-col items-center">
+                    <div className="relative bg-gradient-to-b from-deal to-deal/80 text-deal-foreground rounded-lg px-2 sm:px-3 py-1 sm:py-2 min-w-[2.5rem] sm:min-w-[3.5rem] text-center shadow-lg">
+                      <span className="font-bold text-lg sm:text-2xl md:text-3xl font-heading tabular-nums">
+                        {String(item.value).padStart(2, "0")}
+                      </span>
+                      <div className="absolute inset-x-0 top-1/2 h-px bg-black/10"></div>
+                    </div>
+                    <span className="text-[8px] sm:text-[10px] text-muted-foreground font-medium mt-0.5 sm:mt-1">
+                      {item.label}
+                    </span>
+                  </div>
+                  {i < 2 && (
+                    <span className="text-deal font-bold text-lg sm:text-2xl animate-pulse mb-3 sm:mb-4">:</span>
+                  )}
                 </div>
-                {i < 2 && <span className="text-foreground font-bold text-sm sm:text-base">:</span>}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
