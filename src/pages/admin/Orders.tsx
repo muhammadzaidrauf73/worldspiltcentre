@@ -34,13 +34,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin } from "lucide-react";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface OrderItem {
   id: string;
@@ -63,7 +64,10 @@ const AdminOrders = () => {
   const queryClient = useQueryClient();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [shipDialogOpen, setShipDialogOpen] = useState(false);
+  const [editSpecsDialogOpen, setEditSpecsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  const [editingSpecs, setEditingSpecs] = useState<Record<string, string>>({});
   const [cancelReason, setCancelReason] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
@@ -138,6 +142,86 @@ const AdminOrders = () => {
       toast.error("Error updating tracking: " + error.message);
     },
   });
+
+  const updateItemSpecsMutation = useMutation({
+    mutationFn: async ({ orderId, items }: { orderId: string; items: OrderItem[] }) => {
+      const { error } = await supabase
+        .from("orders")
+        .update({ items: items as any })
+        .eq("id", orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Specifications updated");
+      setEditSpecsDialogOpen(false);
+      setSelectedOrder(null);
+      setSelectedItemIndex(null);
+      setEditingSpecs({});
+    },
+    onError: (error) => {
+      toast.error("Error updating specifications: " + error.message);
+    },
+  });
+
+  const openEditSpecsDialog = (order: any, itemIndex: number) => {
+    const items = order.items as OrderItem[];
+    setSelectedOrder(order);
+    setSelectedItemIndex(itemIndex);
+    setEditingSpecs(items[itemIndex].specifications || {});
+    setEditSpecsDialogOpen(true);
+  };
+
+  const handleAddSpec = () => {
+    setEditingSpecs(prev => ({ ...prev, "": "" }));
+  };
+
+  const handleUpdateSpecKey = (oldKey: string, newKey: string) => {
+    if (oldKey === newKey) return;
+    setEditingSpecs(prev => {
+      const newSpecs: Record<string, string> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        if (k === oldKey) {
+          newSpecs[newKey] = v;
+        } else {
+          newSpecs[k] = v;
+        }
+      });
+      return newSpecs;
+    });
+  };
+
+  const handleUpdateSpecValue = (key: string, value: string) => {
+    setEditingSpecs(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleRemoveSpec = (key: string) => {
+    setEditingSpecs(prev => {
+      const newSpecs = { ...prev };
+      delete newSpecs[key];
+      return newSpecs;
+    });
+  };
+
+  const handleSaveSpecs = () => {
+    if (!selectedOrder || selectedItemIndex === null) return;
+    
+    // Filter out empty keys
+    const cleanedSpecs: Record<string, string> = {};
+    Object.entries(editingSpecs).forEach(([k, v]) => {
+      if (k.trim()) {
+        cleanedSpecs[k.trim()] = v;
+      }
+    });
+
+    const items = [...(selectedOrder.items as OrderItem[])];
+    items[selectedItemIndex] = {
+      ...items[selectedItemIndex],
+      specifications: cleanedSpecs,
+    };
+    
+    updateItemSpecsMutation.mutate({ orderId: selectedOrder.id, items });
+  };
 
   const handlePrintOrder = (order: any) => {
     const items = order.items as OrderItem[];
@@ -433,24 +517,39 @@ const AdminOrders = () => {
                                             </p>
                                           </div>
                                           {/* Specifications */}
-                                          {item.specifications && Object.keys(item.specifications).length > 0 && (
-                                            <div className="mt-2 ml-[68px] bg-muted/50 rounded-md p-2">
-                                              <p className="text-xs font-medium text-muted-foreground mb-1">Specifications:</p>
-                                              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                                {Object.entries(item.specifications).slice(0, 6).map(([key, value]) => (
-                                                  <div key={key} className="text-xs">
-                                                    <span className="text-muted-foreground">{key}: </span>
-                                                    <span className="font-medium">{value}</span>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                              {Object.keys(item.specifications).length > 6 && (
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                  +{Object.keys(item.specifications).length - 6} more
-                                                </p>
-                                              )}
+                                          <div className="mt-2 ml-[68px] bg-muted/50 rounded-md p-2">
+                                            <div className="flex items-center justify-between mb-1">
+                                              <p className="text-xs font-medium text-muted-foreground">Specifications:</p>
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-6 px-2 text-xs"
+                                                onClick={() => openEditSpecsDialog(order, i)}
+                                              >
+                                                <Pencil className="h-3 w-3 mr-1" />
+                                                Edit
+                                              </Button>
                                             </div>
-                                          )}
+                                            {item.specifications && Object.keys(item.specifications).length > 0 ? (
+                                              <>
+                                                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                                  {Object.entries(item.specifications).slice(0, 6).map(([key, value]) => (
+                                                    <div key={key} className="text-xs">
+                                                      <span className="text-muted-foreground">{key}: </span>
+                                                      <span className="font-medium">{value}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                                {Object.keys(item.specifications).length > 6 && (
+                                                  <p className="text-xs text-muted-foreground mt-1">
+                                                    +{Object.keys(item.specifications).length - 6} more
+                                                  </p>
+                                                )}
+                                              </>
+                                            ) : (
+                                              <p className="text-xs text-muted-foreground italic">No specifications added</p>
+                                            )}
+                                          </div>
                                         </div>
                                       ))}
                                   </div>
@@ -615,6 +714,71 @@ const AdminOrders = () => {
             >
               <Truck className="h-4 w-4 mr-2" />
               {selectedOrder?.status === "shipped" ? "Update Tracking" : "Mark as Shipped"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Specifications Dialog */}
+      <Dialog open={editSpecsDialogOpen} onOpenChange={setEditSpecsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Specifications</DialogTitle>
+            <DialogDescription>
+              {selectedOrder && selectedItemIndex !== null && (
+                <span>
+                  Editing specs for: {(selectedOrder.items as OrderItem[])[selectedItemIndex]?.name}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <ScrollArea className="max-h-[300px] pr-4">
+              <div className="space-y-3">
+                {Object.entries(editingSpecs).map(([key, value], index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      placeholder="Key (e.g., Color)"
+                      value={key}
+                      onChange={(e) => handleUpdateSpecKey(key, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      placeholder="Value (e.g., Black)"
+                      value={value}
+                      onChange={(e) => handleUpdateSpecValue(key, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-9 w-9 text-destructive hover:text-destructive shrink-0"
+                      onClick={() => handleRemoveSpec(key)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <Button 
+              variant="outline" 
+              onClick={handleAddSpec}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Specification
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditSpecsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveSpecs}
+              disabled={updateItemSpecsMutation.isPending}
+            >
+              Save Specifications
             </Button>
           </DialogFooter>
         </DialogContent>
