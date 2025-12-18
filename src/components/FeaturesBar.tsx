@@ -13,7 +13,13 @@ const FeaturesBar = () => {
   const duplicatedFeatures = [...features, ...features];
 
   return (
-    <div className="bg-card border-b border-border py-4 overflow-hidden">
+    <div className="bg-card border-b border-border py-4 overflow-hidden relative">
+      {/* Left fade gradient */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
+      
+      {/* Right fade gradient */}
+      <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
+      
       <div className="relative">
         <div className="flex animate-scroll-x hover:pause-animation">
           {duplicatedFeatures.map((feature, index) => (
