@@ -52,7 +52,7 @@ const ProductDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_reviews")
-        .select("*, profiles(full_name)")
+        .select("*")
         .eq("product_id", id)
         .order("created_at", { ascending: false });
       
@@ -385,7 +385,7 @@ const ProductDetail = () => {
                       ))}
                     </div>
                     <span className="font-medium text-foreground text-sm">
-                      {review.profiles?.full_name || "Anonymous"}
+                      Verified Customer
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(review.created_at).toLocaleDateString()}
