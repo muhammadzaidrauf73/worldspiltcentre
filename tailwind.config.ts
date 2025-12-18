@@ -59,6 +59,10 @@ export default {
           DEFAULT: "hsl(var(--deal))",
           foreground: "hsl(var(--deal-foreground))",
         },
+        ticker: {
+          DEFAULT: "hsl(var(--ticker))",
+          foreground: "hsl(var(--ticker-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
