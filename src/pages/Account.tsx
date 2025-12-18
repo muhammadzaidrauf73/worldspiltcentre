@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { User, Package, Heart, LogOut, Save } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, ChevronRight, ShoppingBag } from "lucide-react";
+import { format } from "date-fns";
 
 interface Profile {
   id: string;
@@ -17,6 +19,22 @@ interface Profile {
   phone: string | null;
   address: string | null;
 }
+
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url?: string;
+}
+
+const statusColors: Record<string, string> = {
+  pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  processing: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  shipped: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  delivered: "bg-green-500/10 text-green-600 border-green-500/20",
+  cancelled: "bg-red-500/10 text-red-600 border-red-500/20",
+};
 
 const Account = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -30,6 +48,22 @@ const Account = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+
+  // Fetch user orders
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ["user-orders", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -213,11 +247,95 @@ const Account = () => {
               <h2 className="text-lg font-semibold text-foreground mb-4">
                 Order History
               </h2>
-              <div className="text-center py-12 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No orders yet</p>
-                <p className="text-sm">Your order history will appear here</p>
-              </div>
+              
+              {ordersLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="border border-border rounded-lg p-4 animate-pulse">
+                      <div className="h-4 bg-muted rounded w-1/4 mb-3"></div>
+                      <div className="h-20 bg-muted rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No orders yet</p>
+                  <p className="text-sm mb-4">Your order history will appear here</p>
+                  <Link to="/products">
+                    <Button>
+                      <ShoppingBag className="h-4 w-4 mr-2" />
+                      Start Shopping
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order: any) => {
+                    const items = order.items as OrderItem[];
+                    return (
+                      <div key={order.id} className="border border-border rounded-lg overflow-hidden">
+                        {/* Order Header */}
+                        <div className="bg-secondary/30 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Order ID: </span>
+                              <span className="font-mono font-medium">{order.id.slice(0, 8)}...</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Date: </span>
+                              <span>{format(new Date(order.created_at), "MMM d, yyyy")}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Total: </span>
+                              <span className="font-semibold text-primary">Rs.{Number(order.total).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[order.status] || 'bg-muted'}`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </span>
+                        </div>
+                        
+                        {/* Order Items */}
+                        <div className="p-4">
+                          <div className="space-y-3">
+                            {items?.map((item, index) => (
+                              <div key={index} className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-lg bg-secondary/50 overflow-hidden flex-shrink-0">
+                                  <img 
+                                    src={item.image_url || '/placeholder.svg'} 
+                                    alt={item.name}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-foreground truncate">{item.name}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Qty: {item.quantity} × Rs.{Number(item.price).toLocaleString()}
+                                  </p>
+                                </div>
+                                <p className="font-medium text-foreground">
+                                  Rs.{(item.quantity * item.price).toLocaleString()}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Shipping Address */}
+                          {order.shipping_address && (
+                            <div className="mt-4 pt-4 border-t border-border">
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium">Shipping to: </span>
+                                {order.shipping_address}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </TabsContent>
           
