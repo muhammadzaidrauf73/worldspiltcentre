@@ -181,13 +181,13 @@ const Navbar = () => {
             {/* Right Actions */}
             <div className="flex items-center gap-1 md:gap-3">
               {/* Phone - Desktop */}
-              <div className="hidden lg:flex items-center gap-2 mr-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="hidden lg:flex items-center gap-3 mr-2 group cursor-pointer">
+                <div className="icon-btn icon-btn-ring">
                   <Phone className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Call Us</p>
-                  <p className="font-semibold text-foreground text-sm">0300-4649141</p>
+                  <p className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">0300-4649141</p>
                 </div>
               </div>
 
@@ -333,10 +333,10 @@ const Navbar = () => {
                                 <img 
                                   src={cat.image_url} 
                                   alt={cat.name}
-                                  className="w-8 h-8 rounded-lg object-cover border border-border"
+                                  className="w-9 h-9 rounded-xl object-cover border border-border shadow-sm"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
                                   <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
                                 </div>
                               )}
