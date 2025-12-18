@@ -1,11 +1,11 @@
 import { Truck, Tag, RotateCcw, Shield, Headphones } from "lucide-react";
 
 const features = [
-  { icon: Headphones, text: "Customer Support", subtext: "Quick Response" },
-  { icon: Tag, text: "Lowest Price", subtext: "Guaranteed" },
-  { icon: Truck, text: "Fast Shipping", subtext: "Nationwide Delivery" },
-  { icon: RotateCcw, text: "7 Days Return", subtext: "T&C Apply" },
-  { icon: Shield, text: "Secure Payments", subtext: "T&C Apply" },
+  { icon: Headphones, text: "Customer Support", subtext: "Quick Response", style: "icon-btn-glass" },
+  { icon: Tag, text: "Lowest Price", subtext: "Guaranteed", style: "icon-btn-primary" },
+  { icon: Truck, text: "Fast Shipping", subtext: "Nationwide Delivery", style: "icon-btn-accent" },
+  { icon: RotateCcw, text: "7 Days Return", subtext: "T&C Apply", style: "icon-btn-ring" },
+  { icon: Shield, text: "Secure Payments", subtext: "T&C Apply", style: "icon-btn-glass" },
 ];
 
 const FeaturesBar = () => {
@@ -13,7 +13,7 @@ const FeaturesBar = () => {
   const duplicatedFeatures = [...features, ...features];
 
   return (
-    <div className="bg-card border-b border-border py-4 overflow-hidden relative">
+    <div className="bg-card border-b border-border py-5 overflow-hidden relative">
       {/* Left fade gradient */}
       <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
       
@@ -25,10 +25,10 @@ const FeaturesBar = () => {
           {duplicatedFeatures.map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 px-6 md:px-8 shrink-0 group cursor-pointer"
+              className="flex items-center gap-4 px-8 md:px-10 shrink-0 group cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-primary group-hover:scale-110">
-                <feature.icon className="h-5 w-5 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+              <div className={`icon-btn ${feature.style} shrink-0`}>
+                <feature.icon className="h-5 w-5 text-primary" />
               </div>
               <div className="transition-transform duration-300 group-hover:translate-x-1">
                 <p className="font-semibold text-foreground text-sm whitespace-nowrap">{feature.text}</p>
