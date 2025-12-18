@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Zap, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import FlipClockDigit from "@/components/FlipClockDigit";
 
 interface FlashDealItem {
   id: string;
@@ -83,37 +84,20 @@ const FlashDeal = () => {
           </div>
 
           {/* Countdown Timer */}
-          <div className="flex flex-col items-center sm:items-end gap-1">
-            <span className="text-xs font-medium text-deal uppercase tracking-wider flex items-center gap-1">
+          <div className="flex flex-col items-center sm:items-end gap-1.5 sm:gap-2">
+            <span className="text-xs font-medium text-deal uppercase tracking-wider flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-deal opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-deal"></span>
               </span>
               Ends in
             </span>
-            <div className="flex items-center gap-1 sm:gap-2">
-              {[
-                { value: timeLeft.hours, label: "HRS" },
-                { value: timeLeft.minutes, label: "MIN" },
-                { value: timeLeft.seconds, label: "SEC" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-1 sm:gap-2">
-                  <div className="flex flex-col items-center">
-                    <div className="relative bg-gradient-to-b from-deal to-deal/80 text-deal-foreground rounded-lg px-2 sm:px-3 py-1 sm:py-2 min-w-[2.5rem] sm:min-w-[3.5rem] text-center shadow-lg">
-                      <span className="font-bold text-lg sm:text-2xl md:text-3xl font-heading tabular-nums">
-                        {String(item.value).padStart(2, "0")}
-                      </span>
-                      <div className="absolute inset-x-0 top-1/2 h-px bg-black/10"></div>
-                    </div>
-                    <span className="text-[8px] sm:text-[10px] text-muted-foreground font-medium mt-0.5 sm:mt-1">
-                      {item.label}
-                    </span>
-                  </div>
-                  {i < 2 && (
-                    <span className="text-deal font-bold text-lg sm:text-2xl animate-pulse mb-3 sm:mb-4">:</span>
-                  )}
-                </div>
-              ))}
+            <div className="flex items-end gap-2 sm:gap-3">
+              <FlipClockDigit value={timeLeft.hours} label="Hours" />
+              <span className="text-foreground font-bold text-xl sm:text-2xl mb-5 sm:mb-6 animate-pulse">:</span>
+              <FlipClockDigit value={timeLeft.minutes} label="Minutes" />
+              <span className="text-foreground font-bold text-xl sm:text-2xl mb-5 sm:mb-6 animate-pulse">:</span>
+              <FlipClockDigit value={timeLeft.seconds} label="Seconds" />
             </div>
           </div>
         </div>
