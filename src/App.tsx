@@ -20,6 +20,7 @@ import AdminBanners from "./pages/admin/Banners";
 import AdminOrders from "./pages/admin/Orders";
 import AdminNewsletter from "./pages/admin/Newsletter";
 import AdminShipping from "./pages/admin/Shipping";
+import AdminFlashDeals from "./pages/admin/FlashDeals";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/newsletter" element={<AdminNewsletter />} />
             <Route path="/admin/shipping" element={<AdminShipping />} />
+            <Route path="/admin/flash-deals" element={<AdminFlashDeals />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
