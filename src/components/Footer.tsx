@@ -31,15 +31,16 @@ const Footer = () => {
     support: [
       { name: "Contact Us", path: "#contact" },
       { name: "FAQs", path: "#faq" },
-      { name: "Shipping Info", path: "#" },
-      { name: "Returns Policy", path: "#" },
-      { name: "Warranty", path: "#" },
+      { name: "Shipping Info", path: getSetting('shipping_info_url', '#') },
+      { name: "Returns Policy", path: getSetting('returns_policy_url', '#') },
+      { name: "Warranty", path: getSetting('warranty_url', '#') },
+      { name: "Privacy Policy", path: getSetting('privacy_policy_url', '#') },
     ],
     company: [
       { name: "About Us", path: getSetting('about_us_url', '#') },
       { name: "Blog", path: getSetting('blog_url', '#') },
       { name: "Store Locations", path: getSetting('store_locations_url', '#') },
-      { name: "Careers", path: "#" },
+      { name: "Careers", path: getSetting('careers_url', '#') },
       { name: "Terms & Conditions", path: getSetting('terms_conditions_url', '#') },
     ],
   };
