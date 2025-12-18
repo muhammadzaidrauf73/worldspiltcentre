@@ -13,7 +13,8 @@ import {
   Mail,
   ImageIcon,
   Truck,
-  Zap
+  Zap,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/company-settings", label: "Company Settings", icon: Settings },
 ];
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {

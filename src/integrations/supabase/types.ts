@@ -115,6 +115,36 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          key: string
+          label: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       flash_deals: {
         Row: {
           created_at: string
