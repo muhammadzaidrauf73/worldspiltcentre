@@ -1,6 +1,6 @@
 import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
@@ -16,6 +16,7 @@ import NewArrivals from "@/components/NewArrivals";
 import FlashDeal from "@/components/FlashDeal";
 import Newsletter from "@/components/Newsletter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PullToRefresh } from "@/components/PullToRefresh";
 
 const iconMap: Record<string, LucideIcon> = {
   "AirVent": AirVent,
@@ -29,6 +30,7 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 const Index = () => {
+  const queryClient = useQueryClient();
   // Fetch categories from database
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
@@ -65,9 +67,15 @@ const Index = () => {
     ? products.filter(p => p.category_id === washingMachineCategory.id).slice(0, 4)
     : [];
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["categories"] });
+    await queryClient.invalidateQueries({ queryKey: ["products"] });
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Navbar />
       <Hero />
       <FeaturesBar />
 
@@ -255,7 +263,8 @@ const Index = () => {
       <Newsletter />
       <FAQ />
       <Footer />
-    </div>
+      </div>
+    </PullToRefresh>
   );
 };
 
