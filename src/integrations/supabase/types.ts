@@ -417,6 +417,7 @@ export type Database = {
       }
       promotional_banners: {
         Row: {
+          button_color: string | null
           created_at: string
           description: string | null
           display_order: number | null
@@ -429,6 +430,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          button_color?: string | null
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -441,6 +443,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          button_color?: string | null
           created_at?: string
           description?: string | null
           display_order?: number | null
