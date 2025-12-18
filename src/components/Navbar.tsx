@@ -38,6 +38,27 @@ const Navbar = () => {
     "Small Electronics",
   ];
 
+  // Fetch announcement settings
+  const { data: settings } = useQuery({
+    queryKey: ['announcement-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('key, value')
+        .in('key', ['announcement_enabled', 'announcement_message', 'announcement_bg_color', 'announcement_text_color']);
+      if (error) throw error;
+      return data?.reduce((acc, item) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {} as Record<string, string | null>) || {};
+    },
+  });
+
+  const announcementEnabled = settings?.announcement_enabled === 'true';
+  const announcementMessage = settings?.announcement_message || '';
+  const announcementBgColor = settings?.announcement_bg_color || '#f97316';
+  const announcementTextColor = settings?.announcement_text_color || '#ffffff';
+
   // Fetch cart count
   const { data: cartCount = 0 } = useQuery({
     queryKey: ["cart-count", user?.id],
@@ -67,6 +88,19 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full">
+      {/* Announcement Bar */}
+      {announcementEnabled && announcementMessage && (
+        <div 
+          className="py-2 text-center text-sm font-medium"
+          style={{ backgroundColor: announcementBgColor, color: announcementTextColor }}
+        >
+          <div className="container mx-auto px-4 flex items-center justify-center gap-2">
+            <span className="animate-pulse">🔔</span>
+            <span>{announcementMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* Main Navbar */}
       <nav className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-3">

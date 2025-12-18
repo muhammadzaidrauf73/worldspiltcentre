@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, Building2, Phone, Globe, FileText } from "lucide-react";
+import { Save, Building2, Phone, Globe, FileText, Bell } from "lucide-react";
 
 interface CompanySetting {
   id: string;
@@ -47,6 +48,7 @@ const AdminCompanySettings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["announcement-settings"] });
       setEditedSettings({});
       toast.success("Settings saved successfully!");
     },
@@ -61,6 +63,11 @@ const AdminCompanySettings = () => {
 
   const getValue = (setting: CompanySetting) => {
     return editedSettings[setting.key] ?? setting.value ?? "";
+  };
+
+  const getValueByKey = (key: string) => {
+    const setting = settings?.find(s => s.key === key);
+    return editedSettings[key] ?? setting?.value ?? "";
   };
 
   const handleSave = () => {
@@ -83,6 +90,14 @@ const AdminCompanySettings = () => {
     return ["about_us", "terms_conditions", "privacy_policy", "return_policy", "address"].includes(key);
   };
 
+  const isAnnouncementSetting = (key: string) => {
+    return key.startsWith("announcement_");
+  };
+
+  const isColorSetting = (key: string) => {
+    return key.includes("_color");
+  };
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -92,6 +107,9 @@ const AdminCompanySettings = () => {
       </AdminLayout>
     );
   }
+
+  const generalSettings = getSettingsByCategory("general").filter(s => !isAnnouncementSetting(s.key));
+  const announcementSettings = getSettingsByCategory("general").filter(s => isAnnouncementSetting(s.key));
 
   return (
     <AdminLayout>
@@ -127,14 +145,103 @@ const AdminCompanySettings = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general">
+          <TabsContent value="general" className="space-y-4">
+            {/* Announcement Bar Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Announcement Bar
+                </CardTitle>
+                <CardDescription>Configure the promotional banner at the top of your website</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Announcement Bar</Label>
+                    <p className="text-sm text-muted-foreground">Show the promotional bar at the top of the page</p>
+                  </div>
+                  <Switch
+                    checked={getValueByKey("announcement_enabled") === "true"}
+                    onCheckedChange={(checked) => handleChange("announcement_enabled", checked ? "true" : "false")}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="announcement_message">Announcement Message</Label>
+                  <Input
+                    id="announcement_message"
+                    value={getValueByKey("announcement_message")}
+                    onChange={(e) => handleChange("announcement_message", e.target.value)}
+                    placeholder="Enter your announcement message"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="announcement_bg_color">Background Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="announcement_bg_color"
+                        type="color"
+                        value={getValueByKey("announcement_bg_color") || "#f97316"}
+                        onChange={(e) => handleChange("announcement_bg_color", e.target.value)}
+                        className="w-14 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        value={getValueByKey("announcement_bg_color") || "#f97316"}
+                        onChange={(e) => handleChange("announcement_bg_color", e.target.value)}
+                        placeholder="#f97316"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="announcement_text_color">Text Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="announcement_text_color"
+                        type="color"
+                        value={getValueByKey("announcement_text_color") || "#ffffff"}
+                        onChange={(e) => handleChange("announcement_text_color", e.target.value)}
+                        className="w-14 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        value={getValueByKey("announcement_text_color") || "#ffffff"}
+                        onChange={(e) => handleChange("announcement_text_color", e.target.value)}
+                        placeholder="#ffffff"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="space-y-2">
+                  <Label>Preview</Label>
+                  <div 
+                    className="py-2 text-center text-sm font-medium rounded"
+                    style={{ 
+                      backgroundColor: getValueByKey("announcement_bg_color") || "#f97316", 
+                      color: getValueByKey("announcement_text_color") || "#ffffff" 
+                    }}
+                  >
+                    <span className="mr-2">🔔</span>
+                    {getValueByKey("announcement_message") || "Your announcement message here"}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* General Company Info */}
             <Card>
               <CardHeader>
                 <CardTitle>General Information</CardTitle>
                 <CardDescription>Basic company details displayed across the website</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {getSettingsByCategory("general").map((setting) => (
+                {generalSettings.map((setting) => (
                   <div key={setting.id} className="space-y-2">
                     <Label htmlFor={setting.key}>{setting.label}</Label>
                     <Input
