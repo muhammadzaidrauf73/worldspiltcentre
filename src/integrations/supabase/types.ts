@@ -368,6 +368,51 @@ export type Database = {
         }
         Relationships: []
       }
+      shipping_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_days: string | null
+          free_shipping_threshold: number | null
+          id: string
+          is_active: boolean | null
+          is_free_shipping: boolean | null
+          max_order_amount: number | null
+          min_order_amount: number | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: string | null
+          free_shipping_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_free_shipping?: boolean | null
+          max_order_amount?: number | null
+          min_order_amount?: number | null
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: string | null
+          free_shipping_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_free_shipping?: boolean | null
+          max_order_amount?: number | null
+          min_order_amount?: number | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

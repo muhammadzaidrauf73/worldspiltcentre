@@ -208,7 +208,10 @@ const Cart = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full mt-6 bg-primary hover:bg-primary/90">
+                <Button 
+                  className="w-full mt-6 bg-primary hover:bg-primary/90"
+                  onClick={() => navigate("/checkout")}
+                >
                   Proceed to Checkout
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>

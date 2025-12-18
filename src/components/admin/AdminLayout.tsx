@@ -11,7 +11,8 @@ import {
   Loader2,
   Tags,
   Mail,
-  ImageIcon
+  ImageIcon,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/admin/brands", label: "Brands", icon: Tags },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
 ];
 
