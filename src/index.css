@@ -296,4 +296,37 @@
   .hover\:pause-animation:hover {
     animation-play-state: paused;
   }
+
+  .perspective-500 {
+    perspective: 500px;
+  }
+
+  .animate-flip-top {
+    animation: flipTop 0.3s ease-in forwards;
+    backface-visibility: hidden;
+  }
+
+  .animate-flip-bottom {
+    animation: flipBottom 0.3s ease-out 0.15s forwards;
+    backface-visibility: hidden;
+    transform: rotateX(90deg);
+  }
+
+  @keyframes flipTop {
+    0% {
+      transform: rotateX(0deg);
+    }
+    100% {
+      transform: rotateX(-90deg);
+    }
+  }
+
+  @keyframes flipBottom {
+    0% {
+      transform: rotateX(90deg);
+    }
+    100% {
+      transform: rotateX(0deg);
+    }
+  }
 }

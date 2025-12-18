@@ -127,6 +127,14 @@ export default {
           "0%, 100%": { transform: "translateY(-5%)" },
           "50%": { transform: "translateY(0)" },
         },
+        "flip-top": {
+          "0%": { transform: "rotateX(0deg)" },
+          "100%": { transform: "rotateX(-90deg)" },
+        },
+        "flip-bottom": {
+          "0%": { transform: "rotateX(90deg)" },
+          "100%": { transform: "rotateX(0deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -139,6 +147,11 @@ export default {
         shimmer: "shimmer 2s infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         bounce: "bounce 1s infinite",
+        "flip-top": "flip-top 0.3s ease-in forwards",
+        "flip-bottom": "flip-bottom 0.3s ease-out 0.3s forwards",
+      },
+      perspective: {
+        '500': '500px',
       },
     },
   },
