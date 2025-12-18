@@ -67,25 +67,6 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* Top Announcement Bar */}
-      <div className="bg-primary text-primary-foreground py-2">
-        <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-          <div className="flex items-center gap-2">
-            <span className="animate-pulse">🔔</span>
-            <span className="font-medium">MEGA SALE - Up to 50% Off on Electronics!</span>
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            <a href="tel:0300-4649141" className="hover:underline flex items-center gap-1">
-              <Phone className="h-3 w-3" />
-              0300-4649141
-            </a>
-            <Link to="#" className="hover:underline">About Us</Link>
-            <Link to="#" className="hover:underline">Blog</Link>
-            <Link to="#contact" className="hover:underline">Contact Us</Link>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navbar */}
       <nav className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-3">
