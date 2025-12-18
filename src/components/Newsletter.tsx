@@ -3,22 +3,50 @@ import { Mail, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setIsSubscribed(true);
+    if (!email) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert({ email });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast({
+            title: "Already subscribed",
+            description: "This email is already on our list!",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        setIsSubscribed(true);
+        toast({
+          title: "Successfully subscribed!",
+          description: "You'll receive our best deals and updates.",
+        });
+        setEmail("");
+        setTimeout(() => setIsSubscribed(false), 3000);
+      }
+    } catch (error) {
       toast({
-        title: "Successfully subscribed!",
-        description: "You'll receive our best deals and updates.",
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
       });
-      setEmail("");
-      setTimeout(() => setIsSubscribed(false), 3000);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,7 +85,7 @@ const Newsletter = () => {
                   ? "bg-accent hover:bg-accent"
                   : "bg-foreground hover:bg-foreground/90"
               } text-card font-semibold`}
-              disabled={isSubscribed}
+              disabled={isSubscribed || isLoading}
             >
               {isSubscribed ? (
                 <>

@@ -92,12 +92,14 @@ const Navbar = () => {
           <div className="flex items-center justify-between gap-4">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">AC</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="World Spilt Centre" 
+                className="h-10 w-auto object-contain"
+              />
               <div className="hidden sm:block">
                 <h1 className="font-heading font-bold text-lg text-foreground leading-tight">
-                  AYAN <span className="text-primary">&</span> CO
+                  World <span className="text-primary">Spilt</span> Centre
                 </h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Electronics</p>
               </div>
