@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import AnnouncementTicker from "@/components/AnnouncementTicker";
 import FeaturesBar from "@/components/FeaturesBar";
 import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
@@ -69,7 +68,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <AnnouncementTicker />
       <Hero />
       <FeaturesBar />
 
