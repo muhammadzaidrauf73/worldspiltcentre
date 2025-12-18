@@ -41,10 +41,10 @@ const Footer = () => {
           <div className="col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">AC</span>
+                <span className="text-primary-foreground font-bold text-lg">WS</span>
               </div>
               <div>
-                <h3 className="font-heading font-bold text-lg">AYAN & CO</h3>
+                <h3 className="font-heading font-bold text-lg">World <span className="text-primary">Spilt</span> Centre</h3>
                 <p className="text-xs text-card/60 uppercase tracking-wider">Electronics</p>
               </div>
             </Link>
@@ -123,7 +123,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-card/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-card/60">
-            © {new Date().getFullYear()} Ayan & Co Electronics. All rights reserved.
+            © {new Date().getFullYear()} World Spilt Centre. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
             {socialLinks.map((social) => (
