@@ -102,7 +102,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Account created!",
-            description: "Welcome to World Spilt Centre Electronics.",
+            description: "Welcome to Ayan & Co Electronics.",
           });
           navigate("/");
         }
@@ -137,7 +137,7 @@ const Auth = () => {
               </div>
               <div>
                 <h1 className="font-heading font-bold text-lg text-foreground">
-                  AYAN <span className="text-primary">&</span> CO
+                  World <span className="text-primary">Spilt</span> Centre
                 </h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Electronics</p>
               </div>
