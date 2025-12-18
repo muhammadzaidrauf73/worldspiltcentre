@@ -57,7 +57,7 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative h-[300px] md:h-[450px] lg:h-[500px]">
+      <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px]">
         {banners.map((banner, index) => (
           <Link
             key={banner.id}
@@ -74,28 +74,28 @@ const Hero = () => {
               <img
                 src={banner.image_url}
                 alt={banner.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center sm:object-center"
               />
-              {/* Overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-r from-foreground/40 via-transparent to-transparent" />
+              {/* Overlay for text readability - stronger on mobile */}
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/30 to-transparent sm:from-foreground/40 sm:via-transparent" />
               
               {/* Content overlay - only show if there's text content */}
               {(banner.subtitle || banner.description) && (
                 <div className="absolute inset-0 flex items-center">
                   <div className="container mx-auto px-4">
-                    <div className="max-w-lg text-card">
+                    <div className="max-w-xs sm:max-w-md md:max-w-lg text-card">
                       {banner.subtitle && (
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-bold mb-4">
+                        <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-bold mb-2 sm:mb-4">
                           {banner.subtitle}
                         </span>
                       )}
                       {banner.description && (
-                        <p className="text-card/90 text-base md:text-lg mb-6">
+                        <p className="text-card/90 text-sm sm:text-base md:text-lg mb-3 sm:mb-6 line-clamp-2 sm:line-clamp-none">
                           {banner.description}
                         </p>
                       )}
                       <Button 
-                        className="font-semibold px-6 text-white hover:opacity-90 transition-opacity"
+                        className="font-semibold px-4 sm:px-6 text-sm sm:text-base text-white hover:opacity-90 transition-opacity"
                         style={{ backgroundColor: banner.button_color || '#f97316' }}
                       >
                         Shop Now
