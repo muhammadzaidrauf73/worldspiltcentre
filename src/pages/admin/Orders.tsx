@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle } from "lucide-react";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -61,8 +61,11 @@ const statusColors: Record<string, string> = {
 const AdminOrders = () => {
   const queryClient = useQueryClient();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [shipDialogOpen, setShipDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [trackingUrl, setTrackingUrl] = useState("");
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -93,6 +96,48 @@ const AdminOrders = () => {
     },
   });
 
+  const updateShippingMutation = useMutation({
+    mutationFn: async ({ id, tracking_number, tracking_url }: { id: string; tracking_number: string; tracking_url: string }) => {
+      const { error } = await supabase
+        .from("orders")
+        .update({ 
+          status: "shipped",
+          tracking_number,
+          tracking_url 
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Order marked as shipped with tracking info");
+      setShipDialogOpen(false);
+      setSelectedOrder(null);
+      setTrackingNumber("");
+      setTrackingUrl("");
+    },
+    onError: (error) => {
+      toast.error("Error updating order: " + error.message);
+    },
+  });
+
+  const updateTrackingMutation = useMutation({
+    mutationFn: async ({ id, tracking_number, tracking_url }: { id: string; tracking_number: string; tracking_url: string }) => {
+      const { error } = await supabase
+        .from("orders")
+        .update({ tracking_number, tracking_url })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      toast.success("Tracking info updated");
+    },
+    onError: (error) => {
+      toast.error("Error updating tracking: " + error.message);
+    },
+  });
+
   const handlePrintOrder = (order: any) => {
     const items = order.items as OrderItem[];
     const printContent = `
@@ -116,6 +161,7 @@ const AdminOrders = () => {
           <p><strong>Phone:</strong> ${order.customer_phone || "-"}</p>
           <p><strong>Address:</strong> ${order.shipping_address || "-"}</p>
           <p><strong>Status:</strong> ${order.status}</p>
+          ${order.tracking_number ? `<p><strong>Tracking:</strong> ${order.tracking_number}</p>` : ''}
           <table>
             <thead>
               <tr>
@@ -157,8 +203,25 @@ const AdminOrders = () => {
     }
   };
 
+  const handleShipOrder = () => {
+    if (selectedOrder) {
+      updateShippingMutation.mutate({ 
+        id: selectedOrder.id, 
+        tracking_number: trackingNumber.trim(),
+        tracking_url: trackingUrl.trim()
+      });
+    }
+  };
+
   const handleQuickStatusUpdate = (orderId: string, status: string) => {
     updateStatusMutation.mutate({ id: orderId, status });
+  };
+
+  const openShipDialog = (order: any) => {
+    setSelectedOrder(order);
+    setTrackingNumber(order.tracking_number || "");
+    setTrackingUrl(order.tracking_url || "");
+    setShipDialogOpen(true);
   };
 
   const getItemsSummary = (items: OrderItem[]) => {
@@ -313,6 +376,36 @@ const AdminOrders = () => {
                                   <p className="text-sm bg-secondary/30 p-3 rounded-lg">{order.shipping_address || "-"}</p>
                                 </div>
 
+                                {/* Tracking Info */}
+                                {(order.tracking_number || order.status === "shipped" || order.status === "delivered") && (
+                                  <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <MapPin className="h-4 w-4 text-purple-600" />
+                                      <p className="font-medium text-purple-600">Tracking Information</p>
+                                    </div>
+                                    {order.tracking_number ? (
+                                      <div className="space-y-2">
+                                        <p className="text-sm">
+                                          <span className="text-muted-foreground">Tracking #: </span>
+                                          <span className="font-mono font-medium">{order.tracking_number}</span>
+                                        </p>
+                                        {order.tracking_url && (
+                                          <a 
+                                            href={order.tracking_url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                                          >
+                                            Track Package <ExternalLink className="h-3 w-3" />
+                                          </a>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-muted-foreground">No tracking information added yet</p>
+                                    )}
+                                  </div>
+                                )}
+
                                 <div>
                                   <p className="text-muted-foreground text-sm mb-3">Order Items</p>
                                   <div className="space-y-3 bg-secondary/20 rounded-lg p-3">
@@ -374,11 +467,11 @@ const AdminOrders = () => {
                                 Mark Processing
                               </DropdownMenuItem>
                               <DropdownMenuItem 
-                                onClick={() => handleQuickStatusUpdate(order.id, "shipped")}
-                                disabled={order.status === "shipped" || order.status === "cancelled"}
+                                onClick={() => openShipDialog(order)}
+                                disabled={order.status === "cancelled"}
                               >
                                 <Truck className="h-4 w-4 mr-2" />
-                                Mark Shipped
+                                {order.status === "shipped" ? "Update Tracking" : "Mark Shipped"}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => handleQuickStatusUpdate(order.id, "delivered")}
@@ -442,6 +535,62 @@ const AdminOrders = () => {
             </Button>
             <Button variant="destructive" onClick={handleCancelOrder}>
               Cancel Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ship Order Dialog */}
+      <Dialog open={shipDialogOpen} onOpenChange={setShipDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-purple-600" />
+              {selectedOrder?.status === "shipped" ? "Update Tracking Info" : "Ship Order"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedOrder?.status === "shipped" 
+                ? "Update the tracking information for this order."
+                : "Add tracking details and mark order as shipped."
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="trackingNumber">Tracking Number</Label>
+              <Input
+                id="trackingNumber"
+                placeholder="e.g., TCS-123456789"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="trackingUrl">Tracking URL (optional)</Label>
+              <Input
+                id="trackingUrl"
+                placeholder="e.g., https://tracking.tcs.com.pk/..."
+                value={trackingUrl}
+                onChange={(e) => setTrackingUrl(e.target.value)}
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Paste the full tracking link so customers can track their package
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShipDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleShipOrder}
+              disabled={updateShippingMutation.isPending}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              {selectedOrder?.status === "shipped" ? "Update Tracking" : "Mark as Shipped"}
             </Button>
           </DialogFooter>
         </DialogContent>

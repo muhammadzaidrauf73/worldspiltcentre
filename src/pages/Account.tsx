@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { User, Package, Heart, LogOut, Save, ChevronRight, ShoppingBag } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, ChevronRight, ShoppingBag, Truck, ExternalLink, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
 interface Profile {
@@ -328,6 +328,38 @@ const Account = () => {
                                 <span className="font-medium">Shipping to: </span>
                                 {order.shipping_address}
                               </p>
+                            </div>
+                          )}
+
+                          {/* Tracking Info */}
+                          {(order.status === "shipped" || order.status === "delivered") && order.tracking_number && (
+                            <div className="mt-4 pt-4 border-t border-border">
+                              <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Truck className="h-4 w-4 text-purple-600" />
+                                  <p className="font-medium text-purple-600 text-sm">
+                                    {order.status === "delivered" ? "Delivered" : "In Transit"}
+                                  </p>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-4">
+                                  <p className="text-sm">
+                                    <span className="text-muted-foreground">Tracking #: </span>
+                                    <span className="font-mono font-medium">{order.tracking_number}</span>
+                                  </p>
+                                  {order.tracking_url && (
+                                    <a 
+                                      href={order.tracking_url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                                    >
+                                      <MapPin className="h-3 w-3" />
+                                      Track Package
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           )}
                         </div>
