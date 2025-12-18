@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 const Privacy = () => {
   const { data: settings } = useQuery({
@@ -24,6 +25,11 @@ const Privacy = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Privacy Policy - World Spilt Centre"
+        description="Read our privacy policy to understand how World Spilt Centre collects, uses, and protects your personal information when you shop with us."
+        keywords="privacy policy, data protection, world spilt centre privacy, customer data security"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

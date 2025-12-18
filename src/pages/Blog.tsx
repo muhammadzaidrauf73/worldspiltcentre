@@ -1,10 +1,16 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { FileText } from "lucide-react";
 
 const Blog = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Blog - Electronics Tips & Guides"
+        description="Read helpful articles, buying guides, and tips about electronics and home appliances. Learn how to choose the right AC, TV, refrigerator for your home."
+        keywords="electronics blog, AC buying guide pakistan, LED TV tips, refrigerator guide, home appliances blog lahore"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

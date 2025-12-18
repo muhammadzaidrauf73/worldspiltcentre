@@ -1,11 +1,17 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Briefcase, Users, Heart, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Careers = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Careers - Join World Spilt Centre"
+        description="Join the World Spilt Centre team. We're looking for passionate individuals in electronics retail. Competitive salary and growth opportunities."
+        keywords="jobs lahore, electronics store jobs, retail jobs pakistan, world spilt centre careers, employment lahore"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

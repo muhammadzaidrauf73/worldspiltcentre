@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 const Terms = () => {
   const { data: settings } = useQuery({
@@ -24,6 +25,11 @@ const Terms = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Terms & Conditions - World Spilt Centre"
+        description="Read our terms and conditions for shopping at World Spilt Centre. Understand our policies on orders, payments, shipping, and returns."
+        keywords="terms and conditions, shopping terms, world spilt centre terms, purchase agreement"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

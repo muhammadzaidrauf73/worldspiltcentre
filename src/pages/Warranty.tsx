@@ -1,10 +1,16 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Shield, Clock, Wrench, Phone } from "lucide-react";
 
 const Warranty = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Warranty Information - World Spilt Centre"
+        description="Learn about warranty coverage for electronics and appliances purchased from World Spilt Centre. Official manufacturer warranty on all products."
+        keywords="warranty policy, product warranty pakistan, electronics warranty lahore, manufacturer warranty, appliance warranty"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

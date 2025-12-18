@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,11 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Contact Us - World Spilt Centre"
+        description="Contact World Spilt Centre for electronics inquiries. Visit our store in Model Town Lahore or call us. WhatsApp support available. Free delivery in Lahore!"
+        keywords="contact world spilt centre, electronics store lahore phone, model town electronics, whatsapp electronics lahore, buy appliances lahore"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

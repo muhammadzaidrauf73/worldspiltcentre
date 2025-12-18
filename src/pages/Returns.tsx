@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { RotateCcw, Clock, CheckCircle, XCircle } from "lucide-react";
 
 const Returns = () => {
@@ -25,6 +26,11 @@ const Returns = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Returns Policy - World Spilt Centre"
+        description="Easy 7-day return policy at World Spilt Centre. Learn about our hassle-free return and refund process for electronics and home appliances."
+        keywords="return policy, refund policy, product returns pakistan, electronics return lahore, easy returns"
+      />
       <Navbar />
       
       <section className="bg-gradient-to-r from-primary to-primary/80 py-16">

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Building2, Users, Award, Heart } from "lucide-react";
 
 const About = () => {
@@ -25,6 +26,11 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title={`About Us - ${companyName}`}
+        description={`Learn about ${companyName}, your trusted electronics store in Lahore. We offer quality air conditioners, LED TVs, refrigerators, and home appliances with official warranty.`}
+        keywords="about world spilt centre, electronics store lahore, trusted appliance store pakistan, model town electronics shop"
+      />
       <Navbar />
       
       {/* Hero Section */}
