@@ -125,15 +125,15 @@ const Hero = () => {
             </button>
 
             {/* Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 sm:gap-2 z-20">
               {banners.map((_, index) => (
                 <button
                   key={index}
                   onClick={(e) => { e.preventDefault(); goToSlide(index); }}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  className={`h-3 sm:h-2.5 rounded-full transition-all duration-300 ${
                     index === currentSlide
-                      ? "bg-primary w-8"
-                      : "bg-card/60 hover:bg-card"
+                      ? "bg-primary w-10 sm:w-8"
+                      : "bg-card/60 hover:bg-card w-3 sm:w-2.5"
                   }`}
                 />
               ))}
