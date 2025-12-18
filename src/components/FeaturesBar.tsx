@@ -1,11 +1,11 @@
 import { Truck, Tag, RotateCcw, Shield, Headphones } from "lucide-react";
 
 const features = [
-  { icon: Headphones, text: "Customer Support", subtext: "Quick Response", style: "icon-btn-glass" },
-  { icon: Tag, text: "Lowest Price", subtext: "Guaranteed", style: "icon-btn-primary" },
-  { icon: Truck, text: "Fast Shipping", subtext: "Nationwide Delivery", style: "icon-btn-accent" },
-  { icon: RotateCcw, text: "7 Days Return", subtext: "T&C Apply", style: "icon-btn-ring" },
-  { icon: Shield, text: "Secure Payments", subtext: "T&C Apply", style: "icon-btn-glass" },
+  { icon: Headphones, text: "Customer Support", subtext: "Quick Response", style: "icon-btn-blob" },
+  { icon: Tag, text: "Lowest Price", subtext: "Guaranteed", style: "icon-btn-blob-alt" },
+  { icon: Truck, text: "Fast Shipping", subtext: "Nationwide Delivery", style: "icon-btn-blob" },
+  { icon: RotateCcw, text: "7 Days Return", subtext: "T&C Apply", style: "icon-btn-blob-alt" },
+  { icon: Shield, text: "Secure Payments", subtext: "T&C Apply", style: "icon-btn-blob" },
 ];
 
 const FeaturesBar = () => {
