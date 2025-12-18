@@ -1,59 +1,68 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Zap, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface FlashDealItem {
+  id: string;
+  name: string;
+  original_price: number;
+  deal_price: number;
+  image_url: string | null;
+  sold_percentage: number;
+  ends_at: string;
+}
 
 const FlashDeal = () => {
   const [timeLeft, setTimeLeft] = useState({
-    hours: 23,
-    minutes: 59,
-    seconds: 59,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
   });
 
+  const { data: deals, isLoading } = useQuery({
+    queryKey: ["flash-deals-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flash_deals")
+        .select("*")
+        .eq("is_active", true)
+        .gte("ends_at", new Date().toISOString())
+        .order("display_order", { ascending: true })
+        .limit(3);
+
+      if (error) throw error;
+      return data as FlashDealItem[];
+    },
+  });
+
+  // Calculate countdown from nearest ending deal
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 23, minutes: 59, seconds: 59 };
-      });
-    }, 1000);
+    if (!deals || deals.length === 0) return;
 
+    const nearestEnd = deals.reduce((min, deal) => {
+      const endTime = new Date(deal.ends_at).getTime();
+      return endTime < min ? endTime : min;
+    }, new Date(deals[0].ends_at).getTime());
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diff = Math.max(0, nearestEnd - now);
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      setTimeLeft({ hours, minutes, seconds });
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, []);
-
-  const deals = [
-    {
-      id: "1",
-      name: "Samsung 55\" 4K Smart TV",
-      originalPrice: 159999,
-      dealPrice: 99999,
-      image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300",
-      soldPercentage: 75,
-    },
-    {
-      id: "2",
-      name: "LG Inverter AC 1.5 Ton",
-      originalPrice: 139999,
-      dealPrice: 89999,
-      image: "https://images.unsplash.com/photo-1631545806609-11e3a851df1e?w=300",
-      soldPercentage: 60,
-    },
-    {
-      id: "3",
-      name: "Whirlpool Washing Machine",
-      originalPrice: 119999,
-      dealPrice: 79999,
-      image: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=300",
-      soldPercentage: 85,
-    },
-  ];
+  }, [deals]);
 
   return (
     <section className="py-8 bg-gradient-to-r from-deal/5 via-primary/5 to-deal/5" id="deals">
@@ -94,51 +103,63 @@ const FlashDeal = () => {
         </div>
 
         {/* Deals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {deals.map((deal, index) => (
-            <Link
-              key={deal.id}
-              to={`/product/${deal.id}`}
-              className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="flex gap-4 p-4">
-                <div className="w-24 h-24 rounded-lg bg-secondary/50 overflow-hidden shrink-0">
-                  <img
-                    src={deal.image}
-                    alt={deal.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-smooth"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-foreground text-sm line-clamp-2 mb-2">
-                    {deal.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-lg text-deal">
-                      Rs.{deal.dealPrice.toLocaleString()}
-                    </span>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 rounded-lg" />
+            ))}
+          </div>
+        ) : !deals || deals.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No active flash deals at the moment
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {deals.map((deal, index) => (
+              <Link
+                key={deal.id}
+                to={`/product/${deal.id}`}
+                className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="flex gap-4 p-4">
+                  <div className="w-24 h-24 rounded-lg bg-secondary/50 overflow-hidden shrink-0">
+                    <img
+                      src={deal.image_url || "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300"}
+                      alt={deal.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-smooth"
+                    />
                   </div>
-                  <span className="text-xs text-muted-foreground line-through block mb-2">
-                    Rs.{deal.originalPrice.toLocaleString()}
-                  </span>
-                  {/* Progress Bar */}
-                  <div className="space-y-1">
-                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                      <div
-                        className="h-full gradient-deal rounded-full transition-all duration-500"
-                        style={{ width: `${deal.soldPercentage}%` }}
-                      />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-foreground text-sm line-clamp-2 mb-2">
+                      {deal.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-bold text-lg text-deal">
+                        Rs.{deal.deal_price.toLocaleString()}
+                      </span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      {deal.soldPercentage}% sold
-                    </p>
+                    <span className="text-xs text-muted-foreground line-through block mb-2">
+                      Rs.{deal.original_price.toLocaleString()}
+                    </span>
+                    {/* Progress Bar */}
+                    <div className="space-y-1">
+                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full gradient-deal rounded-full transition-all duration-500"
+                          style={{ width: `${deal.sold_percentage}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {deal.sold_percentage}% sold
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-center mt-6">
           <Link to="/products?deals=true">

@@ -115,6 +115,62 @@ export type Database = {
         }
         Relationships: []
       }
+      flash_deals: {
+        Row: {
+          created_at: string
+          deal_price: number
+          display_order: number | null
+          ends_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          original_price: number
+          product_id: string | null
+          sold_percentage: number | null
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal_price: number
+          display_order?: number | null
+          ends_at: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          original_price: number
+          product_id?: string | null
+          sold_percentage?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal_price?: number
+          display_order?: number | null
+          ends_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          original_price?: number
+          product_id?: string | null
+          sold_percentage?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flash_deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
