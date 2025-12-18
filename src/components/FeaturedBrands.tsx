@@ -19,19 +19,19 @@ const FeaturedBrands = () => {
 
   if (isLoading) {
     return (
-      <section className="py-10 bg-secondary/30 border-y border-border">
+      <section className="py-8 sm:py-10 bg-secondary/30 border-y border-border">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground mb-2">
+          <div className="text-center mb-5 sm:mb-8">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
               Shop by Brand
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Trusted brands, guaranteed quality
             </p>
           </div>
-          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-10">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="w-20 h-14 md:w-28 md:h-16 rounded-lg" />
+              <Skeleton key={i} className="w-16 h-12 sm:w-20 sm:h-14 md:w-28 md:h-16 rounded-lg" />
             ))}
           </div>
         </div>
@@ -42,18 +42,18 @@ const FeaturedBrands = () => {
   if (brands.length === 0) return null;
 
   return (
-    <section className="py-10 bg-secondary/30 border-y border-border">
+    <section className="py-8 sm:py-10 bg-secondary/30 border-y border-border">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground mb-2">
+        <div className="text-center mb-5 sm:mb-8">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
             Shop by Brand
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Trusted brands, guaranteed quality
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+        <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-6 md:gap-10">
           {brands.map((brand: any, index: number) => (
             <Link
               key={brand.id}
@@ -61,7 +61,7 @@ const FeaturedBrands = () => {
               className="group animate-fade-in"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className="w-20 h-14 md:w-28 md:h-16 flex items-center justify-center p-3 rounded-lg bg-card border border-border hover:border-primary hover:shadow-md transition-smooth grayscale hover:grayscale-0 opacity-60 hover:opacity-100">
+              <div className="w-16 h-12 sm:w-20 sm:h-14 md:w-28 md:h-16 flex items-center justify-center p-2 sm:p-3 rounded-lg bg-card border border-border hover:border-primary hover:shadow-md transition-smooth grayscale hover:grayscale-0 opacity-60 hover:opacity-100">
                 {brand.logo_url ? (
                   <img
                     src={brand.logo_url}
@@ -69,7 +69,7 @@ const FeaturedBrands = () => {
                     className="max-w-full max-h-full object-contain"
                   />
                 ) : (
-                  <span className="font-bold text-foreground text-sm text-center">
+                  <span className="font-bold text-foreground text-xs sm:text-sm text-center">
                     {brand.name}
                   </span>
                 )}

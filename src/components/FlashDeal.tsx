@@ -65,38 +65,38 @@ const FlashDeal = () => {
   }, [deals]);
 
   return (
-    <section className="py-8 bg-gradient-to-r from-deal/5 via-primary/5 to-deal/5" id="deals">
+    <section className="py-6 sm:py-8 bg-gradient-to-r from-deal/5 via-primary/5 to-deal/5" id="deals">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full gradient-deal flex items-center justify-center animate-pulse">
-              <Zap className="h-5 w-5 text-deal-foreground" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full gradient-deal flex items-center justify-center animate-pulse">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-deal-foreground" />
             </div>
             <div>
-              <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
                 Flash Deals
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Limited time offers!
               </p>
             </div>
           </div>
 
           {/* Countdown Timer */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground mr-2">Ends in:</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground mr-1 sm:mr-2">Ends in:</span>
             {[
               { value: timeLeft.hours, label: "H" },
               { value: timeLeft.minutes, label: "M" },
               { value: timeLeft.seconds, label: "S" },
             ].map((item, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <div className="bg-foreground text-card rounded px-2 py-1 min-w-[2.5rem] text-center">
-                  <span className="font-bold text-lg">
+              <div key={i} className="flex items-center gap-0.5 sm:gap-1">
+                <div className="bg-foreground text-card rounded px-1.5 sm:px-2 py-0.5 sm:py-1 min-w-[2rem] sm:min-w-[2.5rem] text-center">
+                  <span className="font-bold text-sm sm:text-lg">
                     {String(item.value).padStart(2, "0")}
                   </span>
                 </div>
-                {i < 2 && <span className="text-foreground font-bold">:</span>}
+                {i < 2 && <span className="text-foreground font-bold text-sm sm:text-base">:</span>}
               </div>
             ))}
           </div>
@@ -104,17 +104,17 @@ const FlashDeal = () => {
 
         {/* Deals Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 rounded-lg" />
+              <Skeleton key={i} className="h-28 sm:h-32 rounded-lg" />
             ))}
           </div>
         ) : !deals || deals.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-6 sm:py-8 text-muted-foreground text-sm">
             No active flash deals at the moment
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {deals.map((deal, index) => (
               <Link
                 key={deal.id}
@@ -122,8 +122,8 @@ const FlashDeal = () => {
                 className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="flex gap-4 p-4">
-                  <div className="w-24 h-24 rounded-lg bg-secondary/50 overflow-hidden shrink-0">
+                <div className="flex gap-3 sm:gap-4 p-3 sm:p-4">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-secondary/50 overflow-hidden shrink-0">
                     <img
                       src={deal.image_url || "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300"}
                       alt={deal.name}
@@ -131,26 +131,26 @@ const FlashDeal = () => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground text-sm line-clamp-2 mb-2">
+                    <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 mb-1.5 sm:mb-2">
                       {deal.name}
                     </h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-bold text-lg text-deal">
+                    <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                      <span className="font-bold text-base sm:text-lg text-deal">
                         Rs.{deal.deal_price.toLocaleString()}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground line-through block mb-2">
+                    <span className="text-[10px] sm:text-xs text-muted-foreground line-through block mb-1.5 sm:mb-2">
                       Rs.{deal.original_price.toLocaleString()}
                     </span>
                     {/* Progress Bar */}
-                    <div className="space-y-1">
-                      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <div className="h-1 sm:h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div
                           className="h-full gradient-deal rounded-full transition-all duration-500"
                           style={{ width: `${deal.sold_percentage}%` }}
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-[9px] sm:text-[10px] text-muted-foreground">
                         {deal.sold_percentage}% sold
                       </p>
                     </div>
