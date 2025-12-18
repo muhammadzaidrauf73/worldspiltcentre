@@ -40,9 +40,11 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">WS</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="World Spilt Centre" 
+                className="h-10 w-auto object-contain"
+              />
               <div>
                 <h3 className="font-heading font-bold text-lg">World <span className="text-primary">Spilt</span> Centre</h3>
                 <p className="text-xs text-card/60 uppercase tracking-wider">Electronics</p>
