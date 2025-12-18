@@ -48,6 +48,7 @@ interface OrderItem {
   price: number;
   quantity: number;
   image_url?: string;
+  specifications?: Record<string, string>;
 }
 
 const statusColors: Record<string, string> = {
@@ -166,6 +167,7 @@ const AdminOrders = () => {
             <thead>
               <tr>
                 <th>Product</th>
+                <th>Specifications</th>
                 <th>Qty</th>
                 <th>Price</th>
                 <th>Total</th>
@@ -175,6 +177,7 @@ const AdminOrders = () => {
               ${items?.map(item => `
                 <tr>
                   <td>${item.name}</td>
+                  <td style="font-size: 11px;">${item.specifications ? Object.entries(item.specifications).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join(', ') : '-'}</td>
                   <td>${item.quantity}</td>
                   <td>Rs.${item.price.toLocaleString()}</td>
                   <td>Rs.${(item.quantity * item.price).toLocaleString()}</td>
@@ -409,26 +412,47 @@ const AdminOrders = () => {
                                 <div>
                                   <p className="text-muted-foreground text-sm mb-3">Order Items</p>
                                   <div className="space-y-3 bg-secondary/20 rounded-lg p-3">
-                                    {items?.map((item: OrderItem, i: number) => (
-                                      <div key={i} className="flex items-center gap-3 pb-3 border-b border-border last:border-0 last:pb-0">
-                                        <div className="w-14 h-14 rounded-lg bg-background overflow-hidden flex-shrink-0">
-                                          <img 
-                                            src={item.image_url || '/placeholder.svg'} 
-                                            alt={item.name}
-                                            className="w-full h-full object-contain"
-                                          />
+                                      {items?.map((item: OrderItem, i: number) => (
+                                        <div key={i} className="pb-3 border-b border-border last:border-0 last:pb-0">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-14 h-14 rounded-lg bg-background overflow-hidden flex-shrink-0">
+                                              <img 
+                                                src={item.image_url || '/placeholder.svg'} 
+                                                alt={item.name}
+                                                className="w-full h-full object-contain"
+                                              />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium text-sm">{item.name}</p>
+                                              <p className="text-xs text-muted-foreground">
+                                                Qty: {item.quantity} × Rs.{Number(item.price).toLocaleString()}
+                                              </p>
+                                            </div>
+                                            <p className="font-semibold">
+                                              Rs.{(item.price * item.quantity).toLocaleString()}
+                                            </p>
+                                          </div>
+                                          {/* Specifications */}
+                                          {item.specifications && Object.keys(item.specifications).length > 0 && (
+                                            <div className="mt-2 ml-[68px] bg-muted/50 rounded-md p-2">
+                                              <p className="text-xs font-medium text-muted-foreground mb-1">Specifications:</p>
+                                              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                                {Object.entries(item.specifications).slice(0, 6).map(([key, value]) => (
+                                                  <div key={key} className="text-xs">
+                                                    <span className="text-muted-foreground">{key}: </span>
+                                                    <span className="font-medium">{value}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                              {Object.keys(item.specifications).length > 6 && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                  +{Object.keys(item.specifications).length - 6} more
+                                                </p>
+                                              )}
+                                            </div>
+                                          )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="font-medium text-sm">{item.name}</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            Qty: {item.quantity} × Rs.{Number(item.price).toLocaleString()}
-                                          </p>
-                                        </div>
-                                        <p className="font-semibold">
-                                          Rs.{(item.price * item.quantity).toLocaleString()}
-                                        </p>
-                                      </div>
-                                    ))}
+                                      ))}
                                   </div>
                                 </div>
 
