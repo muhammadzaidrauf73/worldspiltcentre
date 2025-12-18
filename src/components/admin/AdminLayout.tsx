@@ -10,7 +10,8 @@ import {
   ArrowLeft,
   Loader2,
   Tags,
-  Mail
+  Mail,
+  ImageIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: FolderTree },
   { href: "/admin/brands", label: "Brands", icon: Tags },
+  { href: "/admin/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
 ];
