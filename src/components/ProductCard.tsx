@@ -66,6 +66,9 @@ const ProductCard = ({
           src={image || "/placeholder.svg"}
           alt={name}
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = "/placeholder.svg";
+          }}
           className="w-full h-full object-contain p-2 sm:p-4 group-hover:scale-105 transition-smooth"
         />
       </div>

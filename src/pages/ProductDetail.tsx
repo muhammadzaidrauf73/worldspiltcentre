@@ -63,10 +63,14 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
-  const images = product?.gallery_images?.length 
-    ? product.gallery_images 
-    : product?.image_url 
-      ? [product.image_url] 
+  const galleryImages = (product?.gallery_images ?? []).filter(
+    (img): img is string => typeof img === "string" && img.trim().length > 0
+  );
+
+  const images = galleryImages.length
+    ? galleryImages
+    : product?.image_url
+      ? [product.image_url]
       : [];
 
   const specifications = product?.specifications as Record<string, string> || {};
@@ -189,6 +193,9 @@ const ProductDetail = () => {
               <img
                 src={images[selectedImage] || "/placeholder.svg"}
                 alt={product.name}
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
                 className="w-full h-full object-contain p-8"
               />
               {images.length > 1 && (
@@ -222,7 +229,14 @@ const ProductDetail = () => {
                       selectedImage === idx ? "border-primary" : "border-border"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.svg";
+                      }}
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
