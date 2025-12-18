@@ -9,21 +9,24 @@ const features = [
 ];
 
 const FeaturesBar = () => {
+  // Duplicate features for seamless loop
+  const duplicatedFeatures = [...features, ...features];
+
   return (
-    <div className="bg-card border-b border-border py-4">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-wrap justify-center md:justify-between items-center gap-4 md:gap-2">
-          {features.map((feature, index) => (
+    <div className="bg-card border-b border-border py-4 overflow-hidden">
+      <div className="relative">
+        <div className="flex animate-scroll-x hover:pause-animation">
+          {duplicatedFeatures.map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 px-3"
+              className="flex items-center gap-3 px-6 md:px-8 shrink-0 group cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                <feature.icon className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-primary group-hover:scale-110">
+                <feature.icon className="h-5 w-5 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
               </div>
-              <div>
-                <p className="font-semibold text-foreground text-sm">{feature.text}</p>
-                <p className="text-xs text-muted-foreground">{feature.subtext}</p>
+              <div className="transition-transform duration-300 group-hover:translate-x-1">
+                <p className="font-semibold text-foreground text-sm whitespace-nowrap">{feature.text}</p>
+                <p className="text-xs text-muted-foreground whitespace-nowrap">{feature.subtext}</p>
               </div>
             </div>
           ))}
