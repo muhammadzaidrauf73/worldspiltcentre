@@ -1,13 +1,25 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -23,6 +35,33 @@ const Navbar = () => {
     "Water Dispenser",
     "Small Electronics",
   ];
+
+  // Fetch cart count
+  const { data: cartCount = 0 } = useQuery({
+    queryKey: ["cart-count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data, error } = await supabase
+        .from("cart_items")
+        .select("quantity")
+        .eq("user_id", user.id);
+      if (error) return 0;
+      return data.reduce((sum, item) => sum + item.quantity, 0);
+    },
+    enabled: !!user,
+  });
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -63,7 +102,7 @@ const Navbar = () => {
             </Link>
 
             {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl">
+            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
               <div className="relative w-full">
                 <Input
                   type="search"
@@ -73,13 +112,14 @@ const Navbar = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Button 
+                  type="submit"
                   size="icon" 
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 bg-primary hover:bg-primary/90"
                 >
                   <Search className="h-4 w-4 text-primary-foreground" />
                 </Button>
               </div>
-            </div>
+            </form>
 
             {/* Right Actions */}
             <div className="flex items-center gap-1 md:gap-3">
@@ -94,27 +134,66 @@ const Navbar = () => {
                 </div>
               </div>
 
-              <Button variant="ghost" size="icon" className="hidden sm:flex">
-                <User className="h-5 w-5" />
-              </Button>
+              {/* User Menu */}
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="hidden sm:flex">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem asChild>
+                      <Link to="/account" className="cursor-pointer">
+                        <User className="h-4 w-4 mr-2" />
+                        My Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/account?tab=orders" className="cursor-pointer">
+                        Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth">
+                  <Button variant="ghost" size="icon" className="hidden sm:flex">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+              
               <Button variant="ghost" size="icon" className="hidden sm:flex relative">
                 <Heart className="h-5 w-5" />
                 <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
                   0
                 </Badge>
               </Button>
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
-                  0
-                </Badge>
-              </Button>
+              
+              <Link to="/cart">
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="h-5 w-5" />
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
+                    {cartCount}
+                  </Badge>
+                </Button>
+              </Link>
+              
               <div className="hidden lg:flex items-center">
                 <div className="text-right ml-1">
                   <p className="text-xs text-muted-foreground">Cart</p>
-                  <p className="font-semibold text-foreground text-sm">Rs.0</p>
+                  <p className="font-semibold text-foreground text-sm">
+                    {cartCount} items
+                  </p>
                 </div>
               </div>
+              
               <Button
                 variant="ghost"
                 size="icon"
@@ -127,7 +206,7 @@ const Navbar = () => {
           </div>
 
           {/* Search Bar - Mobile */}
-          <div className="mt-3 md:hidden">
+          <form onSubmit={handleSearch} className="mt-3 md:hidden">
             <div className="relative w-full">
               <Input
                 type="search"
@@ -137,13 +216,14 @@ const Navbar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <Button 
+                type="submit"
                 size="icon" 
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-primary hover:bg-primary/90"
               >
                 <Search className="h-4 w-4 text-primary-foreground" />
               </Button>
             </div>
-          </div>
+          </form>
         </div>
 
         {/* Categories Bar - Desktop */}
@@ -186,6 +266,15 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
+              
+              {!user && (
+                <Link
+                  to="/auth"
+                  className="ml-auto px-4 py-3 text-sm font-medium text-primary hover:text-primary/80"
+                >
+                  Login / Register
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -209,6 +298,36 @@ const Navbar = () => {
                     {link.name}
                   </Link>
                 ))}
+                
+                {user ? (
+                  <>
+                    <Link
+                      to="/account"
+                      className="py-2.5 px-4 text-foreground hover:bg-secondary rounded-lg"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Account
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="py-2.5 px-4 text-left text-destructive hover:bg-secondary rounded-lg"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="py-2.5 px-4 text-primary font-medium hover:bg-secondary rounded-lg"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login / Register
+                  </Link>
+                )}
+                
                 <div className="border-t border-border my-2 pt-2">
                   <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">Categories</p>
                   {categories.map((cat) => (
