@@ -76,12 +76,12 @@ const Hero = () => {
                 alt={banner.title}
                 className="w-full h-full object-cover object-center sm:object-center"
               />
-              {/* Overlay for text readability - stronger on mobile */}
-              <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/30 to-transparent sm:from-foreground/40 sm:via-transparent" />
+              {/* Overlay for text readability - stronger on mobile, bottom gradient for mobile text */}
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent sm:bg-gradient-to-r sm:from-foreground/40 sm:via-transparent sm:to-transparent" />
               
               {/* Content overlay - only show if there's text content */}
               {(banner.subtitle || banner.description) && (
-                <div className="absolute inset-0 flex items-center">
+                <div className="absolute inset-0 flex items-end pb-12 sm:items-center sm:pb-0">
                   <div className="container mx-auto px-4">
                     <div className="max-w-xs sm:max-w-md md:max-w-lg text-card">
                       {banner.subtitle && (
