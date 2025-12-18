@@ -177,6 +177,10 @@ const AdminFlashDeals = () => {
   };
 
   const handleProductSelect = (productId: string) => {
+    if (productId === "none") {
+      setFormData({ ...formData, product_id: "" });
+      return;
+    }
     const product = products?.find((p) => p.id === productId);
     if (product) {
       setFormData({
@@ -259,15 +263,15 @@ const AdminFlashDeals = () => {
                 <div className="space-y-2">
                   <Label htmlFor="product">Link to Product (Optional)</Label>
                   <Select
-                    value={formData.product_id}
+                    value={formData.product_id || "none"}
                     onValueChange={handleProductSelect}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a product or create custom deal" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Custom Deal (No Link)</SelectItem>
-                      {products?.map((product) => (
+                      <SelectItem value="none">Custom Deal (No Link)</SelectItem>
+                      {products?.filter(p => p.id).map((product) => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.name} - Rs.{product.price.toLocaleString()}
                         </SelectItem>
