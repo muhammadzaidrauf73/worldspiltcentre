@@ -35,6 +35,7 @@ interface Banner {
   link: string | null;
   is_active: boolean;
   display_order: number;
+  button_color: string | null;
 }
 
 const AdminBanners = () => {
@@ -49,6 +50,7 @@ const AdminBanners = () => {
     link: "/products",
     is_active: true,
     display_order: 0,
+    button_color: "#f97316",
   });
 
   const { data: banners, isLoading } = useQuery({
@@ -122,6 +124,7 @@ const AdminBanners = () => {
       link: "/products",
       is_active: true,
       display_order: 0,
+      button_color: "#f97316",
     });
     setEditingBanner(null);
     setIsDialogOpen(false);
@@ -137,6 +140,7 @@ const AdminBanners = () => {
       link: banner.link || "/products",
       is_active: banner.is_active,
       display_order: banner.display_order,
+      button_color: banner.button_color || "#f97316",
     });
     setIsDialogOpen(true);
   };
@@ -233,14 +237,33 @@ const AdminBanners = () => {
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2 pt-6">
-                    <Switch
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                    />
-                    <Label htmlFor="is_active">Active</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="button_color">Button Color</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="button_color"
+                        type="color"
+                        value={formData.button_color}
+                        onChange={(e) => setFormData({ ...formData, button_color: e.target.value })}
+                        className="w-14 h-10 p-1 cursor-pointer"
+                      />
+                      <Input
+                        value={formData.button_color}
+                        onChange={(e) => setFormData({ ...formData, button_color: e.target.value })}
+                        placeholder="#f97316"
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_active"
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                  />
+                  <Label htmlFor="is_active">Active</Label>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">

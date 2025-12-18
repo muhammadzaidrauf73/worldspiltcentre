@@ -12,6 +12,7 @@ interface Banner {
   description: string | null;
   image_url: string;
   link: string | null;
+  button_color: string | null;
 }
 
 const Hero = () => {
@@ -93,7 +94,10 @@ const Hero = () => {
                           {banner.description}
                         </p>
                       )}
-                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6">
+                      <Button 
+                        className="font-semibold px-6 text-white hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: banner.button_color || '#f97316' }}
+                      >
                         Shop Now
                       </Button>
                     </div>
