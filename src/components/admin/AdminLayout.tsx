@@ -18,7 +18,8 @@ import {
   Sparkles,
   HelpCircle,
   Users,
-  MessageSquare
+  MessageSquare,
+  Ticket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
+  { href: "/admin/coupons", label: "Coupons", icon: Ticket },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/faq", label: "FAQ", icon: HelpCircle },

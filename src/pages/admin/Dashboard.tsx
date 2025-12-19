@@ -2,17 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, FolderTree, ShoppingCart, Users } from "lucide-react";
+import { Package, FolderTree, ShoppingCart, Users, TrendingUp, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { format, subDays, startOfDay } from "date-fns";
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [productsRes, categoriesRes, ordersRes] = await Promise.all([
+      const [productsRes, categoriesRes, ordersRes, customersRes] = await Promise.all([
         supabase.from("products").select("id", { count: "exact", head: true }),
         supabase.from("categories").select("id", { count: "exact", head: true }),
-        supabase.from("orders").select("id, total, status"),
+        supabase.from("orders").select("id, total, status, created_at"),
+        supabase.from("profiles").select("id, created_at"),
       ]);
 
       const totalRevenue = ordersRes.data?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
@@ -24,25 +28,89 @@ const Dashboard = () => {
         orders: ordersRes.data?.length || 0,
         pendingOrders,
         totalRevenue,
+        customers: customersRes.data?.length || 0,
+        ordersData: ordersRes.data || [],
+        customersData: customersRes.data || [],
       };
     },
   });
 
+  const { data: topProducts } = useQuery({
+    queryKey: ["admin-top-products"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, price, reviews_count")
+        .order("reviews_count", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Generate sales trend data for last 7 days
+  const salesTrendData = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    const dayStart = startOfDay(date);
+    const dayOrders = stats?.ordersData?.filter(order => {
+      const orderDate = startOfDay(new Date(order.created_at));
+      return orderDate.getTime() === dayStart.getTime();
+    }) || [];
+    
+    return {
+      date: format(date, "MMM d"),
+      sales: dayOrders.reduce((sum, order) => sum + Number(order.total), 0),
+      orders: dayOrders.length,
+    };
+  });
+
+  // Customer growth data
+  const customerGrowthData = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    const dayStart = startOfDay(date);
+    const newCustomers = stats?.customersData?.filter(customer => {
+      const customerDate = startOfDay(new Date(customer.created_at));
+      return customerDate.getTime() === dayStart.getTime();
+    }).length || 0;
+    
+    return {
+      date: format(date, "MMM d"),
+      customers: newCustomers,
+    };
+  });
+
+  // Order status distribution
+  const orderStatusData = [
+    { name: "Pending", value: stats?.ordersData?.filter(o => o.status === "pending").length || 0, color: "hsl(var(--chart-1))" },
+    { name: "Processing", value: stats?.ordersData?.filter(o => o.status === "processing").length || 0, color: "hsl(var(--chart-2))" },
+    { name: "Shipped", value: stats?.ordersData?.filter(o => o.status === "shipped").length || 0, color: "hsl(var(--chart-3))" },
+    { name: "Delivered", value: stats?.ordersData?.filter(o => o.status === "delivered").length || 0, color: "hsl(var(--chart-4))" },
+    { name: "Cancelled", value: stats?.ordersData?.filter(o => o.status === "cancelled").length || 0, color: "hsl(var(--chart-5))" },
+  ].filter(item => item.value > 0);
+
   const statCards = [
-    { title: "Total Products", value: stats?.products || 0, icon: Package, color: "text-blue-500" },
-    { title: "Categories", value: stats?.categories || 0, icon: FolderTree, color: "text-green-500" },
-    { title: "Total Orders", value: stats?.orders || 0, icon: ShoppingCart, color: "text-orange-500" },
-    { title: "Pending Orders", value: stats?.pendingOrders || 0, icon: Users, color: "text-red-500" },
+    { title: "Total Revenue", value: `Rs.${stats?.totalRevenue.toLocaleString() || 0}`, icon: DollarSign, color: "text-green-500" },
+    { title: "Total Orders", value: stats?.orders || 0, icon: ShoppingCart, color: "text-blue-500" },
+    { title: "Total Products", value: stats?.products || 0, icon: Package, color: "text-purple-500" },
+    { title: "Total Customers", value: stats?.customers || 0, icon: Users, color: "text-orange-500" },
   ];
+
+  const chartConfig = {
+    sales: { label: "Sales", color: "hsl(var(--chart-1))" },
+    orders: { label: "Orders", color: "hsl(var(--chart-2))" },
+    customers: { label: "Customers", color: "hsl(var(--chart-3))" },
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your store</p>
+          <p className="text-muted-foreground">Overview of your store analytics</p>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat) => (
             <Card key={stat.title}>
@@ -63,20 +131,172 @@ const Dashboard = () => {
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-10 w-40" />
-            ) : (
-              <div className="text-3xl font-bold text-primary">
-                Rs.{stats?.totalRevenue.toLocaleString()}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Charts Row 1 */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Sales Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Sales Trend (Last 7 Days)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[250px] w-full" />
+              ) : (
+                <ChartContainer config={chartConfig} className="h-[250px]">
+                  <LineChart data={salesTrendData}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `Rs.${value}`} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="sales" 
+                      stroke="var(--color-sales)" 
+                      strokeWidth={2}
+                      dot={{ fill: "var(--color-sales)" }}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Orders Per Day */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Orders Per Day
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[250px] w-full" />
+              ) : (
+                <ChartContainer config={chartConfig} className="h-[250px]">
+                  <BarChart data={salesTrendData}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="orders" fill="var(--color-orders)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Row 2 */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Customer Growth */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Customer Growth
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : (
+                <ChartContainer config={chartConfig} className="h-[200px]">
+                  <BarChart data={customerGrowthData}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="customers" fill="var(--color-customers)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Order Status Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : orderStatusData.length > 0 ? (
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={orderStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={70}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {orderStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap justify-center gap-2 mt-2">
+                    {orderStatusData.map((entry) => (
+                      <div key={entry.name} className="flex items-center gap-1 text-xs">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                        <span>{entry.name}: {entry.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                  No order data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Products */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Popular Products
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : topProducts && topProducts.length > 0 ? (
+                <div className="space-y-3">
+                  {topProducts.map((product, index) => (
+                    <div key={product.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground w-4">
+                          {index + 1}.
+                        </span>
+                        <span className="text-sm font-medium truncate max-w-[120px]">
+                          {product.name}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold">Rs.{product.price.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">{product.reviews_count || 0} reviews</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                  No products yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AdminLayout>
   );
