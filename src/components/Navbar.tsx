@@ -152,7 +152,9 @@ const Navbar = () => {
               <img 
                 src="/logo.png" 
                 alt="World Spilt Centre" 
-                className="h-10 w-auto object-contain"
+                className="h-10 w-[44px] object-contain"
+                width={44}
+                height={40}
               />
               <div className="hidden sm:block">
                 <h1 className="font-heading font-bold text-lg text-foreground leading-tight">
