@@ -65,7 +65,9 @@ const Footer = () => {
               <img 
                 src="/logo.png" 
                 alt={getSetting('company_name', 'World Spilt Centre')} 
-                className="h-8 sm:h-10 w-auto object-contain"
+                className="h-8 sm:h-10 w-[35px] sm:w-[44px] object-contain"
+                width={44}
+                height={40}
               />
               <div>
                 <h3 className="font-heading font-bold text-base sm:text-lg">

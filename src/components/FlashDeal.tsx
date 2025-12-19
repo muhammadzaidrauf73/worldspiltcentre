@@ -103,17 +103,18 @@ const FlashDeal = () => {
         </div>
 
         {/* Deals Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-28 sm:h-32 rounded-lg" />
-            ))}
-          </div>
-        ) : !deals || deals.length === 0 ? (
-          <div className="text-center py-6 sm:py-8 text-muted-foreground text-sm">
-            No active flash deals at the moment
-          </div>
-        ) : (
+        <div className="min-h-[112px] sm:min-h-[128px]">
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 sm:h-32 rounded-lg" />
+              ))}
+            </div>
+          ) : !deals || deals.length === 0 ? (
+            <div className="text-center py-6 sm:py-8 text-muted-foreground text-sm">
+              No active flash deals at the moment
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {deals.map((deal, index) => (
               <Link
@@ -160,6 +161,7 @@ const FlashDeal = () => {
             ))}
           </div>
         )}
+        </div>
 
         <div className="flex justify-center mt-6">
           <Link to="/products?deals=true">
