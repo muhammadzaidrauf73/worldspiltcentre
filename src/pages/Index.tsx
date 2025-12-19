@@ -20,7 +20,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import SEO from "@/components/SEO";
-import GlowCursor from "@/components/effects/GlowCursor";
 import ScrollReveal from "@/components/effects/ScrollReveal";
 import GradientBlob from "@/components/effects/GradientBlob";
 
@@ -95,9 +94,6 @@ const Index = () => {
     <PullToRefresh onRefresh={handleRefresh}>
       <SEO />
       <div className="min-h-screen bg-background relative overflow-hidden">
-        {/* Visual Effects */}
-        <GlowCursor />
-        
         {/* Gradient Blobs for depth */}
         <GradientBlob className="top-20 -left-32 opacity-40" color="primary" size="lg" />
         <GradientBlob className="top-[60vh] -right-20 opacity-30" color="accent" size="md" />
