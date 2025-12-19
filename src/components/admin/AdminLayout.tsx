@@ -40,6 +40,7 @@ const navItems = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
+  { href: "/admin/messages", label: "Messages", icon: Mail },
   { href: "/admin/coupons", label: "Coupons", icon: Ticket },
   { href: "/admin/coupon-analytics", label: "Coupon Analytics", icon: BarChart3 },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },

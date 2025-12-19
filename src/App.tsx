@@ -70,6 +70,7 @@ const AdminNewArrivalsTopSellers = lazy(() => import("./pages/admin/NewArrivalsT
 const AdminFAQ = lazy(() => import("./pages/admin/FAQ"));
 const AdminCustomers = lazy(() => import("./pages/admin/Customers"));
 const AdminReviews = lazy(() => import("./pages/admin/Reviews"));
+const AdminMessages = lazy(() => import("./pages/admin/Messages"));
 const AdminCoupons = lazy(() => import("./pages/admin/Coupons"));
 const AdminCouponAnalytics = lazy(() => import("./pages/admin/CouponAnalytics"));
 
@@ -135,6 +136,7 @@ const App = () => (
               <Route path="/admin/faq" element={<AdminFAQ />} />
               <Route path="/admin/customers" element={<AdminCustomers />} />
               <Route path="/admin/reviews" element={<AdminReviews />} />
+              <Route path="/admin/messages" element={<AdminMessages />} />
               <Route path="/admin/coupons" element={<AdminCoupons />} />
               <Route path="/admin/coupon-analytics" element={<AdminCouponAnalytics />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
