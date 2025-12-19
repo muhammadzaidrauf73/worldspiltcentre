@@ -407,9 +407,14 @@ export type Database = {
           comment: string | null
           created_at: string
           id: string
+          images: string[] | null
+          is_approved: boolean | null
+          is_featured: boolean | null
           is_verified_purchase: boolean | null
           product_id: string
           rating: number
+          reviewer_location: string | null
+          reviewer_name: string | null
           title: string | null
           user_id: string
         }
@@ -417,9 +422,14 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          images?: string[] | null
+          is_approved?: boolean | null
+          is_featured?: boolean | null
           is_verified_purchase?: boolean | null
           product_id: string
           rating: number
+          reviewer_location?: string | null
+          reviewer_name?: string | null
           title?: string | null
           user_id: string
         }
@@ -427,9 +437,14 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          images?: string[] | null
+          is_approved?: boolean | null
+          is_featured?: boolean | null
           is_verified_purchase?: boolean | null
           product_id?: string
           rating?: number
+          reviewer_location?: string | null
+          reviewer_name?: string | null
           title?: string | null
           user_id?: string
         }
