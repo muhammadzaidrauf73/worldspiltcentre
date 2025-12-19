@@ -294,6 +294,7 @@ const AdminReviews = () => {
                     value={form.images}
                     onChange={(images) => setForm({ ...form, images })}
                     maxImages={5}
+                    bucket="review-images"
                     folder="reviews"
                   />
                 </div>
