@@ -43,6 +43,7 @@ const Coupons = () => {
     discount_value: "",
     min_order_amount: "",
     max_uses: "",
+    max_uses_per_user: "",
     is_active: true,
     starts_at: "",
     expires_at: "",
@@ -70,6 +71,7 @@ const Coupons = () => {
         discount_value: parseFloat(data.discount_value),
         min_order_amount: data.min_order_amount ? parseFloat(data.min_order_amount) : null,
         max_uses: data.max_uses ? parseInt(data.max_uses) : null,
+        max_uses_per_user: data.max_uses_per_user ? parseInt(data.max_uses_per_user) : null,
         is_active: data.is_active,
         starts_at: data.starts_at || null,
         expires_at: data.expires_at || null,
@@ -97,6 +99,7 @@ const Coupons = () => {
           discount_value: parseFloat(data.discount_value),
           min_order_amount: data.min_order_amount ? parseFloat(data.min_order_amount) : null,
           max_uses: data.max_uses ? parseInt(data.max_uses) : null,
+          max_uses_per_user: data.max_uses_per_user ? parseInt(data.max_uses_per_user) : null,
           is_active: data.is_active,
           starts_at: data.starts_at || null,
           expires_at: data.expires_at || null,
@@ -136,6 +139,7 @@ const Coupons = () => {
       discount_value: "",
       min_order_amount: "",
       max_uses: "",
+      max_uses_per_user: "",
       is_active: true,
       starts_at: "",
       expires_at: "",
@@ -144,7 +148,7 @@ const Coupons = () => {
     setIsDialogOpen(false);
   };
 
-  const handleEdit = (coupon: Coupon) => {
+  const handleEdit = (coupon: any) => {
     setEditingCoupon(coupon);
     setFormData({
       code: coupon.code,
@@ -153,6 +157,7 @@ const Coupons = () => {
       discount_value: coupon.discount_value.toString(),
       min_order_amount: coupon.min_order_amount?.toString() || "",
       max_uses: coupon.max_uses?.toString() || "",
+      max_uses_per_user: coupon.max_uses_per_user?.toString() || "",
       is_active: coupon.is_active,
       starts_at: coupon.starts_at ? coupon.starts_at.split("T")[0] : "",
       expires_at: coupon.expires_at ? coupon.expires_at.split("T")[0] : "",
@@ -278,6 +283,16 @@ const Coupons = () => {
                       value={formData.max_uses}
                       onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
                       placeholder="100"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="max_uses_per_user">Max Uses Per User</Label>
+                    <Input
+                      id="max_uses_per_user"
+                      type="number"
+                      value={formData.max_uses_per_user}
+                      onChange={(e) => setFormData({ ...formData, max_uses_per_user: e.target.value })}
+                      placeholder="1"
                     />
                   </div>
                 </div>

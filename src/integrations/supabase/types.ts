@@ -145,6 +145,51 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_usage: {
+        Row: {
+          coupon_id: string
+          discount_amount: number
+          id: string
+          order_id: string | null
+          order_total: number
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          order_total?: number
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          order_total?: number
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code: string
@@ -157,6 +202,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           max_uses: number | null
+          max_uses_per_user: number | null
           min_order_amount: number | null
           starts_at: string | null
           updated_at: string
@@ -172,6 +218,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          max_uses_per_user?: number | null
           min_order_amount?: number | null
           starts_at?: string | null
           updated_at?: string
@@ -187,6 +234,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          max_uses_per_user?: number | null
           min_order_amount?: number | null
           starts_at?: string | null
           updated_at?: string
