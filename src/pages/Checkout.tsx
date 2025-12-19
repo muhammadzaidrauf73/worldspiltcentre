@@ -269,28 +269,19 @@ const Checkout = () => {
 
       // Update coupon usage count
       if (appliedCoupon) {
-        const { error: couponUpdateError } = await supabase
+        // Get current uses and increment
+        const { data: couponData } = await supabase
           .from("coupons")
-          .update({ current_uses: supabase.rpc ? undefined : undefined })
-          .eq("id", appliedCoupon.id);
-
-        // Use raw update to increment
-        await supabase.rpc('increment_coupon_usage', { coupon_id: appliedCoupon.id }).catch(() => {
-          // Fallback: manual increment
-          supabase
+          .select("current_uses")
+          .eq("id", appliedCoupon.id)
+          .single();
+        
+        if (couponData) {
+          await supabase
             .from("coupons")
-            .select("current_uses")
-            .eq("id", appliedCoupon.id)
-            .single()
-            .then(({ data }) => {
-              if (data) {
-                supabase
-                  .from("coupons")
-                  .update({ current_uses: (data.current_uses || 0) + 1 })
-                  .eq("id", appliedCoupon.id);
-              }
-            });
-        });
+            .update({ current_uses: (couponData.current_uses || 0) + 1 })
+            .eq("id", appliedCoupon.id);
+        }
       }
 
       // Clear cart
