@@ -69,6 +69,7 @@ const ProductCard = ({
           size="icon"
           onClick={handleWishlistClick}
           disabled={isToggling}
+          aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
           className={cn(
             "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full",
             inWishlist && "bg-primary text-primary-foreground"
@@ -79,6 +80,7 @@ const ProductCard = ({
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Quick view product"
           className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
         >
           <Eye className="h-4 w-4" />

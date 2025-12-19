@@ -132,6 +132,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    aria-label="Scroll categories left"
                     className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex"
                     onClick={() => scrollCategories('left')}
                   >
@@ -142,6 +143,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    aria-label="Scroll categories right"
                     className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex"
                     onClick={() => scrollCategories('right')}
                   >
