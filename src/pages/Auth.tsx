@@ -297,38 +297,38 @@ const Auth = () => {
       />
       <div className="min-h-screen bg-background flex">
         {/* Left Side - Form */}
-        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 py-6 sm:py-0">
           <div className="mx-auto w-full max-w-sm">
             <Link
               to="/"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-smooth"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 sm:mb-8 transition-smooth"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to store
             </Link>
 
-            <Link to="/" className="flex items-center gap-2 mb-8">
+            <Link to="/" className="flex items-center gap-2 mb-4 sm:mb-8">
               <img 
                 src="/logo.png" 
                 alt="World Spilt Centre" 
-                className="h-10 w-auto object-contain"
+                className="h-8 sm:h-10 w-auto object-contain"
               />
               <div>
-                <h1 className="font-heading font-bold text-lg text-foreground">
+                <h1 className="font-heading font-bold text-base sm:text-lg text-foreground">
                   World <span className="text-primary">Spilt</span> Centre
                 </h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Electronics</p>
               </div>
             </Link>
 
-            <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
+            <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
               {isLogin ? "Welcome back" : "Create an account"}
             </h2>
-            <p className="text-muted-foreground mb-8">
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-8">
               {isLogin ? "Enter your credentials to access your account" : "Sign up to start shopping with us"}
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
@@ -407,7 +407,7 @@ const Auth = () => {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-4 sm:mt-6 text-center text-sm text-muted-foreground">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <button
                 onClick={() => {

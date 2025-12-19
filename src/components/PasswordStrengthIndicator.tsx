@@ -41,7 +41,7 @@ const PasswordStrengthIndicator = ({ password }: PasswordStrengthIndicatorProps)
   if (!password) return null;
 
   return (
-    <div className="space-y-3 mt-2">
+    <div className="space-y-2 mt-2">
       {/* Strength bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-xs">
@@ -63,20 +63,20 @@ const PasswordStrengthIndicator = ({ password }: PasswordStrengthIndicatorProps)
       </div>
 
       {/* Requirements checklist */}
-      <div className="grid grid-cols-2 gap-1">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
         {requirements.map((req) => (
           <div
             key={req.label}
-            className={`flex items-center gap-1.5 text-xs ${
+            className={`flex items-center gap-1 text-[11px] ${
               req.met ? "text-green-500" : "text-muted-foreground"
             }`}
           >
             {req.met ? (
-              <Check className="h-3 w-3" />
+              <Check className="h-3 w-3 flex-shrink-0" />
             ) : (
-              <X className="h-3 w-3" />
+              <X className="h-3 w-3 flex-shrink-0" />
             )}
-            {req.label}
+            <span className="truncate">{req.label}</span>
           </div>
         ))}
       </div>
