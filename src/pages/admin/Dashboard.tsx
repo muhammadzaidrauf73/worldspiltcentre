@@ -102,6 +102,17 @@ const Dashboard = () => {
     customers: { label: "Customers", color: "hsl(var(--chart-3))" },
   };
 
+  const SimplePieTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+    if (!active || !payload?.length) return null;
+    const item = payload[0];
+    return (
+      <div className="grid min-w-[8rem] gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+        <div className="font-medium">{item.name}</div>
+        <div className="text-muted-foreground">{item.value}</div>
+      </div>
+    );
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -239,7 +250,7 @@ const Dashboard = () => {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <ChartTooltip content={<SimplePieTooltip />} />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="flex flex-wrap justify-center gap-2 mt-2">
