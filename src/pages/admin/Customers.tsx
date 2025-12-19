@@ -99,7 +99,14 @@ const AdminCustomers = () => {
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ["admin-customers"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("get-customers");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      
+      const { data, error } = await supabase.functions.invoke("get-customers", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Failed to fetch customers");
       return data.customers || [];
