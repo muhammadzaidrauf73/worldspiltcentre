@@ -55,8 +55,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   if (loading || authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center">
+        <div className="fixed top-0 left-0 right-0 h-1 bg-muted overflow-hidden">
+          <div className="h-full bg-primary animate-pulse w-2/3" />
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading admin...</p>
+        </div>
       </div>
     );
   }

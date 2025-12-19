@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import PageLoader from "@/components/PageLoader";
+import RouteLoadingBar from "@/components/RouteLoadingBar";
 import Index from "./pages/Index";
 
 // Lazy load all pages except Index for better initial bundle size
@@ -47,14 +49,14 @@ const AdminReviews = lazy(() => import("./pages/admin/Reviews"));
 const AdminCoupons = lazy(() => import("./pages/admin/Coupons"));
 const AdminCouponAnalytics = lazy(() => import("./pages/admin/CouponAnalytics"));
 
-const queryClient = new QueryClient();
-
-// Loading fallback component
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-  </div>
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // 1 minute
+      gcTime: 1000 * 60 * 5, // 5 minutes (formerly cacheTime)
+    },
+  },
+});
 
 // WhatsApp button wrapper that hides on admin pages
 const ConditionalWhatsAppButton = () => {
@@ -72,6 +74,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <RouteLoadingBar />
           <ConditionalWhatsAppButton />
           <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
