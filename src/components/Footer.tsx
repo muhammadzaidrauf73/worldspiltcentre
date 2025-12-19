@@ -177,8 +177,8 @@ const Footer = () => {
         href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex items-center gap-2 bg-[#25D366] text-white px-4 py-3 rounded-full shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300 z-50 group"
-        aria-label="Chat on WhatsApp"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 flex items-center gap-2 bg-[#128C7E] text-white px-4 py-3 rounded-full shadow-lg hover:scale-105 hover:shadow-xl transition-all duration-300 z-50 group"
+        aria-label="Chat with us on WhatsApp"
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
