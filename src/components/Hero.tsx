@@ -87,7 +87,7 @@ const Hero = () => {
   return (
     <section className="relative overflow-hidden w-full">
       <div 
-        className="relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-[3/1]"
+        className="relative w-full aspect-[4/3] sm:aspect-[21/9] lg:aspect-[3/1]"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -108,16 +108,16 @@ const Hero = () => {
               <img
                 src={banner.image_url}
                 alt={banner.title}
-                className="w-full h-full object-contain sm:object-cover object-center"
+                className="w-full h-full object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
               />
               {/* Minimal overlay - only at bottom for button visibility */}
-              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-foreground/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-foreground/50 to-transparent" />
               
               {/* Minimal content - just shop button */}
-              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6">
+              <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6">
                 <Button 
-                  className="font-semibold px-4 sm:px-6 text-sm sm:text-base text-white hover:opacity-90 transition-opacity shadow-lg"
+                  className="font-semibold px-3 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-base text-white hover:opacity-90 transition-opacity shadow-lg h-auto min-h-[36px] sm:min-h-[40px]"
                   style={{ backgroundColor: banner.button_color || '#f97316' }}
                 >
                   Shop Now
@@ -132,29 +132,35 @@ const Hero = () => {
           <>
             <button
               onClick={(e) => { e.preventDefault(); prevSlide(); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card transition-smooth z-20"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
             >
-              <ChevronLeft className="h-5 w-5 text-foreground" />
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
             </button>
             <button
               onClick={(e) => { e.preventDefault(); nextSlide(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card transition-smooth z-20"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
             >
-              <ChevronRight className="h-5 w-5 text-foreground" />
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
             </button>
 
-            {/* Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 sm:gap-2 z-20">
+            {/* Dots - larger touch targets on mobile */}
+            <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
               {banners.map((_, index) => (
                 <button
                   key={index}
                   onClick={(e) => { e.preventDefault(); goToSlide(index); }}
-                  className={`h-3 sm:h-2.5 rounded-full transition-all duration-300 ${
+                  className={`rounded-full transition-all duration-300 min-w-[24px] min-h-[24px] sm:min-w-[20px] sm:min-h-[20px] flex items-center justify-center ${
                     index === currentSlide
-                      ? "bg-primary w-10 sm:w-8"
-                      : "bg-card/60 hover:bg-card w-3 sm:w-2.5"
+                      ? "bg-primary"
+                      : "bg-card/60 hover:bg-card"
                   }`}
-                />
+                >
+                  <span className={`rounded-full ${
+                    index === currentSlide
+                      ? "bg-primary w-6 sm:w-8 h-2"
+                      : "bg-card/80 w-2 h-2"
+                  }`} />
+                </button>
               ))}
             </div>
           </>

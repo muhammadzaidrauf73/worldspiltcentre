@@ -501,17 +501,17 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card animate-fade-in">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex flex-col gap-1">
+          <div className="md:hidden border-t border-border bg-card animate-fade-in max-h-[70vh] overflow-y-auto">
+            <div className="container mx-auto px-3 py-3">
+              <div className="flex flex-col gap-0.5">
                 {navLinks.map((link) => (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`py-2.5 px-4 rounded-lg transition-smooth ${
+                    className={`py-3.5 px-4 rounded-lg transition-smooth flex items-center min-h-[48px] ${
                       link.highlight 
-                        ? "text-primary font-medium" 
-                        : "text-foreground hover:bg-secondary"
+                        ? "text-primary font-medium bg-primary/5" 
+                        : "text-foreground hover:bg-secondary active:bg-secondary/80"
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -519,54 +519,107 @@ const Navbar = () => {
                   </Link>
                 ))}
                 
+                <Link
+                  to="/products"
+                  className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center min-h-[48px]"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  All Products
+                </Link>
+                
                 {user ? (
                   <>
                     <Link
                       to="/account"
-                      className="py-2.5 px-4 text-foreground hover:bg-secondary rounded-lg"
+                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
+                      <User className="h-5 w-5 text-muted-foreground" />
                       My Account
                     </Link>
                     <Link
                       to="/account?tab=orders"
-                      className="py-2.5 px-4 text-foreground hover:bg-secondary rounded-lg"
+                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
+                      <ShoppingCart className="h-5 w-5 text-muted-foreground" />
                       Orders
                     </Link>
+                    <Link
+                      to="/account?tab=wishlist"
+                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <Heart className="h-5 w-5 text-muted-foreground" />
+                      Wishlist
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        className="py-3.5 px-4 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-lg flex items-center gap-3 min-h-[48px] font-medium"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Shield className="h-5 w-5" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       onClick={() => {
                         handleSignOut();
                         setIsMenuOpen(false);
                       }}
-                      className="py-2.5 px-4 text-left text-destructive hover:bg-secondary rounded-lg"
+                      className="py-3.5 px-4 text-left text-destructive hover:bg-destructive/10 active:bg-destructive/20 rounded-lg flex items-center gap-3 min-h-[48px] w-full"
                     >
+                      <LogOut className="h-5 w-5" />
                       Sign Out
                     </button>
                   </>
                 ) : (
                   <Link
                     to="/auth"
-                    className="py-2.5 px-4 text-primary font-medium hover:bg-secondary rounded-lg"
+                    className="py-3.5 px-4 text-primary font-medium hover:bg-primary/10 active:bg-primary/20 rounded-lg flex items-center gap-3 min-h-[48px]"
                     onClick={() => setIsMenuOpen(false)}
                   >
+                    <User className="h-5 w-5" />
                     Login / Register
                   </Link>
                 )}
                 
                 <div className="border-t border-border my-2 pt-2">
-                  <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">Categories</p>
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat.id}
-                      to={`/products?category=${encodeURIComponent(cat.name)}`}
-                      className="block py-2 px-4 text-foreground hover:bg-secondary rounded-lg transition-smooth"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+                  <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Categories</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        to={`/products?category=${encodeURIComponent(cat.name)}`}
+                        className="py-3 px-3 text-sm text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg transition-smooth flex items-center gap-2 min-h-[44px]"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {cat.image_url ? (
+                          <img src={cat.image_url} alt={cat.name} className="w-6 h-6 rounded object-cover" />
+                        ) : (
+                          <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
+                          </div>
+                        )}
+                        <span className="truncate">{cat.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Contact Info */}
+                <div className="border-t border-border mt-2 pt-3">
+                  <a 
+                    href="tel:0300-4649141" 
+                    className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
+                  >
+                    <Phone className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Call Us</p>
+                      <p className="font-semibold">0300-4649141</p>
+                    </div>
+                  </a>
                 </div>
               </div>
             </div>
