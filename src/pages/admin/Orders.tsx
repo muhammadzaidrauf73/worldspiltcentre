@@ -34,14 +34,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
@@ -71,6 +78,9 @@ const AdminOrders = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState<Date | undefined>(undefined);
+  const [exportEndDate, setExportEndDate] = useState<Date | undefined>(undefined);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -83,6 +93,28 @@ const AdminOrders = () => {
       return data;
     },
   });
+
+  // Get filtered orders based on date range
+  const getFilteredOrders = () => {
+    if (!exportStartDate && !exportEndDate) return orders;
+    
+    return orders.filter((order: any) => {
+      const orderDate = new Date(order.created_at);
+      if (exportStartDate && exportEndDate) {
+        return isWithinInterval(orderDate, {
+          start: startOfDay(exportStartDate),
+          end: endOfDay(exportEndDate),
+        });
+      }
+      if (exportStartDate) {
+        return orderDate >= startOfDay(exportStartDate);
+      }
+      if (exportEndDate) {
+        return orderDate <= endOfDay(exportEndDate);
+      }
+      return true;
+    });
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, order }: { id: string; status: string; order?: any }) => {
@@ -360,10 +392,13 @@ const AdminOrders = () => {
 
   // Export orders to PNG image with full details
   const exportOrdersToPNG = () => {
-    if (orders.length === 0) {
-      toast.error("No orders to export");
+    const filteredOrders = getFilteredOrders();
+    if (filteredOrders.length === 0) {
+      toast.error("No orders to export in selected date range");
       return;
     }
+
+    const ordersToExport = filteredOrders;
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -379,7 +414,7 @@ const AdminOrders = () => {
 
     // Calculate total height needed
     let totalContentHeight = 80; // Title
-    orders.forEach((order: any) => {
+    ordersToExport.forEach((order: any) => {
       const items = order.items as OrderItem[];
       totalContentHeight += 120; // Order header info
       totalContentHeight += (items?.length || 0) * 80; // Each product
@@ -397,14 +432,17 @@ const AdminOrders = () => {
     // Title
     ctx.fillStyle = "#1a1a1a";
     ctx.font = "bold 28px Arial";
-    ctx.fillText(`Orders Export - ${format(new Date(), "PPP")}`, padding, padding + 35);
+    const dateRangeText = exportStartDate || exportEndDate 
+      ? ` (${exportStartDate ? format(exportStartDate, "dd/MM/yy") : "Start"} - ${exportEndDate ? format(exportEndDate, "dd/MM/yy") : "End"})`
+      : "";
+    ctx.fillText(`Orders Export - ${format(new Date(), "PPP")}${dateRangeText}`, padding, padding + 35);
     ctx.font = "14px Arial";
     ctx.fillStyle = "#6b7280";
-    ctx.fillText(`Total Orders: ${orders.length}`, padding, padding + 60);
+    ctx.fillText(`Total Orders: ${ordersToExport.length}`, padding, padding + 60);
 
     let currentY = padding + 90;
 
-    orders.forEach((order: any, orderIndex) => {
+    ordersToExport.forEach((order: any, orderIndex) => {
       const items = order.items as OrderItem[];
       const orderIdShort = order.id.slice(0, 8).toUpperCase();
 
@@ -530,7 +568,8 @@ const AdminOrders = () => {
     link.href = canvas.toDataURL("image/png");
     link.click();
 
-    toast.success(`Exported ${orders.length} orders to PNG`);
+    toast.success(`Exported ${ordersToExport.length} orders to PNG`);
+    setExportDialogOpen(false);
   };
 
   // Export orders to CSV with all details
@@ -683,10 +722,100 @@ const AdminOrders = () => {
             <h1 className="text-3xl font-bold text-foreground">Orders</h1>
             <p className="text-muted-foreground">View and manage customer orders</p>
           </div>
-          <Button onClick={exportOrdersToPNG} variant="outline" className="shrink-0">
-            <Download className="h-4 w-4 mr-2" />
-            Export All Orders (PNG)
-          </Button>
+          <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="shrink-0">
+                <Download className="h-4 w-4 mr-2" />
+                Export Orders (PNG)
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Export Orders</DialogTitle>
+                <DialogDescription>
+                  Select a date range to filter orders, or export all orders.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label>Start Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !exportStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {exportStartDate ? format(exportStartDate, "PPP") : "Select start date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={exportStartDate}
+                        onSelect={setExportStartDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="grid gap-2">
+                  <Label>End Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !exportEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {exportEndDate ? format(exportEndDate, "PPP") : "Select end date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={exportEndDate}
+                        onSelect={setExportEndDate}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                {(exportStartDate || exportEndDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setExportStartDate(undefined);
+                      setExportEndDate(undefined);
+                    }}
+                  >
+                    Clear date filter
+                  </Button>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  {getFilteredOrders().length} orders will be exported
+                </p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={exportOrdersToPNG}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PNG
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="rounded-lg border border-border overflow-hidden">
