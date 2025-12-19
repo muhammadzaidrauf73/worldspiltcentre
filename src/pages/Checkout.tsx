@@ -150,6 +150,11 @@ const Checkout = () => {
       return;
     }
 
+    if (!user) {
+      setCouponError("Please login to use coupons");
+      return;
+    }
+
     setCouponLoading(true);
     setCouponError("");
 
@@ -190,6 +195,22 @@ const Checkout = () => {
       if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
         setCouponError(`Minimum order amount is Rs.${coupon.min_order_amount.toLocaleString()}`);
         return;
+      }
+
+      // Check per-user usage limit
+      if (coupon.max_uses_per_user) {
+        const { data: userUsage, error: usageError } = await supabase
+          .from("coupon_usage")
+          .select("id")
+          .eq("coupon_id", coupon.id)
+          .eq("user_id", user.id);
+
+        if (usageError) throw usageError;
+
+        if (userUsage && userUsage.length >= coupon.max_uses_per_user) {
+          setCouponError(`You've already used this coupon ${coupon.max_uses_per_user} time(s)`);
+          return;
+        }
       }
 
       setAppliedCoupon({
@@ -261,14 +282,16 @@ const Checkout = () => {
         };
       }
 
-      const { error: orderError } = await supabase
+      const { data: orderResult, error: orderError } = await supabase
         .from("orders")
-        .insert(orderData);
+        .insert(orderData)
+        .select("id")
+        .single();
 
       if (orderError) throw orderError;
 
-      // Update coupon usage count
-      if (appliedCoupon) {
+      // Update coupon usage count and record per-user usage
+      if (appliedCoupon && orderResult) {
         // Get current uses and increment
         const { data: couponData } = await supabase
           .from("coupons")
@@ -282,6 +305,17 @@ const Checkout = () => {
             .update({ current_uses: (couponData.current_uses || 0) + 1 })
             .eq("id", appliedCoupon.id);
         }
+
+        // Record per-user coupon usage for tracking
+        await supabase
+          .from("coupon_usage")
+          .insert({
+            coupon_id: appliedCoupon.id,
+            user_id: user.id,
+            order_id: orderResult.id,
+            discount_amount: discount,
+            order_total: total,
+          });
       }
 
       // Clear cart
@@ -294,6 +328,7 @@ const Checkout = () => {
 
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
+      queryClient.invalidateQueries({ queryKey: ["coupon-analytics"] });
       
       toast.success("Order placed successfully!");
       navigate("/account");
