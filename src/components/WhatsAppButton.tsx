@@ -1,6 +1,25 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 const WhatsAppButton = () => {
-  const whatsappNumber = '923004649141';
-  const whatsappMessage = encodeURIComponent('I have a question');
+  const { data: settings } = useQuery({
+    queryKey: ['whatsapp-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('key, value')
+        .in('key', ['whatsapp', 'whatsapp_message']);
+      if (error) throw error;
+      return data?.reduce((acc, item) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {} as Record<string, string | null>);
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  const whatsappNumber = settings?.whatsapp?.replace(/[^0-9]/g, '') || '923004649141';
+  const whatsappMessage = encodeURIComponent(settings?.whatsapp_message || 'I have a question');
 
   return (
     <a
