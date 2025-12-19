@@ -101,7 +101,8 @@ const Index = () => {
         
         <div className="relative z-10">
           <Navbar />
-          <Hero />
+          <main>
+            <Hero />
           <FeaturesBar />
 
           {/* Top Categories */}
@@ -330,6 +331,7 @@ const Index = () => {
           
           <Newsletter />
           <FAQ />
+          </main>
           <Footer />
         </div>
       </div>
