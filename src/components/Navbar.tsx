@@ -237,7 +237,7 @@ const Navbar = () => {
               )}
               
               <Link to="/account?tab=wishlist">
-                <Button variant="ghost" size="icon" className="hidden sm:flex relative">
+                <Button variant="ghost" size="icon" className="relative">
                   <Heart className="h-5 w-5" />
                   <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
                     {wishlistItems.length}
