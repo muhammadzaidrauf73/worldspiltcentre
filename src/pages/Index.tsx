@@ -8,6 +8,7 @@ import Hero from "@/components/Hero";
 import FeaturesBar from "@/components/FeaturesBar";
 import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/PullToRefresh";
@@ -235,11 +236,7 @@ const Index = () => {
                 </div>
 
                 {productsLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                      <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
-                    ))}
-                  </div>
+                  <ProductGridSkeleton count={8} />
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                     {displayFeatured.map((product, index) => (

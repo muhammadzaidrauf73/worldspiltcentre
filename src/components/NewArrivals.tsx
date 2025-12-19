@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
+import { ProductGridSkeleton } from "./ProductCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -31,11 +32,7 @@ const NewArrivals = () => {
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-10 w-24" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-64 sm:h-80" />
-            ))}
-          </div>
+          <ProductGridSkeleton count={4} />
         </div>
       </section>
     );
