@@ -56,6 +56,7 @@ const Cart = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
     },
   });
 
@@ -69,6 +70,7 @@ const Cart = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart.",

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -31,6 +31,7 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   
   const [quantity, setQuantity] = useState(1);
@@ -113,6 +114,8 @@ const ProductDetail = () => {
         variant: "destructive",
       });
     } else {
+      // Invalidate cart count to update the navbar badge
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
       toast({
         title: "Added to cart",
         description: `${product?.name} has been added to your cart.`,
