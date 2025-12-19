@@ -139,9 +139,23 @@ const Auth = () => {
             });
           }
         } else {
+          // Send welcome email
+          try {
+            await supabase.functions.invoke('send-welcome-email', {
+              body: {
+                email: email,
+                name: fullName || undefined,
+              },
+            });
+            console.log("Welcome email sent");
+          } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+            // Don't fail signup if email fails
+          }
+
           toast({
             title: "Account created!",
-            description: "Welcome to World Spilt Centre Electronics.",
+            description: "Welcome to World Spilt Centre Electronics. Check your email!",
           });
           navigate("/");
         }
