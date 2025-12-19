@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import SEO from "@/components/SEO";
 
@@ -21,6 +22,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || "");
   const [selectedBrand, setSelectedBrand] = useState(brandParam || "");
   const [sortBy, setSortBy] = useState("newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -97,7 +99,10 @@ const Products = () => {
     setSelectedBrand("");
     setSearchQuery("");
     setSortBy("newest");
+    setFiltersOpen(false);
   };
+
+  const activeFiltersCount = [selectedCategory, selectedBrand, searchQuery].filter(Boolean).length;
 
   const hasFilters = selectedCategory || selectedBrand || searchQuery;
 
@@ -116,8 +121,115 @@ const Products = () => {
       
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar Filters */}
-          <aside className="w-full md:w-64 shrink-0">
+          {/* Mobile Filter Button */}
+          <div className="md:hidden">
+            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full gap-2">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                  {activeFiltersCount > 0 && (
+                    <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <SlidersHorizontal className="h-4 w-4" />
+                      Filters
+                    </span>
+                    {hasFilters && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-xs text-primary hover:underline font-normal"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 space-y-4">
+                  {/* Search */}
+                  <div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  <div>
+                    <h3 className="text-sm font-medium text-foreground mb-2">Categories</h3>
+                    <ScrollArea className="h-32">
+                      <div className="space-y-1 pr-3">
+                        <button
+                          onClick={() => { setSelectedCategory(""); setFiltersOpen(false); }}
+                          className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
+                            !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                          }`}
+                        >
+                          All Categories
+                        </button>
+                        {categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => { setSelectedCategory(cat.slug); setFiltersOpen(false); }}
+                            className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
+                              selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                            }`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+
+                  {/* Brands */}
+                  {brands.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground mb-2">Brands</h3>
+                      <ScrollArea className="h-40">
+                        <div className="space-y-1 pr-3">
+                          <button
+                            onClick={() => { setSelectedBrand(""); setFiltersOpen(false); }}
+                            className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
+                              !selectedBrand ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                            }`}
+                          >
+                            All Brands
+                          </button>
+                          {brands.map((brand: any) => (
+                            <button
+                              key={brand.id}
+                              onClick={() => { setSelectedBrand(brand.name); setFiltersOpen(false); }}
+                              className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
+                                selectedBrand === brand.name ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                              }`}
+                            >
+                              {brand.name}
+                            </button>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Desktop Sidebar Filters */}
+          <aside className="hidden md:block w-64 shrink-0">
             <div className="bg-card rounded-lg border border-border p-4 sticky top-24">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-foreground flex items-center gap-2">
