@@ -66,7 +66,7 @@ const FlashDeal = () => {
   }, [deals]);
 
   return (
-    <section className="py-6 sm:py-8 bg-gradient-to-r from-deal/5 via-primary/5 to-deal/5" id="deals">
+    <section className="py-6 sm:py-8 bg-gradient-to-r from-deal/5 via-primary/5 to-deal/5 min-h-[320px] sm:min-h-[345px]" id="deals">
       <div className="container mx-auto px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3">
