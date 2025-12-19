@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle, RefreshCw, Mail } from "lucide-react";
 import { z } from "zod";
+import PasswordStrengthIndicator from "@/components/PasswordStrengthIndicator";
 
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
@@ -19,10 +20,48 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isResending, setIsResending] = useState(false);
+  const [showResendForm, setShowResendForm] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleResendEmail = async () => {
+    if (!resendEmail) {
+      toast({
+        variant: "destructive",
+        title: "Email required",
+        description: "Please enter your email address.",
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-password-reset", {
+        body: { email: resendEmail },
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Failed to send email",
+          description: error.message,
+        });
+      } else {
+        toast({
+          title: "Email sent!",
+          description: "Check your inbox for the password reset link.",
+        });
+        setShowResendForm(false);
+        setResendEmail("");
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -112,9 +151,61 @@ const ResetPassword = () => {
           description="Set a new password for your World Spilt Centre account."
         />
         <div className="min-h-screen bg-background flex items-center justify-center px-4">
-          <div className="text-center">
+          <div className="text-center max-w-md w-full">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Verifying reset link...</p>
+            <p className="text-muted-foreground mb-6">Verifying reset link...</p>
+            
+            {/* Resend email option */}
+            <div className="border-t border-border pt-6 mt-6">
+              <p className="text-sm text-muted-foreground mb-4">
+                Link expired or didn't receive the email?
+              </p>
+              {showResendForm ? (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={resendEmail}
+                      onChange={(e) => setResendEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleResendEmail}
+                      disabled={isResending}
+                      className="flex-1"
+                    >
+                      {isResending ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Send Reset Link"
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowResendForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowResendForm(true)}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Request New Link
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </>
@@ -204,6 +295,7 @@ const ResetPassword = () => {
                 </button>
               </div>
               {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+              <PasswordStrengthIndicator password={password} />
             </div>
 
             <div className="space-y-2">
