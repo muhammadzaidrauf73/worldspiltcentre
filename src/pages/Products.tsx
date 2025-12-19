@@ -8,6 +8,7 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import SEO from "@/components/SEO";
 
@@ -27,6 +28,19 @@ const Products = () => {
       const { data, error } = await supabase
         .from("categories")
         .select("*")
+        .order("display_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: brands = [] } = useQuery({
+    queryKey: ["brands"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("brands")
+        .select("*")
+        .eq("is_active", true)
         .order("display_order");
       if (error) throw error;
       return data;
@@ -76,7 +90,7 @@ const Products = () => {
     },
   });
 
-  const brands = [...new Set(products.map(p => p.brand))];
+  // Brands now fetched from database
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -136,54 +150,58 @@ const Products = () => {
               {/* Categories */}
               <div className="mb-4">
                 <h3 className="text-sm font-medium text-foreground mb-2">Categories</h3>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  <button
-                    onClick={() => setSelectedCategory("")}
-                    className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                      !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                    }`}
-                  >
-                    All Categories
-                  </button>
-                  {categories.map((cat) => (
+                <ScrollArea className="h-48">
+                  <div className="space-y-1 pr-3">
                     <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.slug)}
+                      onClick={() => setSelectedCategory("")}
                       className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                        selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                        !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                       }`}
                     >
-                      {cat.name}
+                      All Categories
                     </button>
-                  ))}
-                </div>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.slug)}
+                        className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
+                          selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
 
               {/* Brands */}
               {brands.length > 0 && (
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-foreground mb-2">Brands</h3>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    <button
-                      onClick={() => setSelectedBrand("")}
-                      className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                        !selectedBrand ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                      }`}
-                    >
-                      All Brands
-                    </button>
-                    {brands.map((brand) => (
+                  <ScrollArea className="h-64">
+                    <div className="space-y-1 pr-3">
                       <button
-                        key={brand}
-                        onClick={() => setSelectedBrand(brand)}
+                        onClick={() => setSelectedBrand("")}
                         className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                          selectedBrand === brand ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                          !selectedBrand ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                         }`}
                       >
-                        {brand}
+                        All Brands
                       </button>
-                    ))}
-                  </div>
+                      {brands.map((brand: any) => (
+                        <button
+                          key={brand.id}
+                          onClick={() => setSelectedBrand(brand.name)}
+                          className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
+                            selectedBrand === brand.name ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                          }`}
+                        >
+                          {brand.name}
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
               )}
             </div>
