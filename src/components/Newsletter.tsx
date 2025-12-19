@@ -34,8 +34,14 @@ const Newsletter = () => {
         setIsSubscribed(true);
         toast({
           title: "Successfully subscribed!",
-          description: "You'll receive our best deals and updates.",
+          description: "Check your inbox for a welcome email with 10% off!",
         });
+        
+        // Send welcome email (non-blocking)
+        supabase.functions.invoke("send-newsletter-welcome", {
+          body: { email },
+        }).catch(console.error);
+        
         setEmail("");
         setTimeout(() => setIsSubscribed(false), 3000);
       }
