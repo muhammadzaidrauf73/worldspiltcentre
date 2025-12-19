@@ -172,19 +172,23 @@ const Index = () => {
                         </div>
                       ))
                     ) : (
-                      categories.map((category) => (
-                        <div
-                          key={category.id}
-                          className="shrink-0 magnetic-hover"
-                        >
-                          <CategoryCard
-                            name={category.name}
-                            icon={iconMap[category.icon || "Tv"] || Tv}
-                            count={category.product_count || 0}
-                            image={category.image_url || ""}
-                          />
-                        </div>
-                      ))
+                      categories.map((category) => {
+                        // Calculate actual product count for this category
+                        const actualProductCount = products.filter(p => p.category_id === category.id).length;
+                        return (
+                          <div
+                            key={category.id}
+                            className="shrink-0 magnetic-hover"
+                          >
+                            <CategoryCard
+                              name={category.name}
+                              icon={iconMap[category.icon || "Tv"] || Tv}
+                              count={actualProductCount}
+                              image={category.image_url || ""}
+                            />
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
