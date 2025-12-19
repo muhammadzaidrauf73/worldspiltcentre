@@ -329,6 +329,8 @@ export type Database = {
           image_url: string | null
           is_active: boolean | null
           is_featured: boolean | null
+          is_new_arrival: boolean | null
+          is_top_seller: boolean | null
           name: string
           original_price: number | null
           price: number
@@ -350,6 +352,8 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           is_featured?: boolean | null
+          is_new_arrival?: boolean | null
+          is_top_seller?: boolean | null
           name: string
           original_price?: number | null
           price: number
@@ -371,6 +375,8 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           is_featured?: boolean | null
+          is_new_arrival?: boolean | null
+          is_top_seller?: boolean | null
           name?: string
           original_price?: number | null
           price?: number
