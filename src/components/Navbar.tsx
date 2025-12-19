@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useWishlist } from "@/hooks/useWishlist";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +24,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { wishlistItems } = useWishlist();
   
   const navigate = useNavigate();
 
@@ -234,12 +236,14 @@ const Navbar = () => {
                 </Link>
               )}
               
-              <Button variant="ghost" size="icon" className="hidden sm:flex relative">
-                <Heart className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
-                  0
-                </Badge>
-              </Button>
+              <Link to="/account?tab=wishlist">
+                <Button variant="ghost" size="icon" className="hidden sm:flex relative">
+                  <Heart className="h-5 w-5" />
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
+                    {wishlistItems.length}
+                  </Badge>
+                </Button>
+              </Link>
               
               <Link to="/cart">
                 <Button variant="ghost" size="icon" className="relative">

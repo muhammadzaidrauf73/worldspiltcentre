@@ -59,6 +59,29 @@ const WishlistTab = () => {
     }
   };
 
+  const handleMoveToCart = async (productId: string, productName: string) => {
+    if (!user) return;
+
+    // Add to cart first
+    const { error: cartError } = await supabase.from("cart_items").upsert(
+      {
+        user_id: user.id,
+        product_id: productId,
+        quantity: 1,
+      },
+      { onConflict: "user_id,product_id" }
+    );
+
+    if (cartError) {
+      toast.error("Failed to move to cart");
+      return;
+    }
+
+    // Then remove from wishlist
+    toggleWishlist(productId);
+    toast.success(`${productName} moved to cart`);
+  };
+
   if (isLoading) {
     return (
       <div className="bg-card rounded-lg border border-border p-6">
@@ -147,24 +170,36 @@ const WishlistTab = () => {
                       )}
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-col gap-2 pt-2">
                     <Button
                       size="sm"
-                      className="flex-1"
-                      onClick={() => handleAddToCart(product.id, product.name)}
+                      className="w-full"
+                      onClick={() => handleMoveToCart(product.id, product.name)}
+                      disabled={isToggling}
                     >
                       <ShoppingCart className="h-4 w-4 mr-1" />
-                      Add to Cart
+                      Move to Cart
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleWishlist(product.id)}
-                      disabled={isToggling}
-                      className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleAddToCart(product.id, product.name)}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-1" />
+                        Add to Cart
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleWishlist(product.id)}
+                        disabled={isToggling}
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
