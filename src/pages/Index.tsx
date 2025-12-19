@@ -20,7 +20,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import SEO from "@/components/SEO";
-import FloatingParticles from "@/components/effects/FloatingParticles";
 import GlowCursor from "@/components/effects/GlowCursor";
 import ScrollReveal from "@/components/effects/ScrollReveal";
 import GradientBlob from "@/components/effects/GradientBlob";
@@ -97,7 +96,6 @@ const Index = () => {
       <SEO />
       <div className="min-h-screen bg-background relative overflow-hidden">
         {/* Visual Effects */}
-        <FloatingParticles />
         <GlowCursor />
         
         {/* Gradient Blobs for depth */}
