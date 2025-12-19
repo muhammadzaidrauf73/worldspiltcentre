@@ -1,6 +1,8 @@
 import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useWishlist } from "@/hooks/useWishlist";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   id: string;
@@ -16,6 +18,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({
+  id,
   name,
   brand,
   price,
@@ -26,9 +29,19 @@ const ProductCard = ({
   badge,
   index = 0,
 }: ProductCardProps) => {
-  const discount = originalPrice
+  const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
+  const inWishlist = isInWishlist(id);
+  
+  // Only show discount if original price is higher than current price
+  const discount = originalPrice && originalPrice > price
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(id);
+  };
 
   return (
     <div
@@ -54,9 +67,14 @@ const ProductCard = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
+          onClick={handleWishlistClick}
+          disabled={isToggling}
+          className={cn(
+            "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full",
+            inWishlist && "bg-primary text-primary-foreground"
+          )}
         >
-          <Heart className="h-4 w-4" />
+          <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
         </Button>
         <Button
           variant="ghost"
@@ -111,7 +129,7 @@ const ProductCard = ({
           <span className="font-bold text-base sm:text-lg text-primary">
             Rs.{price.toLocaleString()}
           </span>
-          {originalPrice && (
+          {originalPrice && originalPrice > price && (
             <span className="text-xs sm:text-sm text-muted-foreground line-through">
               Rs.{originalPrice.toLocaleString()}
             </span>
@@ -129,10 +147,15 @@ const ProductCard = ({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-10 text-xs font-medium rounded-lg touch-manipulation"
+            onClick={handleWishlistClick}
+            disabled={isToggling}
+            className={cn(
+              "flex-1 h-10 text-xs font-medium rounded-lg touch-manipulation",
+              inWishlist && "bg-primary/10 border-primary text-primary"
+            )}
           >
-            <Heart className="h-4 w-4 mr-1.5" />
-            Wishlist
+            <Heart className={cn("h-4 w-4 mr-1.5", inWishlist && "fill-primary")} />
+            {inWishlist ? "Saved" : "Wishlist"}
           </Button>
           <Button
             variant="outline"
