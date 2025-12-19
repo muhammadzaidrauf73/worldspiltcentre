@@ -102,7 +102,7 @@ const Auth = () => {
         } else {
           toast({
             title: "Account created!",
-            description: "Welcome to Ayan & Co Electronics.",
+            description: "Welcome to World Spilt Centre Electronics.",
           });
           navigate("/");
         }
@@ -131,17 +131,19 @@ const Auth = () => {
               Back to store
             </Link>
 
-            <div className="flex items-center gap-2 mb-8">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">AC</span>
-              </div>
+            <Link to="/" className="flex items-center gap-2 mb-8">
+              <img 
+                src="/logo.png" 
+                alt="World Spilt Centre" 
+                className="h-10 w-auto object-contain"
+              />
               <div>
                 <h1 className="font-heading font-bold text-lg text-foreground">
                   World <span className="text-primary">Spilt</span> Centre
                 </h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Electronics</p>
               </div>
-            </div>
+            </Link>
 
             <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
               {isLogin ? "Welcome back" : "Create an account"}
