@@ -318,8 +318,11 @@ const Navbar = () => {
                         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2">
                           All Categories
                         </h3>
-                        <div className="space-y-1">
-                          {categories.slice(0, 8).map((cat) => (
+                        <div 
+                          className="space-y-1 max-h-[320px] overflow-y-auto pr-2"
+                          style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) hsl(var(--secondary))' }}
+                        >
+                          {categories.map((cat) => (
                             <Link
                               key={cat.id}
                               to={`/products?category=${encodeURIComponent(cat.name)}`}
