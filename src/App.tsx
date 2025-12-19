@@ -34,6 +34,7 @@ import AdminShipping from "./pages/admin/Shipping";
 import AdminFlashDeals from "./pages/admin/FlashDeals";
 import AdminCompanySettings from "./pages/admin/CompanySettings";
 import AdminNewArrivalsTopSellers from "./pages/admin/NewArrivalsTopSellers";
+import AdminFAQ from "./pages/admin/FAQ";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/admin/flash-deals" element={<AdminFlashDeals />} />
             <Route path="/admin/company-settings" element={<AdminCompanySettings />} />
             <Route path="/admin/featured-sections" element={<AdminNewArrivalsTopSellers />} />
+            <Route path="/admin/faq" element={<AdminFAQ />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
