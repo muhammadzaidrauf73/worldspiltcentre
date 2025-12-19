@@ -85,9 +85,9 @@ const Hero = () => {
   }
 
   return (
-    <section className="relative overflow-hidden w-full">
+    <section className="relative overflow-hidden w-full bg-secondary/30">
       <div 
-        className="relative w-full aspect-[4/3] sm:aspect-[21/9] lg:aspect-[3/1]"
+        className="relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-[3/1]"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -108,7 +108,7 @@ const Hero = () => {
               <img
                 src={banner.image_url}
                 alt={banner.title}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-contain sm:object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
               />
               {/* Minimal overlay - only at bottom for button visibility */}
