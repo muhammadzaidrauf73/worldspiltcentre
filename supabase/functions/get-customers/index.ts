@@ -62,23 +62,50 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
     }
 
-    // Combine user auth data with profile data
+    // Get orders to extract customer info as fallback
+    const { data: orders, error: ordersError } = await supabaseAdmin
+      .from("orders")
+      .select("user_id, customer_name, customer_email, customer_phone, shipping_address, created_at")
+      .order("created_at", { ascending: false });
+
+    if (ordersError) {
+      console.error("Failed to fetch orders:", ordersError.message);
+    }
+
+    // Group orders by user_id to get the most recent order info
+    const latestOrderByUser: Record<string, any> = {};
+    if (orders) {
+      for (const order of orders) {
+        if (order.user_id && !latestOrderByUser[order.user_id]) {
+          latestOrderByUser[order.user_id] = order;
+        }
+      }
+    }
+
+    // Combine user auth data with profile data and order fallback
     const customers = users.map(authUser => {
       const profile = profiles?.find(p => p.id === authUser.id);
+      const latestOrder = latestOrderByUser[authUser.id];
+      
       return {
         id: authUser.id,
         email: authUser.email,
-        full_name: profile?.full_name || authUser.user_metadata?.full_name || null,
-        phone: profile?.phone || null,
-        address: profile?.address || null,
+        full_name: profile?.full_name || latestOrder?.customer_name || authUser.user_metadata?.full_name || null,
+        phone: profile?.phone || latestOrder?.customer_phone || null,
+        address: profile?.address || latestOrder?.shipping_address || null,
         avatar_url: profile?.avatar_url || null,
         created_at: authUser.created_at,
         last_sign_in_at: authUser.last_sign_in_at,
         email_confirmed_at: authUser.email_confirmed_at,
+        // Additional data sources for reference
+        profile_phone: profile?.phone || null,
+        profile_address: profile?.address || null,
+        order_phone: latestOrder?.customer_phone || null,
+        order_address: latestOrder?.shipping_address || null,
       };
     });
 
-    console.log(`Fetched ${customers.length} customers`);
+    console.log(`Fetched ${customers.length} customers with profile and order data`);
 
     return new Response(JSON.stringify({ success: true, customers }), {
       status: 200,

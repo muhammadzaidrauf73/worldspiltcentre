@@ -22,6 +22,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -505,6 +506,9 @@ const AdminCustomers = () => {
               <User className="h-5 w-5" />
               Customer Details
             </DialogTitle>
+            <DialogDescription>
+              View customer profile, contact information, and order history
+            </DialogDescription>
           </DialogHeader>
           
           {selectedCustomer && (
@@ -543,31 +547,45 @@ const AdminCustomers = () => {
               <div className="space-y-3">
                 <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Contact Information</h4>
                 <div className="grid gap-3">
-                  <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Email</p>
-                      <p className="font-medium">{selectedCustomer.email || "Not provided"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
-                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                      <Phone className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Phone</p>
-                      <p className="font-medium">{selectedCustomer.phone || "Not provided"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg">
-                    <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                      <MapPin className="h-5 w-5 text-orange-600" />
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                    <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                      <Mail className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Address</p>
-                      <p className="font-medium">{selectedCustomer.address || "Not provided"}</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Email Address</p>
+                      <p className="font-semibold text-foreground">{selectedCustomer.email || "Not provided"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                    <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+                      <Phone className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-green-600 dark:text-green-400 font-medium">Phone Number</p>
+                      <p className="font-semibold text-foreground">
+                        {selectedCustomer.phone || "Not provided"}
+                      </p>
+                      {selectedCustomer.order_phone && selectedCustomer.order_phone !== selectedCustomer.phone && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From order: {selectedCustomer.order_phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl">
+                    <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                      <MapPin className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Shipping Address</p>
+                      <p className="font-semibold text-foreground">
+                        {selectedCustomer.address || "Not provided"}
+                      </p>
+                      {selectedCustomer.order_address && selectedCustomer.order_address !== selectedCustomer.address && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From order: {selectedCustomer.order_address}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
