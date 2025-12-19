@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,19 @@ interface Banner {
   button_color: string | null;
 }
 
-const Hero = () => {
+// Preload images for faster LCP
+const preloadImage = (src: string): Promise<void> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    img.src = src;
+  });
+};
+
+const Hero = memo(() => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set([0]));
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const minSwipeDistance = 50;
@@ -32,7 +43,18 @@ const Hero = () => {
       if (error) throw error;
       return data as Banner[];
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+
+  // Preload first 2 banners immediately
+  useEffect(() => {
+    if (banners.length > 0) {
+      preloadImage(banners[0].image_url);
+      if (banners.length > 1) {
+        preloadImage(banners[1].image_url);
+      }
+    }
+  }, [banners]);
 
   useEffect(() => {
     if (banners.length === 0) return;
@@ -172,6 +194,6 @@ const Hero = () => {
       </div>
     </section>
   );
-};
+});
 
 export default Hero;

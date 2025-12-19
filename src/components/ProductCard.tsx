@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/utils";
+import { memo, useState } from "react";
 
 interface ProductCardProps {
   id: string;
@@ -17,7 +18,7 @@ interface ProductCardProps {
   index?: number;
 }
 
-const ProductCard = ({
+const ProductCard = memo(({
   id,
   name,
   brand,
@@ -31,6 +32,8 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   const inWishlist = isInWishlist(id);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // Only show discount if original price is higher than current price
   const discount = originalPrice && originalPrice > price
@@ -46,7 +49,7 @@ const ProductCard = ({
   return (
     <div
       className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
-      style={{ animationDelay: `${index * 0.05}s` }}
+      style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
       {/* Badge */}
       {badge && (
@@ -89,14 +92,21 @@ const ProductCard = ({
 
       {/* Image - Taller on mobile for better visibility */}
       <div className="relative aspect-[4/3] sm:aspect-square bg-secondary/30 overflow-hidden">
+        {/* Skeleton placeholder */}
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 bg-secondary/50 animate-pulse" />
+        )}
         <img
-          src={image || "/placeholder.svg"}
+          src={imageError ? "/placeholder.svg" : (image || "/placeholder.svg")}
           alt={name}
           loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = "/placeholder.svg";
-          }}
-          className="w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-smooth"
+          decoding="async"
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageError(true)}
+          className={cn(
+            "w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-smooth",
+            imageLoaded ? "opacity-100" : "opacity-0"
+          )}
         />
       </div>
 
@@ -171,7 +181,8 @@ const ProductCard = ({
       </div>
     </div>
   );
-};
+});
+
+ProductCard.displayName = "ProductCard";
 
 export default ProductCard;
-
