@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ReviewForm from "@/components/ReviewForm";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -381,101 +382,111 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* Reviews */}
+        {/* Reviews Section */}
         <div className="mb-12">
-          <h2 className="text-xl font-heading font-bold text-foreground mb-4">
+          <h2 className="text-xl font-heading font-bold text-foreground mb-6">
             Customer Reviews ({reviews.length})
           </h2>
           
-          {reviews.length === 0 ? (
-            <div className="bg-card rounded-lg border border-border p-8 text-center">
-              <p className="text-muted-foreground">No reviews yet. Be the first to review this product!</p>
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Review Form */}
+            <div className="lg:col-span-1">
+              <ReviewForm productId={id!} />
             </div>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((review: any) => (
-                <div key={review.id} className="bg-card rounded-lg border border-border p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-primary font-bold">
-                          {(review.reviewer_name || "A")[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">
-                            {review.reviewer_name || "Customer"}
-                          </span>
-                          {review.is_verified_purchase && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                              Verified Purchase
-                            </span>
-                          )}
-                          {review.is_featured && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                              Featured
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {review.reviewer_location && (
-                            <span>{review.reviewer_location}, Pakistan</span>
-                          )}
-                          <span>•</span>
-                          <span>{new Date(review.created_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating
-                              ? "fill-primary text-primary"
-                              : "fill-muted text-muted"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {review.title && (
-                    <h4 className="font-semibold text-foreground mb-2">{review.title}</h4>
-                  )}
-                  
-                  {review.comment && (
-                    <p className="text-muted-foreground mb-3">{review.comment}</p>
-                  )}
-                  
-                  {/* Review Images */}
-                  {review.images && review.images.length > 0 && (
-                    <div className="flex gap-2 flex-wrap mt-3">
-                      {review.images.map((img: string, idx: number) => (
-                        <a
-                          key={idx}
-                          href={img}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block w-20 h-20 rounded-lg overflow-hidden border border-border hover:border-primary transition-colors"
-                        >
-                          <img
-                            src={img}
-                            alt={`Review image ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = "/placeholder.svg";
-                            }}
-                          />
-                        </a>
-                      ))}
-                    </div>
-                  )}
+            
+            {/* Reviews List */}
+            <div className="lg:col-span-2">
+              {reviews.length === 0 ? (
+                <div className="bg-card rounded-lg border border-border p-8 text-center h-full flex items-center justify-center">
+                  <p className="text-muted-foreground">No reviews yet. Be the first to review this product!</p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="bg-card rounded-lg border border-border p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <span className="text-primary font-bold">
+                              {(review.reviewer_name || "A")[0].toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-foreground">
+                                {review.reviewer_name || "Customer"}
+                              </span>
+                              {review.is_verified_purchase && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                  Verified Purchase
+                                </span>
+                              )}
+                              {review.is_featured && (
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                                  Featured
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              {review.reviewer_location && (
+                                <span>{review.reviewer_location}, Pakistan</span>
+                              )}
+                              <span>•</span>
+                              <span>{new Date(review.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < review.rating
+                                  ? "fill-primary text-primary"
+                                  : "fill-muted text-muted"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {review.title && (
+                        <h4 className="font-semibold text-foreground mb-2">{review.title}</h4>
+                      )}
+                      
+                      {review.comment && (
+                        <p className="text-muted-foreground mb-3">{review.comment}</p>
+                      )}
+                      
+                      {/* Review Images */}
+                      {review.images && review.images.length > 0 && (
+                        <div className="flex gap-2 flex-wrap mt-3">
+                          {review.images.map((img: string, idx: number) => (
+                            <a
+                              key={idx}
+                              href={img}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block w-20 h-20 rounded-lg overflow-hidden border border-border hover:border-primary transition-colors"
+                            >
+                              <img
+                                src={img}
+                                alt={`Review image ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/placeholder.svg";
+                                }}
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
       

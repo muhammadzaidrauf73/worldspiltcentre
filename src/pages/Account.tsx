@@ -5,12 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WishlistTab from "@/components/WishlistTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { User, Package, Heart, LogOut, Save, ChevronRight, ShoppingBag, Truck, ExternalLink, MapPin } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
 interface Profile {
@@ -372,16 +373,7 @@ const Account = () => {
           </TabsContent>
           
           <TabsContent value="wishlist">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                My Wishlist
-              </h2>
-              <div className="text-center py-12 text-muted-foreground">
-                <Heart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Your wishlist is empty</p>
-                <p className="text-sm">Save items you love for later</p>
-              </div>
-            </div>
+            <WishlistTab />
           </TabsContent>
         </Tabs>
       </div>
