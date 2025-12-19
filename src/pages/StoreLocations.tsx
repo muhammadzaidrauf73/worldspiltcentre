@@ -95,21 +95,37 @@ const StoreLocations = () => {
               </div>
             </div>
 
-            {/* Map Placeholder */}
-            <div className="bg-secondary/30 rounded-lg p-12 text-center">
-              <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-bold mb-2">Find Us on Google Maps</h3>
-              <p className="text-muted-foreground mb-4">
-                Search for "{settings?.company_name || 'World Spilt Centre'}" on Google Maps
-              </p>
-              <a 
-                href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || 'Model Town Lahore')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                Open in Google Maps →
-              </a>
+            {/* Embedded Google Map */}
+            <div className="bg-card border rounded-lg overflow-hidden">
+              <div className="bg-primary/5 p-4 border-b">
+                <h3 className="font-bold flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Find Us on Map
+                </h3>
+              </div>
+              <div className="aspect-video w-full">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3401.0!2d74.3!3d31.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzHCsDMwJzAwLjAiTiA3NMKwMTgnMDAuMCJF!5e0!3m2!1sen!2s!4v1"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Store Location Map"
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="p-4 bg-muted/30 text-center">
+                <a 
+                  href={`https://www.google.com/maps/search/${encodeURIComponent(settings?.address || 'Shop 30 Saleem Complex Q Block Model Town Lahore')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  Open in Google Maps →
+                </a>
+              </div>
             </div>
           </div>
         </div>
