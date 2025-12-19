@@ -72,8 +72,8 @@ const FAQ = () => {
                 <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-4 text-sm">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-4 text-sm">
-                  {faq.answer}
+                <AccordionContent className="text-muted-foreground pb-4 text-sm prose prose-sm dark:prose-invert max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
                 </AccordionContent>
               </AccordionItem>
             ))}

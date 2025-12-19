@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -194,14 +194,11 @@ const AdminFAQ = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="answer">Answer *</Label>
-                  <Textarea
-                    id="answer"
-                    value={form.answer}
-                    onChange={(e) => setForm({ ...form, answer: e.target.value })}
+                  <Label>Answer *</Label>
+                  <RichTextEditor
+                    content={form.answer}
+                    onChange={(content) => setForm({ ...form, answer: content })}
                     placeholder="Enter the answer..."
-                    rows={4}
-                    required
                   />
                 </div>
 
