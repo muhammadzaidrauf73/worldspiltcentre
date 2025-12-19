@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWishlist } from "@/hooks/useWishlist";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ReviewForm from "@/components/ReviewForm";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
+import { cn } from "@/lib/utils";
 import { 
   Star, 
   Heart, 
@@ -29,10 +31,13 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
+  
+  const inWishlist = id ? isInWishlist(id) : false;
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", id],
@@ -338,8 +343,14 @@ const ProductDetail = () => {
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {addingToCart ? "Adding..." : "Add to Cart"}
               </Button>
-              <Button size="lg" variant="outline">
-                <Heart className="h-5 w-5" />
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => id && toggleWishlist(id)}
+                disabled={isToggling}
+                className={cn(inWishlist && "bg-primary/10 border-primary text-primary")}
+              >
+                <Heart className={cn("h-5 w-5", inWishlist && "fill-primary")} />
               </Button>
             </div>
 
