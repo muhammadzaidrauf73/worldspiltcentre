@@ -6,6 +6,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Heart, ShoppingBag, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
@@ -124,16 +135,36 @@ const WishlistTab = () => {
           My Wishlist ({wishlistProducts.length})
         </h2>
         {wishlistProducts.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClearAll}
-            disabled={clearing}
-            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            {clearing ? "Clearing..." : "Clear All"}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={clearing}
+                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                {clearing ? "Clearing..." : "Clear All"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear entire wishlist?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove all {wishlistProducts.length} items from your wishlist. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleClearAll}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Clear All
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 
