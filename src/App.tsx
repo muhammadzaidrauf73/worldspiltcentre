@@ -3,9 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import Index from "./pages/Index";
 
 // Lazy load all pages except Index for better initial bundle size
@@ -55,6 +56,15 @@ const PageLoader = () => (
   </div>
 );
 
+// WhatsApp button wrapper that hides on admin pages
+const ConditionalWhatsAppButton = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+  
+  if (isAdminPage) return null;
+  return <WhatsAppButton />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -62,6 +72,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ConditionalWhatsAppButton />
           <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
             <Routes>
