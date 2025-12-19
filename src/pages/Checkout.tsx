@@ -326,11 +326,35 @@ const Checkout = () => {
 
       if (cartError) throw cartError;
 
+      // Send order confirmation email
+      try {
+        const emailItems = cartItems.map(item => ({
+          name: item.products?.name || 'Product',
+          quantity: item.quantity,
+          price: Number(item.products?.price) || 0,
+        }));
+
+        await supabase.functions.invoke('send-order-confirmation', {
+          body: {
+            customerEmail: formData.email,
+            customerName: formData.name,
+            orderId: orderResult.id,
+            items: emailItems,
+            total: total,
+            shippingAddress: formData.address,
+          },
+        });
+        console.log("Order confirmation email sent");
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email:", emailError);
+        // Don't fail the order if email fails
+      }
+
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
       queryClient.invalidateQueries({ queryKey: ["coupon-analytics"] });
       
-      toast.success("Order placed successfully!");
+      toast.success("Order placed successfully! Check your email for confirmation.");
       navigate("/account");
     } catch (error: any) {
       console.error("Order error:", error);
