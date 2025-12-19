@@ -1,4 +1,5 @@
-import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon } from "lucide-react";
+import { useRef } from "react";
+import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ import NewArrivals from "@/components/NewArrivals";
 import FlashDeal from "@/components/FlashDeal";
 import Newsletter from "@/components/Newsletter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import SEO from "@/components/SEO";
 
@@ -32,6 +34,19 @@ const iconMap: Record<string, LucideIcon> = {
 
 const Index = () => {
   const queryClient = useQueryClient();
+  const categoriesScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoriesScrollRef.current) {
+      const scrollAmount = 300;
+      categoriesScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Fetch categories from database
   // Fetch categories from database
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
@@ -101,9 +116,33 @@ const Index = () => {
             </Link>
           </div>
 
-          {/* Horizontal Scroll Container */}
-          <div className="relative">
-            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-hide scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0">
+          {/* Horizontal Scroll Container with Buttons */}
+          <div className="relative group">
+            {/* Left Scroll Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex"
+              onClick={() => scrollCategories('left')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+
+            {/* Right Scroll Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex"
+              onClick={() => scrollCategories('right')}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+
+            <div 
+              ref={categoriesScrollRef}
+              className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:px-12"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) transparent' }}
+            >
               {categoriesLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="shrink-0">

@@ -16,7 +16,8 @@ import {
   Zap,
   Settings,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ const navItems = [
   { href: "/admin/flash-deals", label: "Flash Deals", icon: Zap },
   { href: "/admin/featured-sections", label: "Featured Sections", icon: Sparkles },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
