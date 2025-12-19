@@ -416,7 +416,7 @@ export type Database = {
           reviewer_location: string | null
           reviewer_name: string | null
           title: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           comment?: string | null
@@ -431,7 +431,7 @@ export type Database = {
           reviewer_location?: string | null
           reviewer_name?: string | null
           title?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           comment?: string | null
@@ -446,7 +446,7 @@ export type Database = {
           reviewer_location?: string | null
           reviewer_name?: string | null
           title?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
