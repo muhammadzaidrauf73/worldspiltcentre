@@ -18,14 +18,23 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if we have a valid session from the reset link
-    const checkSession = async () => {
+    let timeoutId: NodeJS.Timeout;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        setIsCheckingSession(false);
+      }
+    });
+
+    // Give Supabase time to process the recovery tokens from URL
+    timeoutId = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
@@ -34,9 +43,15 @@ const ResetPassword = () => {
           description: "Please request a new password reset link.",
         });
         navigate("/auth");
+      } else {
+        setIsCheckingSession(false);
       }
+    }, 2000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
     };
-    checkSession();
   }, [navigate, toast]);
 
   const validateForm = () => {
@@ -88,6 +103,23 @@ const ResetPassword = () => {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingSession) {
+    return (
+      <>
+        <SEO
+          title="Reset Password - World Spilt Centre"
+          description="Set a new password for your World Spilt Centre account."
+        />
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Verifying reset link...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (isSuccess) {
     return (
