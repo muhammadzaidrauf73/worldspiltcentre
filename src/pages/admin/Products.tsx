@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Pencil, Trash2, Upload, Download, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -46,6 +47,8 @@ interface ProductForm {
   stock_quantity: string;
   is_featured: boolean;
   is_active: boolean;
+  is_new_arrival: boolean;
+  is_top_seller: boolean;
 }
 
 const emptyForm: ProductForm = {
@@ -60,13 +63,20 @@ const emptyForm: ProductForm = {
   stock_quantity: "0",
   is_featured: false,
   is_active: true,
+  is_new_arrival: false,
+  is_top_seller: false,
 };
 
 const AdminProducts = () => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [bulkCsvData, setBulkCsvData] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -89,6 +99,11 @@ const AdminProducts = () => {
     },
   });
 
+  const filteredProducts = products.filter((product: any) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.brand.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const saveMutation = useMutation({
     mutationFn: async (data: ProductForm) => {
       const productData = {
@@ -103,6 +118,8 @@ const AdminProducts = () => {
         stock_quantity: parseInt(data.stock_quantity),
         is_featured: data.is_featured,
         is_active: data.is_active,
+        is_new_arrival: data.is_new_arrival,
+        is_top_seller: data.is_top_seller,
       };
 
       if (editingId) {
@@ -142,6 +159,55 @@ const AdminProducts = () => {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success(`${selectedProducts.length} products deleted`);
+      setSelectedProducts([]);
+    },
+    onError: (error) => {
+      toast.error("Error deleting products: " + error.message);
+    },
+  });
+
+  const bulkUpdateMutation = useMutation({
+    mutationFn: async ({ ids, updates }: { ids: string[]; updates: Record<string, any> }) => {
+      const { error } = await supabase
+        .from("products")
+        .update(updates)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success(`${selectedProducts.length} products updated`);
+      setSelectedProducts([]);
+    },
+    onError: (error) => {
+      toast.error("Error updating products: " + error.message);
+    },
+  });
+
+  const bulkUploadMutation = useMutation({
+    mutationFn: async (productsData: any[]) => {
+      const { error } = await supabase.from("products").insert(productsData);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success("Products uploaded successfully");
+      setIsBulkUploadOpen(false);
+      setBulkCsvData("");
+    },
+    onError: (error) => {
+      toast.error("Error uploading products: " + error.message);
+    },
+  });
+
   const handleEdit = (product: any) => {
     setEditingId(product.id);
     setForm({
@@ -156,6 +222,8 @@ const AdminProducts = () => {
       stock_quantity: product.stock_quantity?.toString() || "0",
       is_featured: product.is_featured,
       is_active: product.is_active,
+      is_new_arrival: product.is_new_arrival || false,
+      is_top_seller: product.is_top_seller || false,
     });
     setIsOpen(true);
   };
@@ -165,167 +233,430 @@ const AdminProducts = () => {
     saveMutation.mutate(form);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProducts(filteredProducts.map((p: any) => p.id));
+    } else {
+      setSelectedProducts([]);
+    }
+  };
+
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProducts([...selectedProducts, productId]);
+    } else {
+      setSelectedProducts(selectedProducts.filter((id) => id !== productId));
+    }
+  };
+
+  const handleBulkAction = (action: string) => {
+    if (selectedProducts.length === 0) {
+      toast.error("No products selected");
+      return;
+    }
+
+    switch (action) {
+      case "delete":
+        if (confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
+          bulkDeleteMutation.mutate(selectedProducts);
+        }
+        break;
+      case "activate":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_active: true } });
+        break;
+      case "deactivate":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_active: false } });
+        break;
+      case "feature":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_featured: true } });
+        break;
+      case "unfeature":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_featured: false } });
+        break;
+      case "new-arrival":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_new_arrival: true } });
+        break;
+      case "top-seller":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_top_seller: true } });
+        break;
+    }
+  };
+
+  const handleBulkUpload = () => {
+    try {
+      const lines = bulkCsvData.trim().split("\n");
+      if (lines.length < 2) {
+        toast.error("Invalid CSV data. Please include header row and at least one product.");
+        return;
+      }
+
+      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const productsToUpload = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(",").map((v) => v.trim());
+        const product: any = {
+          is_active: true,
+          stock_quantity: 0,
+        };
+
+        headers.forEach((header, index) => {
+          const value = values[index] || "";
+          switch (header) {
+            case "name":
+              product.name = value;
+              product.slug = value.toLowerCase().replace(/\s+/g, "-");
+              break;
+            case "brand":
+              product.brand = value;
+              break;
+            case "price":
+              product.price = parseFloat(value) || 0;
+              break;
+            case "original_price":
+              product.original_price = value ? parseFloat(value) : null;
+              break;
+            case "description":
+              product.description = value;
+              break;
+            case "image_url":
+              product.image_url = value;
+              break;
+            case "stock":
+            case "stock_quantity":
+              product.stock_quantity = parseInt(value) || 0;
+              break;
+            case "category":
+              const cat = categories.find((c) => c.name.toLowerCase() === value.toLowerCase());
+              if (cat) product.category_id = cat.id;
+              break;
+          }
+        });
+
+        if (product.name && product.brand && product.price) {
+          productsToUpload.push(product);
+        }
+      }
+
+      if (productsToUpload.length === 0) {
+        toast.error("No valid products found in CSV. Required fields: name, brand, price");
+        return;
+      }
+
+      bulkUploadMutation.mutate(productsToUpload);
+    } catch (error) {
+      toast.error("Error parsing CSV data");
+    }
+  };
+
+  const exportToCSV = () => {
+    const headers = ["name", "brand", "price", "original_price", "description", "stock_quantity", "category", "image_url"];
+    const csvContent = [
+      headers.join(","),
+      ...products.map((p: any) =>
+        [
+          `"${p.name}"`,
+          `"${p.brand}"`,
+          p.price,
+          p.original_price || "",
+          `"${p.description || ""}"`,
+          p.stock_quantity,
+          `"${p.categories?.name || ""}"`,
+          `"${p.image_url || ""}"`,
+        ].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "products.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Products exported to CSV");
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Products</h1>
-            <p className="text-muted-foreground">Manage your product catalog</p>
+            <p className="text-muted-foreground">
+              Manage your product catalog ({products.length} products)
+            </p>
           </div>
-          <Dialog open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open);
-            if (!open) {
-              setEditingId(null);
-              setForm(emptyForm);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Upload
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Bulk Upload Products</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>CSV Data</Label>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Paste CSV data with headers: name, brand, price, original_price, description, image_url, stock_quantity, category
+                    </p>
+                    <Textarea
+                      value={bulkCsvData}
+                      onChange={(e) => setBulkCsvData(e.target.value)}
+                      placeholder={`name,brand,price,original_price,description,image_url,stock_quantity,category
+Samsung Galaxy S24,Samsung,189999,219999,Latest flagship phone,https://...,50,Smartphones
+LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
+                      rows={10}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsBulkUploadOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleBulkUpload}
+                      disabled={bulkUploadMutation.isPending || !bulkCsvData.trim()}
+                    >
+                      {bulkUploadMutation.isPending ? "Uploading..." : "Upload Products"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog
+              open={isOpen}
+              onOpenChange={(open) => {
+                setIsOpen(open);
+                if (!open) {
+                  setEditingId(null);
+                  setForm(emptyForm);
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name *</Label>
+                      <Input
+                        id="name"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="brand">Brand *</Label>
+                      <Input
+                        id="brand"
+                        value={form.brand}
+                        onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name *</Label>
+                    <Label htmlFor="slug">Slug</Label>
                     <Input
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      required
+                      id="slug"
+                      value={form.slug}
+                      onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                      placeholder="auto-generated-from-name"
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="brand">Brand *</Label>
-                    <Input
-                      id="brand"
-                      value={form.brand}
-                      onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                      required
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      rows={3}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Slug</Label>
-                  <Input
-                    id="slug"
-                    value={form.slug}
-                    onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                    placeholder="auto-generated-from-name"
-                  />
-                </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Price *</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        value={form.price}
+                        onChange={(e) => setForm({ ...form, price: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="original_price">Original Price</Label>
+                      <Input
+                        id="original_price"
+                        type="number"
+                        value={form.original_price}
+                        onChange={(e) => setForm({ ...form, original_price: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="stock">Stock</Label>
+                      <Input
+                        id="stock"
+                        type="number"
+                        value={form.stock_quantity}
+                        onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
+                      />
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={form.price}
-                      onChange={(e) => setForm({ ...form, price: e.target.value })}
-                      required
-                    />
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={form.category_id}
+                      onValueChange={(value) => setForm({ ...form, category_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="original_price">Original Price</Label>
-                    <Input
-                      id="original_price"
-                      type="number"
-                      value={form.original_price}
-                      onChange={(e) => setForm({ ...form, original_price: e.target.value })}
+                    <Label>Product Image</Label>
+                    <ImageUpload
+                      value={form.image_url}
+                      onChange={(url) => setForm({ ...form, image_url: url })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="stock">Stock</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      value={form.stock_quantity}
-                      onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
-                    />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="is_featured"
+                        checked={form.is_featured}
+                        onCheckedChange={(checked) => setForm({ ...form, is_featured: checked })}
+                      />
+                      <Label htmlFor="is_featured">Featured</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="is_active"
+                        checked={form.is_active}
+                        onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
+                      />
+                      <Label htmlFor="is_active">Active</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="is_new_arrival"
+                        checked={form.is_new_arrival}
+                        onCheckedChange={(checked) => setForm({ ...form, is_new_arrival: checked })}
+                      />
+                      <Label htmlFor="is_new_arrival">New Arrival</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="is_top_seller"
+                        checked={form.is_top_seller}
+                        onCheckedChange={(checked) => setForm({ ...form, is_top_seller: checked })}
+                      />
+                      <Label htmlFor="is_top_seller">Top Seller</Label>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={form.category_id}
-                    onValueChange={(value) => setForm({ ...form, category_id: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Product Image</Label>
-                  <ImageUpload
-                    value={form.image_url}
-                    onChange={(url) => setForm({ ...form, image_url: url })}
-                  />
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="is_featured"
-                      checked={form.is_featured}
-                      onCheckedChange={(checked) => setForm({ ...form, is_featured: checked })}
-                    />
-                    <Label htmlFor="is_featured">Featured</Label>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={saveMutation.isPending}>
+                      {saveMutation.isPending ? "Saving..." : "Save"}
+                    </Button>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="is_active"
-                      checked={form.is_active}
-                      onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
-                    />
-                    <Label htmlFor="is_active">Active</Label>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={saveMutation.isPending}>
-                    {saveMutation.isPending ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-border">
+        {/* Search and Bulk Actions */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {selectedProducts.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedProducts.length} selected
+              </span>
+              <Select onValueChange={handleBulkAction}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Bulk Action" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="activate">Activate</SelectItem>
+                  <SelectItem value="deactivate">Deactivate</SelectItem>
+                  <SelectItem value="feature">Mark as Featured</SelectItem>
+                  <SelectItem value="unfeature">Remove Featured</SelectItem>
+                  <SelectItem value="new-arrival">Mark as New Arrival</SelectItem>
+                  <SelectItem value="top-seller">Mark as Top Seller</SelectItem>
+                  <SelectItem value="delete">Delete Selected</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedProducts([])}
+              >
+                Clear
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={
+                      filteredProducts.length > 0 &&
+                      selectedProducts.length === filteredProducts.length
+                    }
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Brand</TableHead>
@@ -333,6 +664,7 @@ const AdminProducts = () => {
                 <TableHead>Price</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Flags</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -340,6 +672,7 @@ const AdminProducts = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
                     <TableCell><Skeleton className="h-10 w-10 rounded" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
@@ -347,47 +680,92 @@ const AdminProducts = () => {
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   </TableRow>
                 ))
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     No products found
                   </TableCell>
                 </TableRow>
               ) : (
-                products.map((product: any) => (
+                filteredProducts.map((product: any) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedProducts.includes(product.id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectProduct(product.id, checked as boolean)
+                        }
+                      />
+                    </TableCell>
                     <TableCell>
                       <img
                         src={product.image_url || "/placeholder.svg"}
                         alt={product.name}
                         className="h-10 w-10 rounded object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="font-medium max-w-[200px] truncate">
+                      {product.name}
+                    </TableCell>
                     <TableCell>{product.brand}</TableCell>
                     <TableCell>{product.categories?.name || "-"}</TableCell>
                     <TableCell>Rs.{Number(product.price).toLocaleString()}</TableCell>
                     <TableCell>{product.stock_quantity}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        product.is_active ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          product.is_active
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-red-500/10 text-red-500"
+                        }`}
+                      >
                         {product.is_active ? "Active" : "Inactive"}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {product.is_featured && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-primary/10 text-primary">
+                            Featured
+                          </span>
+                        )}
+                        {product.is_new_arrival && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500">
+                            New
+                          </span>
+                        )}
+                        {product.is_top_seller && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-500">
+                            Top
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(product)}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleEdit(product)}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
                           className="text-destructive"
-                          onClick={() => deleteMutation.mutate(product.id)}
+                          onClick={() => {
+                            if (confirm("Delete this product?")) {
+                              deleteMutation.mutate(product.id);
+                            }
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
