@@ -1,45 +1,51 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import { HelpCircle } from "lucide-react";
 
-const faqs = [
-  {
-    question: "What is your return policy?",
-    answer:
-      "We offer a 7-day return policy for all products in their original condition. Electronics must be unopened or defective for full refund. Contact our support team to initiate a return.",
-  },
-  {
-    question: "Do you offer installation services?",
-    answer:
-      "Yes! We provide free installation for select appliances including ACs, washing machines, and large TVs. Our trained technicians will set up your product at your convenience.",
-  },
-  {
-    question: "What warranty do you provide?",
-    answer:
-      "All products come with manufacturer warranty (typically 1-2 years). We also offer extended warranty plans for additional coverage up to 5 years at competitive prices.",
-  },
-  {
-    question: "How long does delivery take?",
-    answer:
-      "Standard delivery takes 3-5 business days nationwide. Express delivery (1-2 days) is available for major cities. Large appliances may require scheduled delivery.",
-  },
-  {
-    question: "Do you price match competitors?",
-    answer:
-      "Absolutely! If you find a lower price at an authorized retailer, we'll match it. Just show us the competitor's price and we'll adjust your order accordingly.",
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept all major credit/debit cards, bank transfers, JazzCash, Easypaisa, and Cash on Delivery (COD). EMI options are available on select products.",
-  },
-];
-
 const FAQ = () => {
+  const { data: faqs = [], isLoading } = useQuery({
+    queryKey: ["faqs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("faqs")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <section className="py-10 bg-secondary/30" id="faq">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <Skeleton className="w-10 h-10 rounded-full mx-auto mb-3" />
+              <Skeleton className="h-6 w-48 mx-auto mb-2" />
+              <Skeleton className="h-4 w-32 mx-auto" />
+            </div>
+            <div className="space-y-2">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (faqs.length === 0) return null;
+
   return (
     <section className="py-10 bg-secondary/30" id="faq">
       <div className="container mx-auto px-4">
@@ -59,7 +65,7 @@ const FAQ = () => {
           <Accordion type="single" collapsible className="space-y-2">
             {faqs.map((faq, index) => (
               <AccordionItem
-                key={index}
+                key={faq.id}
                 value={`item-${index}`}
                 className="bg-card rounded-lg border border-border px-4"
               >
