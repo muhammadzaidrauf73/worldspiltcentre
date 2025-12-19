@@ -32,36 +32,43 @@ const ProductCard = ({
 
   return (
     <div
-      className="group relative bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
+      className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       {/* Badge */}
       {badge && (
-        <Badge className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-1.5 sm:px-2">
+        <Badge className="absolute top-2 left-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-2 py-0.5">
           {badge}
         </Badge>
       )}
 
+      {/* Discount Badge - Mobile visible */}
+      {discount > 0 && (
+        <Badge className="absolute top-2 right-2 z-10 bg-destructive text-destructive-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5">
+          -{discount}%
+        </Badge>
+      )}
+
       {/* Action Buttons - Hidden on mobile, shown on hover for desktop */}
-      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-smooth translate-x-2 group-hover:translate-x-0 hidden sm:flex">
+      <div className="absolute top-10 right-2 z-10 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-smooth translate-x-2 group-hover:translate-x-0 hidden sm:flex">
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 sm:h-8 sm:w-8 bg-card shadow-sm hover:bg-primary hover:text-primary-foreground"
+          className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
         >
-          <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Heart className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 sm:h-8 sm:w-8 bg-card shadow-sm hover:bg-primary hover:text-primary-foreground"
+          className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
         >
-          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Eye className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Image */}
-      <div className="relative aspect-square bg-secondary/30 overflow-hidden">
+      {/* Image - Taller on mobile for better visibility */}
+      <div className="relative aspect-[4/3] sm:aspect-square bg-secondary/30 overflow-hidden">
         <img
           src={image || "/placeholder.svg"}
           alt={name}
@@ -69,26 +76,26 @@ const ProductCard = ({
           onError={(e) => {
             e.currentTarget.src = "/placeholder.svg";
           }}
-          className="w-full h-full object-contain p-2 sm:p-4 group-hover:scale-105 transition-smooth"
+          className="w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-smooth"
         />
       </div>
 
       {/* Content */}
-      <div className="p-2 sm:p-3 space-y-1 sm:space-y-1.5">
-        <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">
+      <div className="p-3 sm:p-4 space-y-1.5 sm:space-y-2">
+        <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-medium">
           {brand}
         </p>
-        <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 group-hover:text-primary transition-smooth min-h-[2rem] sm:min-h-[2.5rem]">
+        <h3 className="font-medium text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-smooth min-h-[2.5rem] sm:min-h-[3rem] leading-tight">
           {name}
         </h3>
 
-        {/* Rating - Hidden on very small screens */}
-        <div className="hidden xs:flex items-center gap-1">
-          <div className="flex items-center">
+        {/* Rating */}
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
+                className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${
                   i < Math.floor(rating)
                     ? "fill-primary text-primary"
                     : "fill-muted text-muted"
@@ -96,33 +103,46 @@ const ProductCard = ({
               />
             ))}
           </div>
-          <span className="text-[9px] sm:text-[10px] text-muted-foreground">({reviews})</span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground">({reviews})</span>
         </div>
 
         {/* Price */}
-        <div className="flex flex-col xs:flex-row xs:items-center gap-0.5 xs:gap-2 pt-0.5 sm:pt-1">
-          <span className="font-bold text-sm sm:text-base text-primary">
+        <div className="flex items-baseline gap-2 pt-1">
+          <span className="font-bold text-base sm:text-lg text-primary">
             Rs.{price.toLocaleString()}
           </span>
           {originalPrice && (
-            <span className="text-[10px] sm:text-xs text-muted-foreground line-through">
+            <span className="text-xs sm:text-sm text-muted-foreground line-through">
               Rs.{originalPrice.toLocaleString()}
             </span>
           )}
         </div>
 
-        {discount > 0 && (
-          <Badge variant="secondary" className="bg-accent/10 text-accent text-[9px] sm:text-[10px] font-medium px-1.5">
-            Save {discount}%
-          </Badge>
-        )}
-
-        {/* Add to Cart */}
-        <Button className="w-full mt-1.5 sm:mt-2 h-8 sm:h-9 text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground">
-          <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
-          <span className="hidden xs:inline">Add to Cart</span>
-          <span className="xs:hidden">Add</span>
+        {/* Add to Cart - Touch-friendly */}
+        <Button className="w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation">
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Add to Cart
         </Button>
+
+        {/* Mobile Quick Actions */}
+        <div className="flex gap-2 sm:hidden mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-10 text-xs font-medium rounded-lg touch-manipulation"
+          >
+            <Heart className="h-4 w-4 mr-1.5" />
+            Wishlist
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 h-10 text-xs font-medium rounded-lg touch-manipulation"
+          >
+            <Eye className="h-4 w-4 mr-1.5" />
+            Quick View
+          </Button>
+        </div>
       </div>
     </div>
   );
