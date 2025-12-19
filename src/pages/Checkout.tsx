@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, Percent } from "lucide-react";
 
 interface ShippingOption {
   id: string;
@@ -20,6 +20,14 @@ interface ShippingOption {
   price: number;
   estimated_days: string | null;
   free_shipping_threshold: number | null;
+}
+
+interface AppliedCoupon {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  min_order_amount: number | null;
 }
 
 const Checkout = () => {
@@ -35,6 +43,10 @@ const Checkout = () => {
   });
   const [selectedShipping, setSelectedShipping] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -118,7 +130,89 @@ const Checkout = () => {
         ? 0 
         : Number(selectedShippingOption.price))
     : 0;
-  const total = subtotal + shippingCost;
+
+  // Calculate discount
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.discount_type === "percentage") {
+      return Math.round((subtotal * appliedCoupon.discount_value) / 100);
+    }
+    return Math.min(appliedCoupon.discount_value, subtotal);
+  };
+
+  const discount = calculateDiscount();
+  const total = subtotal - discount + shippingCost;
+
+  // Apply coupon
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError("");
+
+    try {
+      const { data: coupon, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", couponCode.toUpperCase())
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!coupon) {
+        setCouponError("Invalid coupon code");
+        return;
+      }
+
+      // Check expiry
+      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+        setCouponError("This coupon has expired");
+        return;
+      }
+
+      // Check start date
+      if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
+        setCouponError("This coupon is not yet active");
+        return;
+      }
+
+      // Check usage limit
+      if (coupon.max_uses && coupon.current_uses >= coupon.max_uses) {
+        setCouponError("This coupon has reached its usage limit");
+        return;
+      }
+
+      // Check minimum order amount
+      if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
+        setCouponError(`Minimum order amount is Rs.${coupon.min_order_amount.toLocaleString()}`);
+        return;
+      }
+
+      setAppliedCoupon({
+        id: coupon.id,
+        code: coupon.code,
+        discount_type: coupon.discount_type,
+        discount_value: coupon.discount_value,
+        min_order_amount: coupon.min_order_amount,
+      });
+      setCouponCode("");
+      toast.success("Coupon applied successfully!");
+    } catch (error: any) {
+      console.error("Coupon error:", error);
+      setCouponError("Failed to validate coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,20 +237,61 @@ const Checkout = () => {
         specifications: item.products?.specifications || {},
       }));
 
+      const orderData: any = {
+        user_id: user.id,
+        customer_name: formData.name,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        shipping_address: formData.address,
+        items: orderItems,
+        total: total,
+        status: "pending",
+      };
+
+      // Add coupon info to order items for tracking
+      if (appliedCoupon) {
+        orderData.items = {
+          products: orderItems,
+          coupon: {
+            code: appliedCoupon.code,
+            discount_type: appliedCoupon.discount_type,
+            discount_value: appliedCoupon.discount_value,
+            discount_amount: discount,
+          },
+        };
+      }
+
       const { error: orderError } = await supabase
         .from("orders")
-        .insert({
-          user_id: user.id,
-          customer_name: formData.name,
-          customer_email: formData.email,
-          customer_phone: formData.phone,
-          shipping_address: formData.address,
-          items: orderItems,
-          total: total,
-          status: "pending",
-        });
+        .insert(orderData);
 
       if (orderError) throw orderError;
+
+      // Update coupon usage count
+      if (appliedCoupon) {
+        const { error: couponUpdateError } = await supabase
+          .from("coupons")
+          .update({ current_uses: supabase.rpc ? undefined : undefined })
+          .eq("id", appliedCoupon.id);
+
+        // Use raw update to increment
+        await supabase.rpc('increment_coupon_usage', { coupon_id: appliedCoupon.id }).catch(() => {
+          // Fallback: manual increment
+          supabase
+            .from("coupons")
+            .select("current_uses")
+            .eq("id", appliedCoupon.id)
+            .single()
+            .then(({ data }) => {
+              if (data) {
+                supabase
+                  .from("coupons")
+                  .update({ current_uses: (data.current_uses || 0) + 1 })
+                  .eq("id", appliedCoupon.id);
+              }
+            });
+        });
+      }
 
       // Clear cart
       const { error: cartError } = await supabase
@@ -167,6 +302,7 @@ const Checkout = () => {
       if (cartError) throw cartError;
 
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
       
       toast.success("Order placed successfully!");
       navigate("/account");
@@ -375,11 +511,82 @@ const Checkout = () => {
                   ))}
                 </div>
 
+                {/* Coupon Section */}
+                <div className="border-t border-border pt-4 mb-4">
+                  <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    Apply Coupon
+                  </h3>
+                  
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Percent className="h-4 w-4 text-emerald-600" />
+                        <div>
+                          <p className="text-sm font-medium text-emerald-600">{appliedCoupon.code}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {appliedCoupon.discount_type === "percentage" 
+                              ? `${appliedCoupon.discount_value}% off`
+                              : `Rs.${appliedCoupon.discount_value} off`
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeCoupon}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter coupon code"
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value.toUpperCase());
+                            setCouponError("");
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={applyCoupon}
+                          disabled={couponLoading}
+                        >
+                          {couponLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Apply"
+                          )}
+                        </Button>
+                      </div>
+                      {couponError && (
+                        <p className="text-xs text-destructive">{couponError}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="border-t border-border pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium">Rs.{subtotal.toLocaleString()}</span>
                   </div>
+                  
+                  {appliedCoupon && discount > 0 && (
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span className="font-medium">-Rs.{discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
                     <span className="font-medium">
