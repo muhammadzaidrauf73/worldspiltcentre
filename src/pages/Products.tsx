@@ -50,7 +50,7 @@ const Products = () => {
   });
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategory, selectedBrand, sortBy, searchQuery],
+    queryKey: ["products", selectedCategory, selectedBrand, sortBy, searchQuery, categories],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -65,11 +65,12 @@ const Products = () => {
       }
       
       if (selectedBrand) {
-        query = query.ilike("brand", `%${selectedBrand}%`);
+        query = query.eq("brand", selectedBrand);
       }
       
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,brand.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      if (searchQuery && searchQuery.trim()) {
+        const searchTerm = searchQuery.trim();
+        query = query.or(`name.ilike.%${searchTerm}%,brand.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
       
       switch (sortBy) {
@@ -90,6 +91,7 @@ const Products = () => {
       if (error) throw error;
       return data;
     },
+    enabled: categories.length > 0 || !selectedCategory,
   });
 
   // Brands now fetched from database
