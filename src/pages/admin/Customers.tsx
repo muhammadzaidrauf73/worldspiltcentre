@@ -60,12 +60,10 @@ const AdminCustomers = () => {
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ["admin-customers"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.functions.invoke("get-customers");
       if (error) throw error;
-      return data;
+      if (!data?.success) throw new Error(data?.error || "Failed to fetch customers");
+      return data.customers || [];
     },
   });
 
@@ -96,12 +94,13 @@ const AdminCustomers = () => {
 
   // Filter customers
   const filteredCustomers = useMemo(() => {
-    return customers.filter((customer) => {
+    return customers.filter((customer: any) => {
       const stats = customerStats[customer.id] || { count: 0, total: 0 };
       
       const matchesSearch =
         searchQuery === "" ||
         customer.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         customer.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         customer.address?.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -115,11 +114,12 @@ const AdminCustomers = () => {
   }, [customers, customerStats, searchQuery, orderFilter]);
 
   const exportToCSV = () => {
-    const headers = ["Name", "Phone", "Address", "Orders", "Total Spent", "Joined Date"];
-    const rows = filteredCustomers.map((customer) => {
+    const headers = ["Name", "Email", "Phone", "Address", "Orders", "Total Spent", "Joined Date"];
+    const rows = filteredCustomers.map((customer: any) => {
       const stats = customerStats[customer.id] || { count: 0, total: 0 };
       return [
         customer.full_name || "No name",
+        customer.email || "",
         customer.phone || "",
         customer.address?.replace(/,/g, ";") || "",
         stats.count.toString(),
@@ -202,7 +202,7 @@ const AdminCustomers = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name, phone, or address..."
+              placeholder="Search by name, email, phone, or address..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -255,7 +255,7 @@ const AdminCustomers = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCustomers.map((customer) => {
+                filteredCustomers.map((customer: any) => {
                   const stats = customerStats[customer.id] || { count: 0, total: 0 };
                   return (
                     <TableRow key={customer.id}>
@@ -270,7 +270,7 @@ const AdminCustomers = () => {
                               />
                             ) : (
                               <span className="text-sm font-bold text-primary">
-                                {(customer.full_name || "U").charAt(0).toUpperCase()}
+                                {(customer.full_name || customer.email || "U").charAt(0).toUpperCase()}
                               </span>
                             )}
                           </div>
@@ -278,14 +278,20 @@ const AdminCustomers = () => {
                             <p className="font-medium text-foreground">
                               {customer.full_name || "No name"}
                             </p>
-                            <p className="text-xs text-muted-foreground md:hidden">
-                              {customer.phone || "No phone"}
+                            <p className="text-xs text-muted-foreground md:hidden truncate max-w-[150px]">
+                              {customer.email || "No email"}
                             </p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="space-y-1">
+                          {customer.email && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              <span className="truncate max-w-[180px]">{customer.email}</span>
+                            </div>
+                          )}
                           {customer.phone && (
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Phone className="h-3 w-3" />
