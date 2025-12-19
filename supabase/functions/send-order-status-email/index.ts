@@ -160,7 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "World Spilt Centre <onboarding@resend.dev>",
+        from: "World Spilt Centre <support@worldspiltcentre.com>",
         to: [customerEmail],
         subject: `${statusTitles[status] || 'Order Update'} - #${orderId.slice(0, 8).toUpperCase()}`,
         html: getStatusContent(status, orderId, customerName, trackingNumber, trackingUrl),
