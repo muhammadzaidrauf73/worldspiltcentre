@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Search, SlidersHorizontal, X } from "lucide-react";
@@ -378,11 +378,7 @@ const Products = () => {
             )}
 
             {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
-                ))}
-              </div>
+              <ProductGridSkeleton count={9} />
             ) : products.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-muted-foreground mb-4">No products found</p>

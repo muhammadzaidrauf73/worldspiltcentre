@@ -11,13 +11,37 @@ import PageLoader from "@/components/PageLoader";
 import RouteLoadingBar from "@/components/RouteLoadingBar";
 import Index from "./pages/Index";
 
-// Lazy load all pages except Index for better initial bundle size
-const Auth = lazy(() => import("./pages/Auth"));
+// Critical pages - preloaded for instant navigation
+const authImport = () => import("./pages/Auth");
+const productsImport = () => import("./pages/Products");
+const productDetailImport = () => import("./pages/ProductDetail");
+const cartImport = () => import("./pages/Cart");
+
+const Auth = lazy(authImport);
+const Products = lazy(productsImport);
+const ProductDetail = lazy(productDetailImport);
+const Cart = lazy(cartImport);
+
+// Preload critical pages after initial render
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    // Preload after page is fully loaded
+    setTimeout(() => {
+      authImport();
+      productsImport();
+      cartImport();
+    }, 1000);
+    
+    // Preload product detail slightly later
+    setTimeout(() => {
+      productDetailImport();
+    }, 2000);
+  }, { once: true });
+}
+
+// Other lazy loaded pages
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Account = lazy(() => import("./pages/Account"));
-const Products = lazy(() => import("./pages/Products"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const About = lazy(() => import("./pages/About"));
