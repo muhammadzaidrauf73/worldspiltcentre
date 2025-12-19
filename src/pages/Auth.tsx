@@ -7,34 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle, Tv, Smartphone, Refrigerator, Wifi, Monitor, Speaker, Headphones, Camera } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle } from "lucide-react";
 import { z } from "zod";
-
-// Floating icons configuration
-const floatingIcons = [
-  { Icon: Tv, delay: 0, duration: 15, x: 10, y: 20 },
-  { Icon: Smartphone, delay: 2, duration: 18, x: 80, y: 15 },
-  { Icon: Refrigerator, delay: 4, duration: 20, x: 20, y: 70 },
-  { Icon: Wifi, delay: 1, duration: 16, x: 70, y: 60 },
-  { Icon: Monitor, delay: 3, duration: 22, x: 85, y: 40 },
-  { Icon: Speaker, delay: 5, duration: 17, x: 15, y: 45 },
-  { Icon: Headphones, delay: 2.5, duration: 19, x: 60, y: 80 },
-  { Icon: Camera, delay: 3.5, duration: 21, x: 40, y: 25 },
-];
-
-const FloatingIcon = ({ Icon, delay, duration, x, y }: { Icon: any; delay: number; duration: number; x: number; y: number }) => (
-  <div
-    className="absolute text-primary/10 pointer-events-none"
-    style={{
-      left: `${x}%`,
-      top: `${y}%`,
-      animation: `float ${duration}s ease-in-out infinite`,
-      animationDelay: `${delay}s`,
-    }}
-  >
-    <Icon className="w-8 h-8 md:w-12 md:h-12" />
-  </div>
-);
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -317,16 +291,9 @@ const Auth = () => {
         description="Sign in or create an account at World Spilt Centre to track orders, save favorites, and get exclusive deals on electronics."
         keywords="login, sign up, create account, world spilt centre account, electronics store login"
       />
-      <div className="min-h-screen bg-background flex relative overflow-hidden">
-        {/* Floating Icons Background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {floatingIcons.map((icon, index) => (
-            <FloatingIcon key={index} {...icon} />
-          ))}
-        </div>
-        
+      <div className="min-h-screen bg-background flex">
         {/* Left Side - Form */}
-        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 relative z-10">
+        <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
           <div className="mx-auto w-full max-w-sm">
             <Link
               to="/"
