@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, CheckCircle } from "lucide-react";
 import { z } from "zod";
+import PasswordStrengthIndicator from "@/components/PasswordStrengthIndicator";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -394,6 +395,7 @@ const Auth = () => {
                   </button>
                 </div>
                 {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                {!isLogin && <PasswordStrengthIndicator password={password} />}
               </div>
 
               <Button
