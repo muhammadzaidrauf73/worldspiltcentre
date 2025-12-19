@@ -51,6 +51,7 @@ interface ProductForm {
   is_active: boolean;
   is_new_arrival: boolean;
   is_top_seller: boolean;
+  colors: string[];
 }
 
 const emptyForm: ProductForm = {
@@ -68,7 +69,23 @@ const emptyForm: ProductForm = {
   is_active: true,
   is_new_arrival: false,
   is_top_seller: false,
+  colors: [],
 };
+
+const PRESET_COLORS = [
+  { name: "Black", value: "#000000" },
+  { name: "White", value: "#FFFFFF" },
+  { name: "Silver", value: "#C0C0C0" },
+  { name: "Gray", value: "#808080" },
+  { name: "Red", value: "#EF4444" },
+  { name: "Blue", value: "#3B82F6" },
+  { name: "Green", value: "#22C55E" },
+  { name: "Gold", value: "#EAB308" },
+  { name: "Rose Gold", value: "#E8B4B8" },
+  { name: "Navy", value: "#1E3A5F" },
+  { name: "Brown", value: "#8B4513" },
+  { name: "Beige", value: "#F5F5DC" },
+];
 
 const AdminProducts = () => {
   const queryClient = useQueryClient();
@@ -124,6 +141,7 @@ const AdminProducts = () => {
         is_active: data.is_active,
         is_new_arrival: data.is_new_arrival,
         is_top_seller: data.is_top_seller,
+        colors: data.colors,
       };
 
       if (editingId) {
@@ -229,6 +247,7 @@ const AdminProducts = () => {
       is_active: product.is_active,
       is_new_arrival: product.is_new_arrival || false,
       is_top_seller: product.is_top_seller || false,
+      colors: product.colors || [],
     });
     setIsOpen(true);
   };
@@ -565,6 +584,64 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                       onChange={(urls) => setForm({ ...form, gallery_images: urls })}
                       maxImages={8}
                     />
+                  </div>
+
+                  {/* Product Colors */}
+                  <div className="space-y-2">
+                    <Label>Product Colors</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Select available colors for this product
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_COLORS.map((color) => {
+                        const isSelected = form.colors.includes(color.value);
+                        return (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setForm({
+                                  ...form,
+                                  colors: form.colors.filter((c) => c !== color.value),
+                                });
+                              } else {
+                                setForm({
+                                  ...form,
+                                  colors: [...form.colors, color.value],
+                                });
+                              }
+                            }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? "border-primary bg-primary/10"
+                                : "border-border hover:border-muted-foreground"
+                            }`}
+                          >
+                            <span
+                              className="w-5 h-5 rounded-full border border-border shadow-sm"
+                              style={{ backgroundColor: color.value }}
+                            />
+                            <span className="text-sm">{color.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {form.colors.length > 0 && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Selected:</span>
+                        <div className="flex gap-1">
+                          {form.colors.map((color) => (
+                            <span
+                              key={color}
+                              className="w-6 h-6 rounded-full border-2 border-primary shadow-sm"
+                              style={{ backgroundColor: color }}
+                              title={PRESET_COLORS.find((c) => c.value === color)?.name || color}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

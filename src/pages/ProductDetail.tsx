@@ -36,6 +36,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   
   const inWishlist = id ? isInWishlist(id) : false;
 
@@ -311,6 +312,33 @@ const ProductDetail = () => {
 
             {/* Description */}
             <p className="text-muted-foreground">{product.description}</p>
+
+            {/* Color Selection */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-sm font-medium">Color:</span>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((color: string) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`w-10 h-10 rounded-full border-2 transition-all shadow-sm hover:scale-110 ${
+                        selectedColor === color
+                          ? "border-primary ring-2 ring-primary ring-offset-2"
+                          : "border-border"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+                {selectedColor && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {selectedColor}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">

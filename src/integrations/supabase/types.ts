@@ -462,6 +462,7 @@ export type Database = {
         Row: {
           brand: string
           category_id: string | null
+          colors: string[] | null
           created_at: string
           description: string | null
           discount_percentage: number | null
@@ -485,6 +486,7 @@ export type Database = {
         Insert: {
           brand: string
           category_id?: string | null
+          colors?: string[] | null
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
@@ -508,6 +510,7 @@ export type Database = {
         Update: {
           brand?: string
           category_id?: string | null
+          colors?: string[] | null
           created_at?: string
           description?: string | null
           discount_percentage?: number | null
