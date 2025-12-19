@@ -110,6 +110,7 @@ const Hero = () => {
                 alt={banner.title}
                 className="w-full h-full object-contain sm:object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
               />
               {/* Minimal overlay - only at bottom for button visibility */}
               <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-foreground/50 to-transparent" />
