@@ -367,7 +367,7 @@ const Navbar = () => {
                             {featuredProducts.map((product) => (
                               <Link
                                 key={product.id}
-                                to={`/products/${product.slug}`}
+                                to={`/product/${product.id}`}
                                 className="group"
                                 onClick={() => setIsMegaMenuOpen(false)}
                               >
