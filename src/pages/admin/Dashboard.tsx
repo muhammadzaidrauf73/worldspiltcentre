@@ -1,16 +1,27 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, FolderTree, ShoppingCart, Users, TrendingUp, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Package, ShoppingCart, Users, TrendingUp, DollarSign, CalendarIcon, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { format, subDays, startOfDay } from "date-fns";
+import { AreaChart, Area, XAxis, YAxis, BarChart, Bar } from "recharts";
+import { format, subDays, startOfDay, isWithinInterval } from "date-fns";
+import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 const Dashboard = () => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 6),
+    to: new Date(),
+  });
+
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["admin-stats"],
+    queryKey: ["admin-stats", dateRange],
     queryFn: async () => {
       const [productsRes, categoriesRes, ordersRes, customersRes] = await Promise.all([
         supabase.from("products").select("id", { count: "exact", head: true }),
@@ -19,18 +30,41 @@ const Dashboard = () => {
         supabase.from("profiles").select("id, created_at"),
       ]);
 
-      const totalRevenue = ordersRes.data?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
-      const pendingOrders = ordersRes.data?.filter(o => o.status === "pending").length || 0;
+      // Filter orders by date range
+      const filteredOrders = ordersRes.data?.filter(order => {
+        if (!dateRange?.from) return true;
+        const orderDate = new Date(order.created_at);
+        return isWithinInterval(orderDate, {
+          start: startOfDay(dateRange.from),
+          end: dateRange.to ? startOfDay(subDays(dateRange.to, -1)) : startOfDay(subDays(dateRange.from, -1)),
+        });
+      }) || [];
+
+      const totalRevenue = filteredOrders.reduce((sum, order) => sum + Number(order.total), 0);
+      const pendingOrders = filteredOrders.filter(o => o.status === "pending").length;
+      const completedOrders = filteredOrders.filter(o => o.status === "delivered").length;
+
+      // Filter customers by date range
+      const filteredCustomers = customersRes.data?.filter(customer => {
+        if (!dateRange?.from) return true;
+        const customerDate = new Date(customer.created_at);
+        return isWithinInterval(customerDate, {
+          start: startOfDay(dateRange.from),
+          end: dateRange.to ? startOfDay(subDays(dateRange.to, -1)) : startOfDay(subDays(dateRange.from, -1)),
+        });
+      }) || [];
 
       return {
         products: productsRes.count || 0,
         categories: categoriesRes.count || 0,
-        orders: ordersRes.data?.length || 0,
+        orders: filteredOrders.length,
         pendingOrders,
+        completedOrders,
         totalRevenue,
-        customers: customersRes.data?.length || 0,
-        ordersData: ordersRes.data || [],
-        customersData: customersRes.data || [],
+        customers: filteredCustomers.length,
+        allCustomers: customersRes.data?.length || 0,
+        ordersData: filteredOrders,
+        customersData: filteredCustomers,
       };
     },
   });
@@ -49,261 +83,364 @@ const Dashboard = () => {
     },
   });
 
-  // Generate sales trend data for last 7 days
-  const salesTrendData = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
+  // Generate chart data based on date range
+  const getDaysInRange = () => {
+    if (!dateRange?.from) return 7;
+    if (!dateRange.to) return 1;
+    return Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  };
+
+  const chartData = Array.from({ length: getDaysInRange() }, (_, i) => {
+    const date = subDays(dateRange?.to || new Date(), getDaysInRange() - 1 - i);
     const dayStart = startOfDay(date);
     const dayOrders = stats?.ordersData?.filter(order => {
       const orderDate = startOfDay(new Date(order.created_at));
       return orderDate.getTime() === dayStart.getTime();
     }) || [];
     
-    return {
-      date: format(date, "MMM d"),
-      sales: dayOrders.reduce((sum, order) => sum + Number(order.total), 0),
-      orders: dayOrders.length,
-    };
-  });
-
-  // Customer growth data
-  const customerGrowthData = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
-    const dayStart = startOfDay(date);
     const newCustomers = stats?.customersData?.filter(customer => {
       const customerDate = startOfDay(new Date(customer.created_at));
       return customerDate.getTime() === dayStart.getTime();
     }).length || 0;
-    
+
     return {
       date: format(date, "MMM d"),
+      revenue: dayOrders.reduce((sum, order) => sum + Number(order.total), 0),
+      orders: dayOrders.length,
       customers: newCustomers,
     };
   });
 
-  // Order status distribution
-  const orderStatusData = [
-    { name: "Pending", value: stats?.ordersData?.filter(o => o.status === "pending").length || 0, color: "hsl(var(--chart-1))" },
-    { name: "Processing", value: stats?.ordersData?.filter(o => o.status === "processing").length || 0, color: "hsl(var(--chart-2))" },
-    { name: "Shipped", value: stats?.ordersData?.filter(o => o.status === "shipped").length || 0, color: "hsl(var(--chart-3))" },
-    { name: "Delivered", value: stats?.ordersData?.filter(o => o.status === "delivered").length || 0, color: "hsl(var(--chart-4))" },
-    { name: "Cancelled", value: stats?.ordersData?.filter(o => o.status === "cancelled").length || 0, color: "hsl(var(--chart-5))" },
-  ].filter(item => item.value > 0);
-
-  const statCards = [
-    { title: "Total Revenue", value: `Rs.${stats?.totalRevenue.toLocaleString() || 0}`, icon: DollarSign, color: "text-green-500" },
-    { title: "Total Orders", value: stats?.orders || 0, icon: ShoppingCart, color: "text-blue-500" },
-    { title: "Total Products", value: stats?.products || 0, icon: Package, color: "text-purple-500" },
-    { title: "Total Customers", value: stats?.customers || 0, icon: Users, color: "text-orange-500" },
-  ];
+  // Order status counts
+  const orderStatusCounts = {
+    pending: stats?.ordersData?.filter(o => o.status === "pending").length || 0,
+    processing: stats?.ordersData?.filter(o => o.status === "processing").length || 0,
+    shipped: stats?.ordersData?.filter(o => o.status === "shipped").length || 0,
+    delivered: stats?.ordersData?.filter(o => o.status === "delivered").length || 0,
+    cancelled: stats?.ordersData?.filter(o => o.status === "cancelled").length || 0,
+  };
 
   const chartConfig = {
-    sales: { label: "Sales", color: "hsl(var(--chart-1))" },
-    orders: { label: "Orders", color: "hsl(var(--chart-2))" },
-    customers: { label: "Customers", color: "hsl(var(--chart-3))" },
+    revenue: { label: "Revenue", color: "hsl(142, 76%, 36%)" },
+    orders: { label: "Orders", color: "hsl(221, 83%, 53%)" },
+    customers: { label: "Customers", color: "hsl(262, 83%, 58%)" },
   };
 
-  const SimplePieTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
-    if (!active || !payload?.length) return null;
-    const item = payload[0];
-    return (
-      <div className="grid min-w-[8rem] gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
-        <div className="font-medium">{item.name}</div>
-        <div className="text-muted-foreground">{item.value}</div>
-      </div>
-    );
-  };
+  const presetRanges = [
+    { label: "7 Days", days: 7 },
+    { label: "14 Days", days: 14 },
+    { label: "30 Days", days: 30 },
+    { label: "90 Days", days: 90 },
+  ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your store analytics</p>
+        {/* Header with Date Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground">Store analytics overview</p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {presetRanges.map((preset) => (
+              <Button
+                key={preset.days}
+                variant={getDaysInRange() === preset.days ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateRange({
+                  from: subDays(new Date(), preset.days - 1),
+                  to: new Date(),
+                })}
+              >
+                {preset.label}
+              </Button>
+            ))}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    "Custom"
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {statCards.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-8 w-32" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-emerald-600">
+                    Rs.{stats?.totalRevenue.toLocaleString() || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats?.completedOrders || 0} completed orders
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Orders</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <ShoppingCart className="h-4 w-4 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-blue-600">{stats?.orders || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats?.pendingOrders || 0} pending
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 border-violet-500/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Customers</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-violet-500/20 flex items-center justify-center">
+                <Users className="h-4 w-4 text-violet-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-violet-600">+{stats?.customers || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats?.allCustomers || 0} total customers
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Products</CardTitle>
+              <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <Package className="h-4 w-4 text-orange-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-orange-600">{stats?.products || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stats?.categories || 0} categories
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Charts Row 1 */}
+        {/* Revenue Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold">Revenue Overview</CardTitle>
+                <p className="text-sm text-muted-foreground">Daily revenue for selected period</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-emerald-600">
+                  Rs.{stats?.totalRevenue.toLocaleString() || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Total revenue</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[250px] w-full" />
+            ) : (
+              <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                  <YAxis tickLine={false} axisLine={false} fontSize={11} width={60} tickFormatter={(v) => `Rs.${v}`} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="hsl(142, 76%, 36%)" 
+                    strokeWidth={2}
+                    fill="url(#revenueGradient)"
+                  />
+                </AreaChart>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Orders & Customers Charts */}
         <div className="grid gap-4 md:grid-cols-2">
-          {/* Sales Trend */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <TrendingUp className="h-4 w-4" />
-                Sales Trend (Last 7 Days)
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold">Orders</CardTitle>
+                <span className="text-2xl font-bold text-blue-600">{stats?.orders || 0}</span>
+              </div>
             </CardHeader>
-            <CardContent className="pt-0">
-              {isLoading ? (
-                <Skeleton className="h-[200px] w-full" />
-              ) : (
-                <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                  <LineChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
-                    <YAxis tickLine={false} axisLine={false} fontSize={11} width={50} tickFormatter={(value) => `${value}`} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="sales" 
-                      stroke="var(--color-sales)" 
-                      strokeWidth={2}
-                      dot={{ fill: "var(--color-sales)", r: 3 }}
-                    />
-                  </LineChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Orders Per Day */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ShoppingCart className="h-4 w-4" />
-                Orders Per Day
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {isLoading ? (
-                <Skeleton className="h-[200px] w-full" />
-              ) : (
-                <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                  <BarChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
-                    <YAxis tickLine={false} axisLine={false} fontSize={11} width={30} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="orders" fill="var(--color-orders)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ChartContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Row 2 */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* Customer Growth */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="h-4 w-4" />
-                Customer Growth
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent>
               {isLoading ? (
                 <Skeleton className="h-[180px] w-full" />
               ) : (
                 <ChartContainer config={chartConfig} className="h-[180px] w-full">
-                  <BarChart data={customerGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={10} />
                     <YAxis tickLine={false} axisLine={false} fontSize={10} width={25} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="customers" fill="var(--color-customers)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="orders" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ChartContainer>
               )}
             </CardContent>
           </Card>
 
-          {/* Order Status Distribution */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Order Status</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold">New Customers</CardTitle>
+                <span className="text-2xl font-bold text-violet-600">+{stats?.customers || 0}</span>
+              </div>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent>
               {isLoading ? (
                 <Skeleton className="h-[180px] w-full" />
-              ) : orderStatusData.length > 0 ? (
-                <div className="flex flex-col items-center">
-                  <div className="h-[130px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={orderStatusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={30}
-                          outerRadius={55}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {orderStatusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip content={<SimplePieTooltip />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
-                    {orderStatusData.map((entry) => (
-                      <div key={entry.name} className="flex items-center gap-1 text-xs">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                        <span>{entry.name}: {entry.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               ) : (
-                <div className="h-[180px] flex items-center justify-center text-muted-foreground">
-                  No order data available
+                <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={10} />
+                    <YAxis tickLine={false} axisLine={false} fontSize={10} width={25} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="customers" fill="hsl(262, 83%, 58%)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Order Status & Top Products */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Order Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : (
+                <div className="space-y-4">
+                  {[
+                    { label: "Pending", count: orderStatusCounts.pending, color: "bg-yellow-500", textColor: "text-yellow-600" },
+                    { label: "Processing", count: orderStatusCounts.processing, color: "bg-blue-500", textColor: "text-blue-600" },
+                    { label: "Shipped", count: orderStatusCounts.shipped, color: "bg-purple-500", textColor: "text-purple-600" },
+                    { label: "Delivered", count: orderStatusCounts.delivered, color: "bg-emerald-500", textColor: "text-emerald-600" },
+                    { label: "Cancelled", count: orderStatusCounts.cancelled, color: "bg-red-500", textColor: "text-red-600" },
+                  ].map((status) => {
+                    const total = stats?.orders || 1;
+                    const percentage = Math.round((status.count / total) * 100) || 0;
+                    return (
+                      <div key={status.label} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{status.label}</span>
+                          <span className={cn("font-bold", status.textColor)}>{status.count}</span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div 
+                            className={cn("h-full rounded-full transition-all", status.color)}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Top Products */}
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Package className="h-4 w-4" />
-                Popular Products
-              </CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Top Products</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent>
               {isLoading ? (
-                <Skeleton className="h-[180px] w-full" />
+                <Skeleton className="h-[200px] w-full" />
               ) : topProducts && topProducts.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {topProducts.map((product, index) => (
-                    <div key={product.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs font-medium text-muted-foreground w-4 shrink-0">
-                          {index + 1}.
-                        </span>
-                        <span className="text-sm font-medium truncate">
-                          {product.name}
-                        </span>
+                    <div key={product.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
+                        index === 0 ? "bg-yellow-500/20 text-yellow-600" :
+                        index === 1 ? "bg-gray-300/30 text-gray-600" :
+                        index === 2 ? "bg-orange-500/20 text-orange-600" :
+                        "bg-secondary text-muted-foreground"
+                      )}>
+                        {index + 1}
                       </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <div className="text-sm font-bold">Rs.{product.price.toLocaleString()}</div>
-                        <div className="text-xs text-muted-foreground">{product.reviews_count || 0} reviews</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.reviews_count || 0} reviews</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-emerald-600">Rs.{product.price.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-[180px] flex items-center justify-center text-muted-foreground">
+                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
                   No products yet
                 </div>
               )}
