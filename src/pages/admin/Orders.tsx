@@ -358,7 +358,7 @@ const AdminOrders = () => {
     return `${items[0].name} +${items.length - 1} more`;
   };
 
-  // Export orders to PNG image
+  // Export orders to PNG image with full details
   const exportOrdersToPNG = () => {
     if (orders.length === 0) {
       toast.error("No orders to export");
@@ -372,82 +372,157 @@ const AdminOrders = () => {
       return;
     }
 
-    // Calculate dimensions
     const padding = 40;
-    const rowHeight = 28;
-    const headerHeight = 50;
-    const titleHeight = 60;
-    const columnWidths = [100, 150, 180, 120, 100, 120, 150];
-    const totalWidth = columnWidths.reduce((a, b) => a + b, 0) + padding * 2;
-    const totalHeight = titleHeight + headerHeight + orders.length * rowHeight + padding * 2;
+    const lineHeight = 22;
+    const orderSpacing = 30;
+    const sectionPadding = 15;
 
-    canvas.width = totalWidth;
-    canvas.height = totalHeight;
+    // Calculate total height needed
+    let totalContentHeight = 80; // Title
+    orders.forEach((order: any) => {
+      const items = order.items as OrderItem[];
+      totalContentHeight += 120; // Order header info
+      totalContentHeight += (items?.length || 0) * 80; // Each product
+      totalContentHeight += orderSpacing;
+    });
+
+    const canvasWidth = 1200;
+    canvas.width = canvasWidth;
+    canvas.height = totalContentHeight + padding * 2;
 
     // Background
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, totalWidth, totalHeight);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Title
     ctx.fillStyle = "#1a1a1a";
-    ctx.font = "bold 24px Arial";
-    ctx.fillText(`Orders Export - ${format(new Date(), "PPP")}`, padding, padding + 30);
+    ctx.font = "bold 28px Arial";
+    ctx.fillText(`Orders Export - ${format(new Date(), "PPP")}`, padding, padding + 35);
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText(`Total Orders: ${orders.length}`, padding, padding + 60);
 
-    // Header background
-    ctx.fillStyle = "#f1f5f9";
-    ctx.fillRect(padding, padding + titleHeight, totalWidth - padding * 2, headerHeight);
+    let currentY = padding + 90;
 
-    // Headers
-    const headers = ["Order ID", "Customer", "Email", "Phone", "Status", "Total", "Date"];
-    ctx.fillStyle = "#1e293b";
-    ctx.font = "bold 13px Arial";
-    let xPos = padding + 10;
-    headers.forEach((header, i) => {
-      ctx.fillText(header, xPos, padding + titleHeight + 32);
-      xPos += columnWidths[i];
-    });
+    orders.forEach((order: any, orderIndex) => {
+      const items = order.items as OrderItem[];
+      const orderIdShort = order.id.slice(0, 8).toUpperCase();
 
-    // Draw rows
-    ctx.font = "12px Arial";
-    orders.forEach((order: any, index) => {
-      const y = padding + titleHeight + headerHeight + index * rowHeight;
+      // Order card background
+      const cardHeight = 100 + (items?.length || 0) * 75;
+      ctx.fillStyle = orderIndex % 2 === 0 ? "#f8fafc" : "#f1f5f9";
+      ctx.fillRect(padding, currentY, canvasWidth - padding * 2, cardHeight);
       
-      // Alternate row background
-      if (index % 2 === 0) {
-        ctx.fillStyle = "#f8fafc";
-        ctx.fillRect(padding, y, totalWidth - padding * 2, rowHeight);
-      }
-
-      // Row border
+      // Card border
       ctx.strokeStyle = "#e2e8f0";
-      ctx.beginPath();
-      ctx.moveTo(padding, y + rowHeight);
-      ctx.lineTo(totalWidth - padding, y + rowHeight);
-      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.strokeRect(padding, currentY, canvasWidth - padding * 2, cardHeight);
 
-      // Row data
+      // Order ID badge
+      ctx.fillStyle = "#3b82f6";
+      ctx.fillRect(padding + sectionPadding, currentY + sectionPadding, 100, 28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 13px Arial";
+      ctx.fillText(`#${orderIdShort}`, padding + sectionPadding + 10, currentY + sectionPadding + 19);
+
+      // Status badge
+      const statusColors: Record<string, string> = {
+        pending: "#eab308",
+        processing: "#3b82f6",
+        shipped: "#8b5cf6",
+        delivered: "#22c55e",
+        cancelled: "#ef4444",
+      };
+      ctx.fillStyle = statusColors[order.status] || "#6b7280";
+      ctx.fillRect(padding + sectionPadding + 110, currentY + sectionPadding, 90, 28);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 12px Arial";
+      ctx.fillText(order.status.toUpperCase(), padding + sectionPadding + 120, currentY + sectionPadding + 19);
+
+      // Date
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "12px Arial";
+      ctx.fillText(format(new Date(order.created_at), "PPP 'at' p"), padding + sectionPadding + 220, currentY + sectionPadding + 19);
+
+      // Total
+      ctx.fillStyle = "#1a1a1a";
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(`Total: Rs.${Number(order.total).toLocaleString()}`, canvasWidth - padding - sectionPadding - 180, currentY + sectionPadding + 19);
+
+      currentY += 50;
+
+      // Customer info section
       ctx.fillStyle = "#374151";
-      xPos = padding + 10;
-      const rowData = [
-        `#${order.id.slice(0, 8).toUpperCase()}`,
-        (order.customer_name || "Guest").slice(0, 18),
-        (order.customer_email || "-").slice(0, 22),
-        order.customer_phone || "-",
-        order.status.charAt(0).toUpperCase() + order.status.slice(1),
-        `Rs.${Number(order.total).toLocaleString()}`,
-        format(new Date(order.created_at), "dd/MM/yy"),
-      ];
-      
-      rowData.forEach((data, i) => {
-        ctx.fillText(data, xPos, y + 18);
-        xPos += columnWidths[i];
-      });
-    });
+      ctx.font = "bold 13px Arial";
+      ctx.fillText("Customer:", padding + sectionPadding, currentY + 5);
+      ctx.font = "13px Arial";
+      ctx.fillText(order.customer_name || "Guest", padding + sectionPadding + 80, currentY + 5);
 
-    // Border around table
-    ctx.strokeStyle = "#cbd5e1";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(padding, padding + titleHeight, totalWidth - padding * 2, headerHeight + orders.length * rowHeight);
+      ctx.font = "bold 13px Arial";
+      ctx.fillText("Email:", padding + sectionPadding + 250, currentY + 5);
+      ctx.font = "13px Arial";
+      ctx.fillText(order.customer_email || "-", padding + sectionPadding + 300, currentY + 5);
+
+      ctx.font = "bold 13px Arial";
+      ctx.fillText("Phone:", padding + sectionPadding + 550, currentY + 5);
+      ctx.font = "13px Arial";
+      ctx.fillText(order.customer_phone || "-", padding + sectionPadding + 600, currentY + 5);
+
+      currentY += lineHeight;
+
+      // Address
+      ctx.font = "bold 13px Arial";
+      ctx.fillText("Address:", padding + sectionPadding, currentY + 5);
+      ctx.font = "13px Arial";
+      const address = (order.shipping_address || "-").replace(/\n/g, ", ");
+      const maxAddressWidth = canvasWidth - padding * 2 - sectionPadding - 80;
+      ctx.fillText(address.slice(0, 120) + (address.length > 120 ? "..." : ""), padding + sectionPadding + 65, currentY + 5);
+
+      currentY += lineHeight + 10;
+
+      // Products header
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "bold 13px Arial";
+      ctx.fillText("Products:", padding + sectionPadding, currentY + 5);
+      currentY += lineHeight;
+
+      // Products
+      items?.forEach((item, itemIndex) => {
+        // Product row background
+        ctx.fillStyle = itemIndex % 2 === 0 ? "#ffffff" : "#f9fafb";
+        ctx.fillRect(padding + sectionPadding, currentY, canvasWidth - padding * 2 - sectionPadding * 2, 65);
+        
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.strokeRect(padding + sectionPadding, currentY, canvasWidth - padding * 2 - sectionPadding * 2, 65);
+
+        // Product name
+        ctx.fillStyle = "#1f2937";
+        ctx.font = "bold 13px Arial";
+        ctx.fillText(`${itemIndex + 1}. ${item.name}`, padding + sectionPadding + 10, currentY + 20);
+
+        // Quantity and price
+        ctx.font = "13px Arial";
+        ctx.fillStyle = "#4b5563";
+        ctx.fillText(`Qty: ${item.quantity}`, padding + sectionPadding + 10, currentY + 40);
+        ctx.fillText(`Price: Rs.${item.price.toLocaleString()}`, padding + sectionPadding + 80, currentY + 40);
+        ctx.fillText(`Subtotal: Rs.${(item.price * item.quantity).toLocaleString()}`, padding + sectionPadding + 220, currentY + 40);
+
+        // Specifications
+        if (item.specifications && Object.keys(item.specifications).length > 0) {
+          const specs = Object.entries(item.specifications)
+            .slice(0, 5)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(" | ");
+          ctx.fillStyle = "#6b7280";
+          ctx.font = "11px Arial";
+          ctx.fillText(`Specs: ${specs.slice(0, 100)}${specs.length > 100 ? "..." : ""}`, padding + sectionPadding + 10, currentY + 58);
+        }
+
+        currentY += 70;
+      });
+
+      currentY += orderSpacing;
+    });
 
     // Download
     const link = document.createElement("a");
