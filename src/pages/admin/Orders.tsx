@@ -358,6 +358,106 @@ const AdminOrders = () => {
     return `${items[0].name} +${items.length - 1} more`;
   };
 
+  // Export orders to PNG image
+  const exportOrdersToPNG = () => {
+    if (orders.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      toast.error("Failed to create canvas");
+      return;
+    }
+
+    // Calculate dimensions
+    const padding = 40;
+    const rowHeight = 28;
+    const headerHeight = 50;
+    const titleHeight = 60;
+    const columnWidths = [100, 150, 180, 120, 100, 120, 150];
+    const totalWidth = columnWidths.reduce((a, b) => a + b, 0) + padding * 2;
+    const totalHeight = titleHeight + headerHeight + orders.length * rowHeight + padding * 2;
+
+    canvas.width = totalWidth;
+    canvas.height = totalHeight;
+
+    // Background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, totalWidth, totalHeight);
+
+    // Title
+    ctx.fillStyle = "#1a1a1a";
+    ctx.font = "bold 24px Arial";
+    ctx.fillText(`Orders Export - ${format(new Date(), "PPP")}`, padding, padding + 30);
+
+    // Header background
+    ctx.fillStyle = "#f1f5f9";
+    ctx.fillRect(padding, padding + titleHeight, totalWidth - padding * 2, headerHeight);
+
+    // Headers
+    const headers = ["Order ID", "Customer", "Email", "Phone", "Status", "Total", "Date"];
+    ctx.fillStyle = "#1e293b";
+    ctx.font = "bold 13px Arial";
+    let xPos = padding + 10;
+    headers.forEach((header, i) => {
+      ctx.fillText(header, xPos, padding + titleHeight + 32);
+      xPos += columnWidths[i];
+    });
+
+    // Draw rows
+    ctx.font = "12px Arial";
+    orders.forEach((order: any, index) => {
+      const y = padding + titleHeight + headerHeight + index * rowHeight;
+      
+      // Alternate row background
+      if (index % 2 === 0) {
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(padding, y, totalWidth - padding * 2, rowHeight);
+      }
+
+      // Row border
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.beginPath();
+      ctx.moveTo(padding, y + rowHeight);
+      ctx.lineTo(totalWidth - padding, y + rowHeight);
+      ctx.stroke();
+
+      // Row data
+      ctx.fillStyle = "#374151";
+      xPos = padding + 10;
+      const rowData = [
+        `#${order.id.slice(0, 8).toUpperCase()}`,
+        (order.customer_name || "Guest").slice(0, 18),
+        (order.customer_email || "-").slice(0, 22),
+        order.customer_phone || "-",
+        order.status.charAt(0).toUpperCase() + order.status.slice(1),
+        `Rs.${Number(order.total).toLocaleString()}`,
+        format(new Date(order.created_at), "dd/MM/yy"),
+      ];
+      
+      rowData.forEach((data, i) => {
+        ctx.fillText(data, xPos, y + 18);
+        xPos += columnWidths[i];
+      });
+    });
+
+    // Border around table
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(padding, padding + titleHeight, totalWidth - padding * 2, headerHeight + orders.length * rowHeight);
+
+    // Download
+    const link = document.createElement("a");
+    link.download = `orders_export_${format(new Date(), "yyyy-MM-dd_HH-mm")}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    toast.success(`Exported ${orders.length} orders to PNG`);
+  };
+
   // Export orders to CSV with all details
   const exportOrdersToCSV = () => {
     if (orders.length === 0) {
@@ -508,9 +608,9 @@ const AdminOrders = () => {
             <h1 className="text-3xl font-bold text-foreground">Orders</h1>
             <p className="text-muted-foreground">View and manage customer orders</p>
           </div>
-          <Button onClick={exportOrdersToCSV} variant="outline" className="shrink-0">
+          <Button onClick={exportOrdersToPNG} variant="outline" className="shrink-0">
             <Download className="h-4 w-4 mr-2" />
-            Export All Orders
+            Export All Orders (PNG)
           </Button>
         </div>
 
