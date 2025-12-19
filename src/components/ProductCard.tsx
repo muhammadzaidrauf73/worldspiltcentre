@@ -142,28 +142,28 @@ const ProductCard = ({
           Add to Cart
         </Button>
 
-        {/* Mobile Quick Actions */}
-        <div className="flex gap-2 sm:hidden mt-2">
+        {/* Mobile Quick Actions - Full width stacked */}
+        <div className="grid grid-cols-2 gap-2 sm:hidden mt-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleWishlistClick}
             disabled={isToggling}
             className={cn(
-              "flex-1 h-10 text-xs font-medium rounded-lg touch-manipulation",
+              "h-9 text-xs font-medium rounded-lg touch-manipulation px-2",
               inWishlist && "bg-primary/10 border-primary text-primary"
             )}
           >
-            <Heart className={cn("h-4 w-4 mr-1.5", inWishlist && "fill-primary")} />
-            {inWishlist ? "Saved" : "Wishlist"}
+            <Heart className={cn("h-3.5 w-3.5 mr-1", inWishlist && "fill-primary")} />
+            <span className="truncate">{inWishlist ? "Saved" : "Wishlist"}</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-10 text-xs font-medium rounded-lg touch-manipulation"
+            className="h-9 text-xs font-medium rounded-lg touch-manipulation px-2"
           >
-            <Eye className="h-4 w-4 mr-1.5" />
-            Quick View
+            <Eye className="h-3.5 w-3.5 mr-1" />
+            <span className="truncate">Quick View</span>
           </Button>
         </div>
       </div>
