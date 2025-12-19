@@ -39,13 +39,26 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // For now, just show a success message
-    // In production, you would send this to an API or email service
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || null,
+          message: formData.message.trim()
+        });
+
+      if (error) throw error;
+
       toast.success("Thank you for your message! We'll get back to you soon.");
       setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (error) {
+      console.error('Error submitting message:', error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const whatsappNumber = settings?.whatsapp?.replace(/[^0-9]/g, '') || '923004649141';
