@@ -132,24 +132,27 @@ const Hero = () => {
           <>
             <button
               onClick={(e) => { e.preventDefault(); prevSlide(); }}
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
+              aria-label="Previous slide"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
             >
-              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+              <ChevronLeft className="h-5 w-5 text-foreground" />
             </button>
             <button
               onClick={(e) => { e.preventDefault(); nextSlide(); }}
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
+              aria-label="Next slide"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
             >
-              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+              <ChevronRight className="h-5 w-5 text-foreground" />
             </button>
 
-            {/* Dots - larger touch targets on mobile */}
-            <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+            {/* Dots - WCAG compliant touch targets (min 24x24px) */}
+            <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-20">
               {banners.map((_, index) => (
                 <button
                   key={index}
                   onClick={(e) => { e.preventDefault(); goToSlide(index); }}
-                  className={`rounded-full transition-all duration-300 min-w-[24px] min-h-[24px] sm:min-w-[20px] sm:min-h-[20px] flex items-center justify-center ${
+                  aria-label={`Go to slide ${index + 1}`}
+                  className={`rounded-full transition-all duration-300 w-6 h-6 flex items-center justify-center ${
                     index === currentSlide
                       ? "bg-primary"
                       : "bg-card/60 hover:bg-card"
