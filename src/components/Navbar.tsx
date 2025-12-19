@@ -229,8 +229,8 @@ const Navbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link to="/auth">
-                  <Button variant="ghost" size="icon" className="hidden sm:flex">
+                <Link to="/auth" aria-label="Login or Register">
+                  <Button variant="ghost" size="icon" className="hidden sm:flex" aria-label="Login or Register">
                     <User className="h-5 w-5" />
                   </Button>
                 </Link>
