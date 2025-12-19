@@ -104,30 +104,11 @@ const ReviewForm = ({ productId, onSuccess }: ReviewFormProps) => {
   }
 
   if (checkingPurchase) {
-    return (
-      <div className="bg-card rounded-lg border border-border p-6">
-        <div className="animate-pulse space-y-3">
-          <div className="h-6 bg-muted rounded w-1/3"></div>
-          <div className="h-20 bg-muted rounded"></div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (!hasPurchased) {
-    return (
-      <div className="bg-secondary/30 rounded-lg p-6 text-center">
-        <ShoppingBag className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-        <p className="font-medium text-foreground mb-1">Purchase to Review</p>
-        <p className="text-sm text-muted-foreground mb-4">
-          Only customers who have purchased this product can write a review
-        </p>
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <CheckCircle className="h-4 w-4 text-primary" />
-          <span>Verified purchases only</span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
