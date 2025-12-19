@@ -150,14 +150,14 @@ const ResetPassword = () => {
           title="Reset Password - World Spilt Centre"
           description="Set a new password for your World Spilt Centre account."
         />
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="min-h-screen bg-background flex items-center justify-center px-4 py-6">
           <div className="text-center max-w-md w-full">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground mb-6">Verifying reset link...</p>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">Verifying reset link...</p>
             
             {/* Resend email option */}
-            <div className="border-t border-border pt-6 mt-6">
-              <p className="text-sm text-muted-foreground mb-4">
+            <div className="border-t border-border pt-4 sm:pt-6 mt-4 sm:mt-6">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 Link expired or didn't receive the email?
               </p>
               {showResendForm ? (
@@ -219,15 +219,15 @@ const ResetPassword = () => {
           title="Password Reset Successful - World Spilt Centre"
           description="Your password has been reset successfully."
         />
-        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="min-h-screen bg-background flex items-center justify-center px-4 py-6">
           <div className="max-w-md w-full text-center">
-            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-8 w-8 text-accent" />
+            <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <CheckCircle className="h-6 sm:h-8 w-6 sm:w-8 text-accent" />
             </div>
-            <h1 className="text-2xl font-heading font-bold text-foreground mb-2">
+            <h1 className="text-xl sm:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
               Password Reset Successful!
             </h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
               Your password has been updated. Redirecting you to login...
             </p>
           </div>
@@ -242,38 +242,38 @@ const ResetPassword = () => {
         title="Reset Password - World Spilt Centre"
         description="Set a new password for your World Spilt Centre account."
       />
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-6">
         <div className="max-w-md w-full">
           <Link
             to="/auth"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-smooth"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 sm:mb-8 transition-smooth"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to login
           </Link>
 
-          <Link to="/" className="flex items-center gap-2 mb-8">
+          <Link to="/" className="flex items-center gap-2 mb-4 sm:mb-8">
             <img 
               src="/logo.png" 
               alt="World Spilt Centre" 
-              className="h-10 w-auto object-contain"
+              className="h-8 sm:h-10 w-auto object-contain"
             />
             <div>
-              <h1 className="font-heading font-bold text-lg text-foreground">
+              <h1 className="font-heading font-bold text-base sm:text-lg text-foreground">
                 World <span className="text-primary">Spilt</span> Centre
               </h1>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Electronics</p>
             </div>
           </Link>
 
-          <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
             Set new password
           </h2>
-          <p className="text-muted-foreground mb-8">
+          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-8">
             Enter your new password below.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password">New Password</Label>
               <div className="relative">
