@@ -146,27 +146,27 @@ const Dashboard = () => {
         <div className="grid gap-4 md:grid-cols-2">
           {/* Sales Trend */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4" />
                 Sales Trend (Last 7 Days)
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {isLoading ? (
-                <Skeleton className="h-[250px] w-full" />
+                <Skeleton className="h-[200px] w-full" />
               ) : (
-                <ChartContainer config={chartConfig} className="h-[250px]">
-                  <LineChart data={salesTrendData}>
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `Rs.${value}`} />
+                <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                  <LineChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                    <YAxis tickLine={false} axisLine={false} fontSize={11} width={50} tickFormatter={(value) => `${value}`} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Line 
                       type="monotone" 
                       dataKey="sales" 
                       stroke="var(--color-sales)" 
                       strokeWidth={2}
-                      dot={{ fill: "var(--color-sales)" }}
+                      dot={{ fill: "var(--color-sales)", r: 3 }}
                     />
                   </LineChart>
                 </ChartContainer>
@@ -176,20 +176,20 @@ const Dashboard = () => {
 
           {/* Orders Per Day */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShoppingCart className="h-4 w-4" />
                 Orders Per Day
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {isLoading ? (
-                <Skeleton className="h-[250px] w-full" />
+                <Skeleton className="h-[200px] w-full" />
               ) : (
-                <ChartContainer config={chartConfig} className="h-[250px]">
-                  <BarChart data={salesTrendData}>
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
+                <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                  <BarChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
+                    <YAxis tickLine={false} axisLine={false} fontSize={11} width={30} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="orders" fill="var(--color-orders)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -203,20 +203,20 @@ const Dashboard = () => {
         <div className="grid gap-4 md:grid-cols-3">
           {/* Customer Growth */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="h-4 w-4" />
                 Customer Growth
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {isLoading ? (
-                <Skeleton className="h-[200px] w-full" />
+                <Skeleton className="h-[180px] w-full" />
               ) : (
-                <ChartContainer config={chartConfig} className="h-[200px]">
-                  <BarChart data={customerGrowthData}>
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
+                <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                  <BarChart data={customerGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={10} />
+                    <YAxis tickLine={false} axisLine={false} fontSize={10} width={25} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Bar dataKey="customers" fill="var(--color-customers)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -227,33 +227,35 @@ const Dashboard = () => {
 
           {/* Order Status Distribution */}
           <Card>
-            <CardHeader>
-              <CardTitle>Order Status</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Order Status</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {isLoading ? (
-                <Skeleton className="h-[200px] w-full" />
+                <Skeleton className="h-[180px] w-full" />
               ) : orderStatusData.length > 0 ? (
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={orderStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={70}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {orderStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<SimplePieTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex flex-wrap justify-center gap-2 mt-2">
+                <div className="flex flex-col items-center">
+                  <div className="h-[130px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={orderStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={55}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {orderStatusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<SimplePieTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2">
                     {orderStatusData.map((entry) => (
                       <div key={entry.name} className="flex items-center gap-1 text-xs">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
@@ -263,7 +265,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                <div className="h-[180px] flex items-center justify-center text-muted-foreground">
                   No order data available
                 </div>
               )}
@@ -272,28 +274,28 @@ const Dashboard = () => {
 
           {/* Top Products */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Package className="h-4 w-4" />
                 Popular Products
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               {isLoading ? (
-                <Skeleton className="h-[200px] w-full" />
+                <Skeleton className="h-[180px] w-full" />
               ) : topProducts && topProducts.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {topProducts.map((product, index) => (
                     <div key={product.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground w-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-medium text-muted-foreground w-4 shrink-0">
                           {index + 1}.
                         </span>
-                        <span className="text-sm font-medium truncate max-w-[120px]">
+                        <span className="text-sm font-medium truncate">
                           {product.name}
                         </span>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0 ml-2">
                         <div className="text-sm font-bold">Rs.{product.price.toLocaleString()}</div>
                         <div className="text-xs text-muted-foreground">{product.reviews_count || 0} reviews</div>
                       </div>
@@ -301,7 +303,7 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                <div className="h-[180px] flex items-center justify-center text-muted-foreground">
                   No products yet
                 </div>
               )}
