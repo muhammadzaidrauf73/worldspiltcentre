@@ -418,15 +418,36 @@ const Auth = () => {
         </div>
 
         {/* Right Side - Image */}
-        <div className="hidden lg:block relative w-0 flex-1">
-          <div className="absolute inset-0 gradient-hero" />
-          <div className="absolute inset-0 flex items-center justify-center p-12">
-            <div className="text-center text-primary-foreground max-w-md">
+        <div className="hidden lg:block relative w-0 flex-1 overflow-hidden">
+          <img 
+            src="/banners/led-tv.jpg" 
+            alt="Premium Electronics" 
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-12">
+            <div className="text-white max-w-md">
               <h2 className="text-3xl font-heading font-bold mb-4">Shop Premium Electronics</h2>
-              <p className="text-primary-foreground/80">
+              <p className="text-white/80 mb-6">
                 Discover the latest in home appliances, TVs, smartphones, and more. Quality guaranteed with the best
                 after-sales service.
               </p>
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">500+</div>
+                  <div className="text-sm text-white/70">Products</div>
+                </div>
+                <div className="w-px h-10 bg-white/30" />
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">15+</div>
+                  <div className="text-sm text-white/70">Brands</div>
+                </div>
+                <div className="w-px h-10 bg-white/30" />
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">24/7</div>
+                  <div className="text-sm text-white/70">Support</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
