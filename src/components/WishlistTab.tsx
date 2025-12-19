@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +12,8 @@ import { toast } from "sonner";
 const WishlistTab = () => {
   const { user } = useAuth();
   const { toggleWishlist, isToggling } = useWishlist();
+  const queryClient = useQueryClient();
+  const [clearing, setClearing] = useState(false);
 
   const { data: wishlistProducts = [], isLoading } = useQuery({
     queryKey: ["wishlist-products", user?.id],
@@ -82,6 +85,25 @@ const WishlistTab = () => {
     toast.success(`${productName} moved to cart`);
   };
 
+  const handleClearAll = async () => {
+    if (!user) return;
+    
+    setClearing(true);
+    const { error } = await supabase
+      .from("wishlist_items")
+      .delete()
+      .eq("user_id", user.id);
+    
+    if (error) {
+      toast.error("Failed to clear wishlist");
+    } else {
+      toast.success("Wishlist cleared");
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist-products"] });
+    }
+    setClearing(false);
+  };
+
   if (isLoading) {
     return (
       <div className="bg-card rounded-lg border border-border p-6">
@@ -97,9 +119,23 @@ const WishlistTab = () => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-4">
-        My Wishlist ({wishlistProducts.length})
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-foreground">
+          My Wishlist ({wishlistProducts.length})
+        </h2>
+        {wishlistProducts.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearAll}
+            disabled={clearing}
+            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            {clearing ? "Clearing..." : "Clear All"}
+          </Button>
+        )}
+      </div>
 
       {wishlistProducts.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
