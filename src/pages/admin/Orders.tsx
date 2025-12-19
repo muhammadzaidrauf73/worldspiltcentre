@@ -85,16 +85,36 @@ const AdminOrders = () => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, order }: { id: string; status: string; order?: any }) => {
       const { error } = await supabase
         .from("orders")
         .update({ status })
         .eq("id", id);
       if (error) throw error;
+      return { id, status, order };
     },
-    onSuccess: () => {
+    onSuccess: async ({ id, status, order }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       toast.success("Order status updated");
+      
+      // Send status update email
+      if (order?.customer_email) {
+        try {
+          await supabase.functions.invoke('send-order-status-email', {
+            body: {
+              customerEmail: order.customer_email,
+              customerName: order.customer_name || 'Customer',
+              orderId: id,
+              status: status,
+              trackingNumber: order.tracking_number,
+              trackingUrl: order.tracking_url,
+            },
+          });
+          console.log("Status update email sent for:", status);
+        } catch (emailError) {
+          console.error("Failed to send status update email:", emailError);
+        }
+      }
     },
     onError: (error) => {
       toast.error("Error updating order: " + error.message);
@@ -102,7 +122,7 @@ const AdminOrders = () => {
   });
 
   const updateShippingMutation = useMutation({
-    mutationFn: async ({ id, tracking_number, tracking_url }: { id: string; tracking_number: string; tracking_url: string }) => {
+    mutationFn: async ({ id, tracking_number, tracking_url, order }: { id: string; tracking_number: string; tracking_url: string; order?: any }) => {
       const { error } = await supabase
         .from("orders")
         .update({ 
@@ -112,14 +132,34 @@ const AdminOrders = () => {
         })
         .eq("id", id);
       if (error) throw error;
+      return { id, tracking_number, tracking_url, order };
     },
-    onSuccess: () => {
+    onSuccess: async ({ id, tracking_number, tracking_url, order }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
       toast.success("Order marked as shipped with tracking info");
       setShipDialogOpen(false);
       setSelectedOrder(null);
       setTrackingNumber("");
       setTrackingUrl("");
+
+      // Send shipped email with tracking info
+      if (order?.customer_email) {
+        try {
+          await supabase.functions.invoke('send-order-status-email', {
+            body: {
+              customerEmail: order.customer_email,
+              customerName: order.customer_name || 'Customer',
+              orderId: id,
+              status: 'shipped',
+              trackingNumber: tracking_number,
+              trackingUrl: tracking_url,
+            },
+          });
+          console.log("Shipped notification email sent");
+        } catch (emailError) {
+          console.error("Failed to send shipped email:", emailError);
+        }
+      }
     },
     onError: (error) => {
       toast.error("Error updating order: " + error.message);
@@ -283,7 +323,7 @@ const AdminOrders = () => {
 
   const handleCancelOrder = () => {
     if (selectedOrder) {
-      updateStatusMutation.mutate({ id: selectedOrder.id, status: "cancelled" });
+      updateStatusMutation.mutate({ id: selectedOrder.id, status: "cancelled", order: selectedOrder });
       setCancelDialogOpen(false);
       setSelectedOrder(null);
       setCancelReason("");
@@ -295,7 +335,8 @@ const AdminOrders = () => {
       updateShippingMutation.mutate({ 
         id: selectedOrder.id, 
         tracking_number: trackingNumber.trim(),
-        tracking_url: trackingUrl.trim()
+        tracking_url: trackingUrl.trim(),
+        order: selectedOrder
       });
     }
   };
@@ -400,7 +441,7 @@ const AdminOrders = () => {
                         <Select
                           value={order.status}
                           onValueChange={(status) => 
-                            updateStatusMutation.mutate({ id: order.id, status })
+                            updateStatusMutation.mutate({ id: order.id, status, order })
                           }
                         >
                           <SelectTrigger className={`w-32 h-8 text-xs border ${statusColors[order.status]}`}>
