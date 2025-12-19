@@ -57,8 +57,7 @@ const Index = () => {
     }
   };
 
-  // Fetch categories from database
-  // Fetch categories from database
+  // Fetch categories from database with caching
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -69,9 +68,10 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch featured products from database
+  // Fetch featured products from database with caching
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -83,6 +83,7 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 3 * 60 * 1000, // Cache for 3 minutes
   });
 
   const featuredProducts = products.filter(p => p.is_featured).slice(0, 8);

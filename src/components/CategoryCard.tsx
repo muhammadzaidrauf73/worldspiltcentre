@@ -1,5 +1,6 @@
 import { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, memo } from "react";
 
 interface CategoryCardProps {
   name: string;
@@ -8,7 +9,10 @@ interface CategoryCardProps {
   image?: string;
 }
 
-const CategoryCard = ({ name, icon: Icon, count, image }: CategoryCardProps) => {
+const CategoryCard = memo(({ name, icon: Icon, count, image }: CategoryCardProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
   return (
     <Link
       to={`/products?category=${encodeURIComponent(name)}`}
@@ -16,12 +20,24 @@ const CategoryCard = ({ name, icon: Icon, count, image }: CategoryCardProps) => 
     >
       {/* Circular Image Container */}
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-border group-hover:border-primary shadow-card group-hover:shadow-lg transition-smooth">
-        {image ? (
-          <img
-            src={image}
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-smooth"
-          />
+        {image && !imageError ? (
+          <>
+            {/* Skeleton placeholder */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-secondary animate-pulse" />
+            )}
+            <img
+              src={image}
+              alt={name}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+              className={`w-full h-full object-cover group-hover:scale-110 transition-smooth ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-secondary">
             <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary group-hover:scale-110 transition-smooth" />
@@ -36,7 +52,8 @@ const CategoryCard = ({ name, icon: Icon, count, image }: CategoryCardProps) => 
       </div>
     </Link>
   );
-};
+});
+
+CategoryCard.displayName = "CategoryCard";
 
 export default CategoryCard;
-
