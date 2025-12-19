@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -358,12 +358,160 @@ const AdminOrders = () => {
     return `${items[0].name} +${items.length - 1} more`;
   };
 
+  // Export orders to CSV with all details
+  const exportOrdersToCSV = () => {
+    if (orders.length === 0) {
+      toast.error("No orders to export");
+      return;
+    }
+
+    const headers = [
+      "Order ID",
+      "Order Date",
+      "Order Time",
+      "Customer Name",
+      "Customer Email",
+      "Customer Phone",
+      "Shipping Address",
+      "Status",
+      "Products",
+      "Product Details",
+      "Total Items",
+      "Subtotal",
+      "Total Amount",
+      "Tracking Number",
+      "Tracking URL",
+    ];
+
+    const rows = orders.map((order: any) => {
+      const items = order.items as OrderItem[];
+      const productNames = items?.map(item => item.name).join("; ") || "";
+      const productDetails = items?.map(item => {
+        const specs = item.specifications 
+          ? Object.entries(item.specifications).map(([k, v]) => `${k}: ${v}`).join(", ")
+          : "";
+        return `${item.name} (Qty: ${item.quantity}, Price: Rs.${item.price}${specs ? `, ${specs}` : ""})`;
+      }).join(" | ") || "";
+      const totalItems = items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+      const subtotal = items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+
+      return [
+        order.id.slice(0, 8).toUpperCase(),
+        format(new Date(order.created_at), "yyyy-MM-dd"),
+        format(new Date(order.created_at), "HH:mm:ss"),
+        order.customer_name || "Guest",
+        order.customer_email || "",
+        order.customer_phone || "",
+        (order.shipping_address || "").replace(/,/g, ";").replace(/\n/g, " "),
+        order.status,
+        productNames.replace(/,/g, ";"),
+        productDetails.replace(/,/g, ";"),
+        totalItems.toString(),
+        subtotal.toString(),
+        Number(order.total).toString(),
+        order.tracking_number || "",
+        order.tracking_url || "",
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `orders_export_${format(new Date(), "yyyy-MM-dd_HH-mm")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Exported ${orders.length} orders to CSV`);
+  };
+
+  // Export single order to detailed format
+  const exportSingleOrder = (order: any) => {
+    const items = order.items as OrderItem[];
+    const orderIdShort = order.id.slice(0, 8).toUpperCase();
+    
+    const headers = [
+      "Field",
+      "Value",
+    ];
+
+    const orderInfo = [
+      ["Order ID", `#${orderIdShort}`],
+      ["Full Order ID", order.id],
+      ["Order Date", format(new Date(order.created_at), "yyyy-MM-dd HH:mm:ss")],
+      ["Status", order.status],
+      ["", ""],
+      ["CUSTOMER INFORMATION", ""],
+      ["Customer Name", order.customer_name || "Guest"],
+      ["Customer Email", order.customer_email || ""],
+      ["Customer Phone", order.customer_phone || ""],
+      ["Shipping Address", (order.shipping_address || "").replace(/\n/g, " ")],
+      ["", ""],
+      ["ORDER ITEMS", ""],
+    ];
+
+    // Add each item
+    items?.forEach((item, index) => {
+      orderInfo.push([`Item ${index + 1}`, item.name]);
+      orderInfo.push([`  Quantity`, item.quantity.toString()]);
+      orderInfo.push([`  Unit Price`, `Rs.${item.price.toLocaleString()}`]);
+      orderInfo.push([`  Line Total`, `Rs.${(item.price * item.quantity).toLocaleString()}`]);
+      if (item.specifications && Object.keys(item.specifications).length > 0) {
+        Object.entries(item.specifications).forEach(([key, value]) => {
+          orderInfo.push([`  ${key}`, value]);
+        });
+      }
+    });
+
+    orderInfo.push(["", ""]);
+    orderInfo.push(["TOTALS", ""]);
+    orderInfo.push(["Total Items", items?.reduce((sum, item) => sum + item.quantity, 0).toString() || "0"]);
+    orderInfo.push(["Order Total", `Rs.${Number(order.total).toLocaleString()}`]);
+    
+    if (order.tracking_number) {
+      orderInfo.push(["", ""]);
+      orderInfo.push(["SHIPPING", ""]);
+      orderInfo.push(["Tracking Number", order.tracking_number]);
+      orderInfo.push(["Tracking URL", order.tracking_url || ""]);
+    }
+
+    const csvContent = [
+      headers.join(","),
+      ...orderInfo.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `order_${orderIdShort}_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Exported order #${orderIdShort}`);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Orders</h1>
-          <p className="text-muted-foreground">View and manage customer orders</p>
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Orders</h1>
+            <p className="text-muted-foreground">View and manage customer orders</p>
+          </div>
+          <Button onClick={exportOrdersToCSV} variant="outline" className="shrink-0">
+            <Download className="h-4 w-4 mr-2" />
+            Export All Orders
+          </Button>
         </div>
 
         <div className="rounded-lg border border-border overflow-hidden">
@@ -621,6 +769,10 @@ const AdminOrders = () => {
                               <DropdownMenuItem onClick={() => handlePrintOrder(order)}>
                                 <Printer className="h-4 w-4 mr-2" />
                                 Print Order
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => exportSingleOrder(order)}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Export Order
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
