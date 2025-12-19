@@ -21,13 +21,41 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Users, Phone, MapPin, Calendar, Search, Download } from "lucide-react";
+import { Users, Phone, MapPin, Calendar, Search, Download, Mail, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
 const AdminCustomers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [orderFilter, setOrderFilter] = useState<string>("all");
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
+
+  const handleSendBulkWelcomeEmails = async () => {
+    if (!confirm("Send welcome emails to all registered users? This will send an email to every user.")) {
+      return;
+    }
+
+    setIsSendingEmails(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-bulk-welcome-emails");
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        toast.success(`Welcome emails sent! ${data.sent} sent, ${data.failed} failed out of ${data.total} users.`);
+        if (data.errors?.length > 0) {
+          console.error("Email errors:", data.errors);
+        }
+      } else {
+        throw new Error(data.error || "Failed to send emails");
+      }
+    } catch (error: any) {
+      console.error("Error sending bulk emails:", error);
+      toast.error(`Failed to send emails: ${error.message}`);
+    } finally {
+      setIsSendingEmails(false);
+    }
+  };
 
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ["admin-customers"],
@@ -131,10 +159,24 @@ const AdminCustomers = () => {
               Manage registered customers and view their order history
             </p>
           </div>
-          <Button onClick={exportToCSV} variant="outline" className="shrink-0">
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button 
+              onClick={handleSendBulkWelcomeEmails} 
+              variant="outline" 
+              disabled={isSendingEmails}
+            >
+              {isSendingEmails ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Mail className="h-4 w-4 mr-2" />
+              )}
+              Send Welcome Emails
+            </Button>
+            <Button onClick={exportToCSV} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
