@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, lazy, Suspense } from "react";
 import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,20 +8,29 @@ import Hero from "@/components/Hero";
 import FeaturesBar from "@/components/FeaturesBar";
 import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
-import CustomerReviews from "@/components/CustomerReviews";
-import FAQ from "@/components/FAQ";
-import Footer from "@/components/Footer";
-import TopSellers from "@/components/TopSellers";
-import FeaturedBrands from "@/components/FeaturedBrands";
-import NewArrivals from "@/components/NewArrivals";
-import FlashDeal from "@/components/FlashDeal";
-import Newsletter from "@/components/Newsletter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import SEO from "@/components/SEO";
 import ScrollReveal from "@/components/effects/ScrollReveal";
 import GradientBlob from "@/components/effects/GradientBlob";
+
+// Lazy load below-the-fold components for better TTI
+const FlashDeal = lazy(() => import("@/components/FlashDeal"));
+const NewArrivals = lazy(() => import("@/components/NewArrivals"));
+const FeaturedBrands = lazy(() => import("@/components/FeaturedBrands"));
+const TopSellers = lazy(() => import("@/components/TopSellers"));
+const CustomerReviews = lazy(() => import("@/components/CustomerReviews"));
+const Newsletter = lazy(() => import("@/components/Newsletter"));
+const FAQ = lazy(() => import("@/components/FAQ"));
+const Footer = lazy(() => import("@/components/Footer"));
+
+// Lightweight loading placeholder
+const SectionLoader = () => (
+  <div className="py-8 flex justify-center">
+    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+  </div>
+);
 
 const iconMap: Record<string, LucideIcon> = {
   "AirVent": AirVent,
@@ -193,7 +202,9 @@ const Index = () => {
             </section>
           </ScrollReveal>
 
-          <FlashDeal />
+          <Suspense fallback={<SectionLoader />}>
+            <FlashDeal />
+          </Suspense>
 
           {/* Hot Deals - Featured Products */}
           <ScrollReveal delay={100}>
@@ -316,25 +327,39 @@ const Index = () => {
           </ScrollReveal>
 
           <ScrollReveal delay={50}>
-            <NewArrivals />
+            <Suspense fallback={<SectionLoader />}>
+              <NewArrivals />
+            </Suspense>
           </ScrollReveal>
           
           <ScrollReveal delay={100}>
-            <FeaturedBrands />
+            <Suspense fallback={<SectionLoader />}>
+              <FeaturedBrands />
+            </Suspense>
           </ScrollReveal>
           
           <ScrollReveal delay={50}>
-            <TopSellers />
+            <Suspense fallback={<SectionLoader />}>
+              <TopSellers />
+            </Suspense>
           </ScrollReveal>
           
           <ScrollReveal delay={100}>
-            <CustomerReviews />
+            <Suspense fallback={<SectionLoader />}>
+              <CustomerReviews />
+            </Suspense>
           </ScrollReveal>
           
-          <Newsletter />
-          <FAQ />
+          <Suspense fallback={<SectionLoader />}>
+            <Newsletter />
+          </Suspense>
+          <Suspense fallback={<SectionLoader />}>
+            <FAQ />
+          </Suspense>
           </main>
-          <Footer />
+          <Suspense fallback={<SectionLoader />}>
+            <Footer />
+          </Suspense>
         </div>
       </div>
     </PullToRefresh>
