@@ -14,7 +14,8 @@ import {
   ImageIcon,
   Truck,
   Zap,
-  Settings
+  Settings,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/admin/brands", label: "Brands", icon: Tags },
   { href: "/admin/banners", label: "Banners", icon: ImageIcon },
   { href: "/admin/flash-deals", label: "Flash Deals", icon: Zap },
+  { href: "/admin/featured-sections", label: "Featured Sections", icon: Sparkles },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },

@@ -1,54 +1,48 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { Button } from "@/components/ui/button";
-
-const topSellerProducts = [
-  {
-    id: "ts1",
-    name: "Samsung Galaxy S24 Ultra",
-    brand: "Samsung",
-    price: 239999,
-    originalPrice: 279999,
-    image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=300",
-    rating: 4.9,
-    reviews: 2456,
-    badge: "Best Seller",
-  },
-  {
-    id: "ts2",
-    name: "Sony 65\" BRAVIA XR OLED TV",
-    brand: "Sony",
-    price: 359999,
-    originalPrice: 439999,
-    image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300",
-    rating: 4.8,
-    reviews: 892,
-  },
-  {
-    id: "ts3",
-    name: "Dyson V15 Detect Vacuum",
-    brand: "Dyson",
-    price: 129999,
-    originalPrice: 149999,
-    image: "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=300",
-    rating: 4.7,
-    reviews: 1234,
-  },
-  {
-    id: "ts4",
-    name: "Apple MacBook Pro 14\"",
-    brand: "Apple",
-    price: 399999,
-    originalPrice: 439999,
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300",
-    rating: 4.9,
-    reviews: 3421,
-    badge: "Top Rated",
-  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TopSellers = () => {
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["top-sellers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_active", true)
+        .eq("is_top_seller", true)
+        .order("reviews_count", { ascending: false })
+        .limit(8);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <section className="py-8 sm:py-10 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-64 sm:h-80" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!products?.length) return null;
+
   return (
     <section className="py-8 sm:py-10 bg-card">
       <div className="container mx-auto px-4">
@@ -75,9 +69,20 @@ const TopSellers = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-          {topSellerProducts.map((product, index) => (
+          {products.map((product, index) => (
             <Link key={product.id} to={`/product/${product.id}`}>
-              <ProductCard {...product} index={index} />
+              <ProductCard
+                id={product.id}
+                name={product.name}
+                brand={product.brand}
+                price={product.price}
+                originalPrice={product.original_price || undefined}
+                image={product.image_url || "/placeholder.svg"}
+                rating={product.rating || 0}
+                reviews={product.reviews_count || 0}
+                badge="Best Seller"
+                index={index}
+              />
             </Link>
           ))}
         </div>

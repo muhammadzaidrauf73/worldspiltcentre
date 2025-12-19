@@ -1,53 +1,48 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, ArrowRight } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { Button } from "@/components/ui/button";
-
-const newProducts = [
-  {
-    id: "na1",
-    name: "Samsung Bespoke AI Refrigerator",
-    brand: "Samsung",
-    price: 499999,
-    image: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=300",
-    rating: 4.8,
-    reviews: 89,
-    badge: "New",
-  },
-  {
-    id: "na2",
-    name: "LG InstaView Door-in-Door",
-    brand: "LG",
-    price: 379999,
-    image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=300",
-    rating: 4.7,
-    reviews: 156,
-    badge: "New",
-  },
-  {
-    id: "na3",
-    name: "Sony WH-1000XM5 Headphones",
-    brand: "Sony",
-    price: 69999,
-    originalPrice: 79999,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300",
-    rating: 4.9,
-    reviews: 2341,
-    badge: "New",
-  },
-  {
-    id: "na4",
-    name: "Samsung Galaxy Watch 6 Pro",
-    brand: "Samsung",
-    price: 89999,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300",
-    rating: 4.6,
-    reviews: 567,
-    badge: "New",
-  },
-];
+import { Skeleton } from "@/components/ui/skeleton";
 
 const NewArrivals = () => {
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["new-arrivals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_active", true)
+        .eq("is_new_arrival", true)
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <section className="py-8 sm:py-10 bg-secondary/30">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-64 sm:h-80" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!products?.length) return null;
+
   return (
     <section className="py-8 sm:py-10 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -74,9 +69,20 @@ const NewArrivals = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-          {newProducts.map((product, index) => (
+          {products.map((product, index) => (
             <Link key={product.id} to={`/product/${product.id}`}>
-              <ProductCard {...product} index={index} />
+              <ProductCard
+                id={product.id}
+                name={product.name}
+                brand={product.brand}
+                price={product.price}
+                originalPrice={product.original_price || undefined}
+                image={product.image_url || "/placeholder.svg"}
+                rating={product.rating || 0}
+                reviews={product.reviews_count || 0}
+                badge="New"
+                index={index}
+              />
             </Link>
           ))}
         </div>
