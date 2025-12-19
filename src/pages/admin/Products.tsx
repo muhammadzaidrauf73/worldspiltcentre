@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import ImageUpload from "@/components/admin/ImageUpload";
+import GalleryUpload from "@/components/admin/GalleryUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,7 @@ interface ProductForm {
   original_price: string;
   category_id: string;
   image_url: string;
+  gallery_images: string[];
   stock_quantity: string;
   is_featured: boolean;
   is_active: boolean;
@@ -60,6 +62,7 @@ const emptyForm: ProductForm = {
   original_price: "",
   category_id: "",
   image_url: "",
+  gallery_images: [],
   stock_quantity: "0",
   is_featured: false,
   is_active: true,
@@ -115,6 +118,7 @@ const AdminProducts = () => {
         original_price: data.original_price ? parseFloat(data.original_price) : null,
         category_id: data.category_id || null,
         image_url: data.image_url,
+        gallery_images: data.gallery_images,
         stock_quantity: parseInt(data.stock_quantity),
         is_featured: data.is_featured,
         is_active: data.is_active,
@@ -219,6 +223,7 @@ const AdminProducts = () => {
       original_price: product.original_price?.toString() || "",
       category_id: product.category_id || "",
       image_url: product.image_url || "",
+      gallery_images: product.gallery_images || [],
       stock_quantity: product.stock_quantity?.toString() || "0",
       is_featured: product.is_featured,
       is_active: product.is_active,
@@ -546,10 +551,19 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Product Image</Label>
+                    <Label>Main Product Image</Label>
                     <ImageUpload
                       value={form.image_url}
                       onChange={(url) => setForm({ ...form, image_url: url })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Gallery Images (up to 8 images)</Label>
+                    <GalleryUpload
+                      value={form.gallery_images}
+                      onChange={(urls) => setForm({ ...form, gallery_images: urls })}
+                      maxImages={8}
                     />
                   </div>
 
