@@ -80,18 +80,6 @@ const Auth = () => {
           description: error.message,
         });
       } else {
-        // Send custom branded email
-        try {
-          await supabase.functions.invoke('send-password-reset', {
-            body: {
-              email: email,
-              resetLink: `${window.location.origin}/reset-password`,
-            },
-          });
-        } catch (emailError) {
-          console.error("Custom email failed, using default:", emailError);
-        }
-        
         setResetEmailSent(true);
         toast({
           title: "Email sent!",
