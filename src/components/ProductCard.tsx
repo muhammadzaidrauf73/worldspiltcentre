@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import React, { forwardRef } from "react";
 import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
-  (
+  function ProductCard(
     {
       name,
       brand,
@@ -30,7 +30,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
       index = 0,
     },
     ref
-  ) => {
+  ) {
     const discount = originalPrice
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : 0;
@@ -134,7 +134,5 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
     );
   }
 );
-
-ProductCard.displayName = "ProductCard";
 
 export default ProductCard;

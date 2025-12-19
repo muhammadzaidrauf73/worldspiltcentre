@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import React, { forwardRef } from "react";
 import { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -10,7 +10,7 @@ interface CategoryCardProps {
 }
 
 const CategoryCard = forwardRef<HTMLAnchorElement, CategoryCardProps>(
-  ({ name, icon: Icon, count, image }, ref) => {
+  function CategoryCard({ name, icon: Icon, count, image }, ref) {
     return (
       <Link
         ref={ref}
@@ -41,7 +41,5 @@ const CategoryCard = forwardRef<HTMLAnchorElement, CategoryCardProps>(
     );
   }
 );
-
-CategoryCard.displayName = "CategoryCard";
 
 export default CategoryCard;
