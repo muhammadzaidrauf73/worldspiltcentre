@@ -1,9 +1,27 @@
 import { useState, useRef } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, X, Loader2, Plus, GripVertical } from "lucide-react";
+import { Upload, X, Loader2, Plus, GripVertical, Crop } from "lucide-react";
 import { toast } from "sonner";
+import ImageCropper from "./ImageCropper";
 
 interface GalleryUploadProps {
   value: string[];
@@ -12,6 +30,81 @@ interface GalleryUploadProps {
   bucket?: string;
   folder?: string;
 }
+
+interface SortableImageProps {
+  url: string;
+  index: number;
+  onRemove: (index: number) => void;
+}
+
+const SortableImage = ({ url, index, onRemove }: SortableImageProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: url });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative group aspect-square rounded-lg overflow-hidden border-2 bg-muted ${
+        isDragging ? "border-primary shadow-lg" : "border-border"
+      }`}
+    >
+      <img
+        src={url}
+        alt={`Gallery ${index + 1}`}
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          e.currentTarget.src = "/placeholder.svg";
+        }}
+      />
+      
+      {/* Drag Handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 left-1 p-1 bg-black/60 rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <GripVertical className="h-4 w-4 text-white" />
+      </div>
+
+      {/* Remove Button */}
+      <Button
+        type="button"
+        variant="destructive"
+        size="icon"
+        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={() => onRemove(index)}
+      >
+        <X className="h-3 w-3" />
+      </Button>
+
+      {/* Main Badge */}
+      {index === 0 && (
+        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] rounded font-medium">
+          Main
+        </span>
+      )}
+
+      {/* Order Badge */}
+      <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">
+        {index + 1}
+      </span>
+    </div>
+  );
+};
 
 const GalleryUpload = ({
   value = [],
@@ -22,7 +115,32 @@ const GalleryUpload = ({
 }: GalleryUploadProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [currentCropFile, setCurrentCropFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = value.indexOf(active.id as string);
+      const newIndex = value.indexOf(over.id as string);
+      const newOrder = arrayMove(value, oldIndex, newIndex);
+      onChange(newOrder);
+      toast.success("Image order updated");
+    }
+  };
 
   const handleFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -40,8 +158,8 @@ const GalleryUpload = ({
         toast.error(`${file.name} is not an image file`);
         return false;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} is larger than 5MB`);
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} is larger than 10MB`);
         return false;
       }
       return true;
@@ -49,64 +167,97 @@ const GalleryUpload = ({
 
     if (validFiles.length === 0) return;
 
+    // Add to crop queue
+    setCropQueue(validFiles);
+    setCurrentCropFile(validFiles[0]);
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setIsUploading(true);
+
+    try {
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, croppedBlob, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: "image/jpeg",
+        });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
+
+      onChange([...value, urlData.publicUrl]);
+      toast.success("Image uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+
+    // Move to next file in queue
+    const nextQueue = cropQueue.slice(1);
+    setCropQueue(nextQueue);
+    setCurrentCropFile(nextQueue[0] || null);
+  };
+
+  const handleCropCancel = () => {
+    // Skip current file and move to next
+    const nextQueue = cropQueue.slice(1);
+    setCropQueue(nextQueue);
+    setCurrentCropFile(nextQueue[0] || null);
+  };
+
+  const handleSkipCrop = async () => {
+    if (!currentCropFile) return;
+
     setIsUploading(true);
     setUploadProgress(0);
 
-    const uploadedUrls: string[] = [];
-
     try {
-      for (let i = 0; i < validFiles.length; i++) {
-        const file = validFiles[i];
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileExt = currentCropFile.name.split(".").pop();
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        const { data, error } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, currentCropFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const { data: urlData } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(data.path);
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
 
-        uploadedUrls.push(urlData.publicUrl);
-        setUploadProgress(Math.round(((i + 1) / validFiles.length) * 100));
-      }
-
-      onChange([...value, ...uploadedUrls]);
-      toast.success(`${uploadedUrls.length} image(s) uploaded successfully`);
+      onChange([...value, urlData.publicUrl]);
+      toast.success("Image uploaded successfully");
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload images: " + error.message);
+      toast.error("Failed to upload image: " + error.message);
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
     }
+
+    // Move to next file in queue
+    const nextQueue = cropQueue.slice(1);
+    setCropQueue(nextQueue);
+    setCurrentCropFile(nextQueue[0] || null);
   };
 
   const handleRemove = (index: number) => {
     const newUrls = value.filter((_, i) => i !== index);
-    onChange(newUrls);
-  };
-
-  const handleMoveUp = (index: number) => {
-    if (index === 0) return;
-    const newUrls = [...value];
-    [newUrls[index - 1], newUrls[index]] = [newUrls[index], newUrls[index - 1]];
-    onChange(newUrls);
-  };
-
-  const handleMoveDown = (index: number) => {
-    if (index === value.length - 1) return;
-    const newUrls = [...value];
-    [newUrls[index], newUrls[index + 1]] = [newUrls[index + 1], newUrls[index]];
     onChange(newUrls);
   };
 
@@ -132,51 +283,45 @@ const GalleryUpload = ({
         id="gallery-upload"
       />
 
-      {/* Image Grid */}
+      {/* Image Cropper Dialog */}
+      {currentCropFile && (
+        <ImageCropper
+          imageFile={currentCropFile}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+          maxWidth={800}
+          maxHeight={800}
+        />
+      )}
+
+      {/* Sortable Image Grid */}
       {value.length > 0 && (
-        <div className="grid grid-cols-4 gap-2">
-          {value.map((url, index) => (
-            <div
-              key={index}
-              className="relative group aspect-square rounded-lg overflow-hidden border border-border bg-muted"
-            >
-              <img
-                src={url}
-                alt={`Gallery ${index + 1}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/placeholder.svg";
-                }}
-              />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-white hover:bg-white/20"
-                  onClick={() => handleMoveUp(index)}
-                  disabled={index === 0}
-                >
-                  <GripVertical className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => handleRemove(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              {index === 0 && (
-                <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-primary text-primary-foreground text-[10px] rounded">
-                  Main
-                </span>
-              )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={value} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-4 gap-2">
+              {value.map((url, index) => (
+                <SortableImage
+                  key={url}
+                  url={url}
+                  index={index}
+                  onRemove={handleRemove}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      {/* Info text */}
+      {value.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Drag images to reorder. First image will be the main product image.
+        </p>
       )}
 
       {/* Upload Area */}
@@ -191,20 +336,21 @@ const GalleryUpload = ({
             <div className="flex flex-col items-center">
               <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
               <p className="mt-2 text-sm text-muted-foreground">
-                Uploading... {uploadProgress}%
+                Uploading...
               </p>
             </div>
           ) : (
             <div className="flex flex-col items-center">
               <div className="flex items-center gap-2">
                 <Upload className="h-5 w-5 text-muted-foreground" />
+                <Crop className="h-4 w-4 text-muted-foreground" />
                 <Plus className="h-4 w-4 text-muted-foreground" />
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
                 Click to add images ({value.length}/{maxImages})
               </p>
               <p className="text-xs text-muted-foreground">
-                Select multiple images at once
+                Images will be cropped before upload
               </p>
             </div>
           )}
