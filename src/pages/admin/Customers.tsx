@@ -26,17 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Users, Phone, MapPin, Calendar, Search, Download, Mail, Loader2, 
-  ChevronDown, ChevronUp, Package, Eye, ShoppingBag, User
+  Package, Eye, ShoppingBag, User
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -67,7 +62,6 @@ const AdminCustomers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [orderFilter, setOrderFilter] = useState<string>("all");
   const [isSendingEmails, setIsSendingEmails] = useState(false);
-  const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
 
   const handleSendBulkWelcomeEmails = async () => {
@@ -310,10 +304,8 @@ const AdminCustomers = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-[50px]"></TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead className="hidden md:table-cell">Contact</TableHead>
-                <TableHead className="hidden lg:table-cell">Address</TableHead>
                 <TableHead>Orders</TableHead>
                 <TableHead>Total Spent</TableHead>
                 <TableHead className="hidden md:table-cell">Joined</TableHead>
@@ -324,10 +316,8 @@ const AdminCustomers = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
                     <TableCell><Skeleton className="h-10 w-40" /></TableCell>
                     <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-40" /></TableCell>
-                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
@@ -336,160 +326,77 @@ const AdminCustomers = () => {
                 ))
               ) : filteredCustomers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     No customers found.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredCustomers.map((customer: any) => {
                   const stats = customerStats[customer.id] || { count: 0, total: 0 };
-                  const customerOrders = ordersByCustomer[customer.id] || [];
-                  const isExpanded = expandedCustomer === customer.id;
 
                   return (
-                    <Collapsible key={customer.id} open={isExpanded} onOpenChange={() => setExpandedCustomer(isExpanded ? null : customer.id)}>
-                      <TableRow className={isExpanded ? "bg-muted/30" : ""}>
-                        <TableCell>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={customerOrders.length === 0}>
-                              {isExpanded ? (
-                                <ChevronUp className="h-4 w-4" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </CollapsibleTrigger>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-12 w-12 border-2 border-primary/20">
-                              <AvatarImage src={customer.avatar_url} alt={customer.full_name || "Customer"} />
-                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                {(customer.full_name || customer.email || "U").charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-semibold text-foreground">
-                                {customer.full_name || "No name"}
-                              </p>
-                              <p className="text-xs text-muted-foreground md:hidden truncate max-w-[150px]">
-                                {customer.email || "No email"}
-                              </p>
-                            </div>
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 border-2 border-primary/20">
+                            <AvatarImage src={customer.avatar_url} alt={customer.full_name || "Customer"} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                              {(customer.full_name || customer.email || "U").charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-foreground">
+                              {customer.full_name || "No name"}
+                            </p>
+                            <p className="text-xs text-muted-foreground md:hidden truncate max-w-[150px]">
+                              {customer.email || "No email"}
+                            </p>
                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="space-y-1">
-                            {customer.email && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="truncate max-w-[180px]">{customer.email}</span>
-                              </div>
-                            )}
-                            {customer.phone && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Phone className="h-3.5 w-3.5" />
-                                {customer.phone}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {customer.address ? (
-                            <div className="flex items-start gap-2 text-sm text-muted-foreground max-w-[200px]">
-                              <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                              <span className="line-clamp-2">{customer.address}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="space-y-1">
+                          {customer.email && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="truncate max-w-[180px]">{customer.email}</span>
                             </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={stats.count > 0 ? "default" : "secondary"} className="font-medium">
-                            {stats.count} orders
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-semibold text-primary">
-                            Rs.{stats.total.toLocaleString()}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {format(new Date(customer.created_at), "MMM d, yyyy")}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedCustomer(customer)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-
-                      {/* Expanded Order Details */}
-                      <CollapsibleContent asChild>
-                        <TableRow className="bg-muted/20 hover:bg-muted/20">
-                          <TableCell colSpan={8} className="p-0">
-                            <div className="p-4 space-y-3">
-                              <h4 className="font-semibold text-sm flex items-center gap-2">
-                                <ShoppingBag className="h-4 w-4" />
-                                Order History ({customerOrders.length} orders)
-                              </h4>
-                              <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                                {customerOrders.map((order) => {
-                                  const orderItems = parseOrderItems(order.items);
-                                  return (
-                                    <div key={order.id} className="bg-card border border-border rounded-lg p-3">
-                                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
-                                        <div className="flex items-center gap-3">
-                                          <span className="font-mono text-xs text-muted-foreground">
-                                            #{order.id.slice(0, 8).toUpperCase()}
-                                          </span>
-                                          <Badge className={getStatusColor(order.status)}>
-                                            {order.status}
-                                          </Badge>
-                                          <span className="text-xs text-muted-foreground">
-                                            {format(new Date(order.created_at), "MMM d, yyyy h:mm a")}
-                                          </span>
-                                        </div>
-                                        <span className="font-semibold text-primary">
-                                          Rs.{Number(order.total).toLocaleString()}
-                                        </span>
-                                      </div>
-                                      
-                                      {/* Order Items */}
-                                      <div className="flex flex-wrap gap-2 mt-2">
-                                        {orderItems.slice(0, 4).map((item, idx) => (
-                                          <div key={idx} className="flex items-center gap-2 bg-muted/50 rounded px-2 py-1">
-                                            {item.image_url && (
-                                              <img src={item.image_url} alt={item.name} className="h-6 w-6 object-cover rounded" />
-                                            )}
-                                            <span className="text-xs">
-                                              {item.name} x{item.quantity}
-                                            </span>
-                                          </div>
-                                        ))}
-                                        {orderItems.length > 4 && (
-                                          <span className="text-xs text-muted-foreground self-center">
-                                            +{orderItems.length - 4} more
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                          {customer.phone && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone className="h-3.5 w-3.5" />
+                              {customer.phone}
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      </CollapsibleContent>
-                    </Collapsible>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={stats.count > 0 ? "default" : "secondary"} className="font-medium">
+                          {stats.count}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-semibold text-primary">
+                          Rs.{stats.total.toLocaleString()}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {format(new Date(customer.created_at), "MMM d, yyyy")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedCustomer(customer)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
