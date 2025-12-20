@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,8 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface Profile {
@@ -42,6 +50,7 @@ const Account = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const activeTab = searchParams.get("tab") || "profile";
   
@@ -52,6 +61,11 @@ const Account = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  
+  // Cancel order state
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   // Fetch user orders
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
@@ -68,6 +82,66 @@ const Account = () => {
     },
     enabled: !!user,
   });
+
+  // Fetch cancellation requests
+  const { data: cancellationRequests = [] } = useQuery({
+    queryKey: ["cancellation-requests", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("order_cancellation_requests")
+        .select("*")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // Cancel request mutation
+  const cancelRequestMutation = useMutation({
+    mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
+      const { error } = await supabase
+        .from("order_cancellation_requests")
+        .insert({
+          order_id: orderId,
+          user_id: user!.id,
+          reason: reason.trim(),
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cancellation-requests"] });
+      toast({
+        title: "Request submitted",
+        description: "Your cancellation request has been submitted. We'll review it shortly.",
+      });
+      setCancelDialogOpen(false);
+      setCancelReason("");
+      setSelectedOrderId(null);
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to submit cancellation request. Please try again.",
+      });
+    },
+  });
+
+  const handleCancelRequest = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setCancelDialogOpen(true);
+  };
+
+  const submitCancelRequest = () => {
+    if (!selectedOrderId || !cancelReason.trim()) return;
+    cancelRequestMutation.mutate({ orderId: selectedOrderId, reason: cancelReason });
+  };
+
+  const getCancellationStatus = (orderId: string) => {
+    return cancellationRequests.find((req: any) => req.order_id === orderId);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -366,6 +440,44 @@ const Account = () => {
                               </div>
                             </div>
                           )}
+
+                          {/* Cancel Order Button */}
+                          {(order.status === "pending" || order.status === "processing") && (
+                            <div className="mt-4 pt-4 border-t border-border">
+                              {(() => {
+                                const cancelRequest = getCancellationStatus(order.id);
+                                if (cancelRequest) {
+                                  return (
+                                    <div className={`p-3 rounded-lg text-sm ${
+                                      cancelRequest.status === 'pending' 
+                                        ? 'bg-yellow-500/10 text-yellow-700 border border-yellow-500/20'
+                                        : cancelRequest.status === 'approved'
+                                        ? 'bg-green-500/10 text-green-700 border border-green-500/20'
+                                        : 'bg-red-500/10 text-red-700 border border-red-500/20'
+                                    }`}>
+                                      <p className="font-medium">
+                                        Cancellation {cancelRequest.status === 'pending' ? 'Requested' : cancelRequest.status.charAt(0).toUpperCase() + cancelRequest.status.slice(1)}
+                                      </p>
+                                      {cancelRequest.admin_notes && (
+                                        <p className="mt-1 text-xs opacity-80">{cancelRequest.admin_notes}</p>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                                    onClick={() => handleCancelRequest(order.id)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Request Cancellation
+                                  </Button>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -380,6 +492,43 @@ const Account = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Cancel Order Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Order Cancellation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Please tell us why you'd like to cancel this order. Our team will review your request and get back to you.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="cancel-reason">Reason for cancellation *</Label>
+              <Textarea
+                id="cancel-reason"
+                placeholder="E.g., Changed my mind, found a better price, ordered by mistake..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={submitCancelRequest}
+              disabled={!cancelReason.trim() || cancelRequestMutation.isPending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {cancelRequestMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Submit Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <Footer />
     </div>
