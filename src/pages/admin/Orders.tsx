@@ -40,7 +40,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon, Search, Filter } from "lucide-react";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon, Search, Filter, Clock, RefreshCw, XCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -176,6 +177,29 @@ const AdminOrders = () => {
   };
   
   const hasActiveFilters = filterStatus !== "all" || filterStartDate || filterEndDate || searchQuery.trim();
+
+  // Calculate order status counts for statistics cards
+  const orderStatusCounts = {
+    pending: orders.filter((o: any) => o.status === "pending").length,
+    processing: orders.filter((o: any) => o.status === "processing").length,
+    shipped: orders.filter((o: any) => o.status === "shipped").length,
+    delivered: orders.filter((o: any) => o.status === "delivered").length,
+    cancelled: orders.filter((o: any) => o.status === "cancelled").length,
+    total: orders.length,
+  };
+
+  const getPercentage = (count: number) => {
+    if (orderStatusCounts.total === 0) return 0;
+    return Math.round((count / orderStatusCounts.total) * 100);
+  };
+
+  const statusCardConfig = [
+    { key: "pending", label: "Pending", icon: Clock, color: "text-yellow-600", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/30" },
+    { key: "processing", label: "Processing", icon: RefreshCw, color: "text-blue-600", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/30" },
+    { key: "shipped", label: "Shipped", icon: Truck, color: "text-purple-600", bgColor: "bg-purple-500/10", borderColor: "border-purple-500/30" },
+    { key: "delivered", label: "Delivered", icon: CheckCircle, color: "text-green-600", bgColor: "bg-green-500/10", borderColor: "border-green-500/30" },
+    { key: "cancelled", label: "Cancelled", icon: XCircle, color: "text-red-600", bgColor: "bg-red-500/10", borderColor: "border-red-500/30" },
+  ];
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, order, notes }: { id: string; status: string; order?: any; notes?: string }) => {
@@ -957,7 +981,53 @@ const AdminOrders = () => {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+        </Dialog>
+        </div>
+
+        {/* Order Statistics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {isLoading ? (
+            <>
+              {[...Array(5)].map((_, i) => (
+                <Card key={i} className="border">
+                  <CardContent className="p-4">
+                    <Skeleton className="h-4 w-16 mb-3" />
+                    <Skeleton className="h-8 w-12 mb-1" />
+                    <Skeleton className="h-3 w-20" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : (
+            statusCardConfig.map((config) => {
+              const count = orderStatusCounts[config.key as keyof typeof orderStatusCounts] as number;
+              const Icon = config.icon;
+              return (
+                <Card 
+                  key={config.key} 
+                  className={cn(
+                    "border cursor-pointer transition-all hover:shadow-md",
+                    config.borderColor,
+                    filterStatus === config.key && "ring-2 ring-offset-2 ring-primary"
+                  )}
+                  onClick={() => setFilterStatus(filterStatus === config.key ? "all" : config.key)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground font-medium">{config.label}</span>
+                      <div className={cn("p-1.5 rounded-full", config.bgColor)}>
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                      </div>
+                    </div>
+                    <div className={cn("text-2xl font-bold", config.color)}>{count}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {getPercentage(count)}% of total
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
 
         {/* Filter Bar */}
