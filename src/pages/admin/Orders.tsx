@@ -72,6 +72,7 @@ const AdminOrders = () => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [shipDialogOpen, setShipDialogOpen] = useState(false);
   const [editSpecsDialogOpen, setEditSpecsDialogOpen] = useState(false);
+  const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
   const [editingSpecs, setEditingSpecs] = useState<Record<string, string>>({});
@@ -81,6 +82,8 @@ const AdminOrders = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportStartDate, setExportStartDate] = useState<Date | undefined>(undefined);
   const [exportEndDate, setExportEndDate] = useState<Date | undefined>(undefined);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusNote, setStatusNote] = useState("");
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -117,17 +120,36 @@ const AdminOrders = () => {
   };
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status, order }: { id: string; status: string; order?: any }) => {
+    mutationFn: async ({ id, status, order, notes }: { id: string; status: string; order?: any; notes?: string }) => {
       const { error } = await supabase
         .from("orders")
         .update({ status })
         .eq("id", id);
       if (error) throw error;
+      
+      // Update the status history with notes if provided
+      if (notes) {
+        await supabase
+          .from("order_status_history")
+          .update({ notes })
+          .eq("order_id", id)
+          .eq("status", status)
+          .order("created_at", { ascending: false })
+          .limit(1);
+      }
+      
       return { id, status, order };
     },
     onSuccess: async ({ id, status, order }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order-status-history"] });
       toast.success("Order status updated");
+      
+      // Close the dialog and reset state
+      setStatusChangeDialogOpen(false);
+      setSelectedOrder(null);
+      setNewStatus("");
+      setStatusNote("");
       
       // Send status update email
       if (order?.customer_email) {
@@ -153,6 +175,29 @@ const AdminOrders = () => {
     },
   });
 
+  const openStatusChangeDialog = (order: any, status: string) => {
+    // For shipped status, use the ship dialog instead
+    if (status === "shipped") {
+      openShipDialog(order);
+      return;
+    }
+    setSelectedOrder(order);
+    setNewStatus(status);
+    setStatusNote("");
+    setStatusChangeDialogOpen(true);
+  };
+
+  const handleStatusChange = () => {
+    if (selectedOrder && newStatus) {
+      updateStatusMutation.mutate({ 
+        id: selectedOrder.id, 
+        status: newStatus, 
+        order: selectedOrder,
+        notes: statusNote.trim() || undefined
+      });
+    }
+  };
+
   const updateShippingMutation = useMutation({
     mutationFn: async ({ id, tracking_number, tracking_url, order }: { id: string; tracking_number: string; tracking_url: string; order?: any }) => {
       const { error } = await supabase
@@ -168,6 +213,7 @@ const AdminOrders = () => {
     },
     onSuccess: async ({ id, tracking_number, tracking_url, order }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order-status-history"] });
       toast.success("Order marked as shipped with tracking info");
       setShipDialogOpen(false);
       setSelectedOrder(null);
@@ -892,9 +938,7 @@ const AdminOrders = () => {
                       <TableCell>
                         <Select
                           value={order.status}
-                          onValueChange={(status) => 
-                            updateStatusMutation.mutate({ id: order.id, status, order })
-                          }
+                          onValueChange={(status) => openStatusChangeDialog(order, status)}
                         >
                           <SelectTrigger className={`w-32 h-8 text-xs border ${statusColors[order.status]}`}>
                             <SelectValue />
@@ -1276,6 +1320,53 @@ const AdminOrders = () => {
               disabled={updateItemSpecsMutation.isPending}
             >
               Save Specifications
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Change Dialog with Notes */}
+      <Dialog open={statusChangeDialogOpen} onOpenChange={setStatusChangeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Order Status</DialogTitle>
+            <DialogDescription>
+              Change order #{selectedOrder?.id?.slice(0, 8)} status to <span className="font-semibold capitalize">{newStatus}</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[selectedOrder?.status || "pending"]}`}>
+                {selectedOrder?.status}
+              </span>
+              <span className="text-muted-foreground">→</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[newStatus] || "bg-muted"}`}>
+                {newStatus}
+              </span>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status-note">Add a note (optional)</Label>
+              <Textarea
+                id="status-note"
+                placeholder="E.g., Customer requested expedited processing, Item verified and packed..."
+                value={statusNote}
+                onChange={(e) => setStatusNote(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                This note will appear in the order tracking timeline visible to the customer.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusChangeDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleStatusChange}
+              disabled={updateStatusMutation.isPending}
+            >
+              {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
             </Button>
           </DialogFooter>
         </DialogContent>
