@@ -7,13 +7,20 @@ section, footer, header, nav, main {
   contain: layout style;
 }
 
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Optimize font loading */
 @import "@fontsource/dm-sans/400.css";
 @import "@fontsource/dm-sans/500.css";
-@import "@fontsource/dm-sans/600.css";
 @import "@fontsource/dm-sans/700.css";
-@import "@fontsource/outfit/400.css";
 @import "@fontsource/outfit/500.css";
-@import "@fontsource/outfit/600.css";
 @import "@fontsource/outfit/700.css";
 
 @layer base {
@@ -280,7 +287,12 @@ section, footer, header, nav, main {
   }
 
   .animate-ticker {
-    animation: ticker 20s linear infinite;
+    animation: ticker 25s linear infinite;
+  }
+  
+  /* GPU-accelerated animations */
+  .will-change-transform {
+    will-change: transform;
   }
 
   @keyframes slideIn {
@@ -335,21 +347,7 @@ section, footer, header, nav, main {
     }
   }
 
-  /* Floating blob animation */
-  @keyframes blob-float {
-    0%, 100% {
-      transform: translate(0, 0) scale(1);
-    }
-    25% {
-      transform: translate(20px, -20px) scale(1.05);
-    }
-    50% {
-      transform: translate(-10px, 10px) scale(0.95);
-    }
-    75% {
-      transform: translate(-20px, -10px) scale(1.02);
-    }
-  }
+  /* Removed blob-float animation for performance */
 
   /* Shimmer effect for cards */
   .shimmer-effect {
@@ -452,27 +450,7 @@ section, footer, header, nav, main {
   }
 
   .animate-counter-up {
-    animation: counter-up 0.6s ease-out forwards;
-  }
-
-  /* Staggered fade in */
-  .stagger-fade > * {
-    opacity: 0;
-    animation: fade-in 0.5s ease-out forwards;
-  }
-
-  .stagger-fade > *:nth-child(1) { animation-delay: 0.1s; }
-  .stagger-fade > *:nth-child(2) { animation-delay: 0.2s; }
-  .stagger-fade > *:nth-child(3) { animation-delay: 0.3s; }
-  .stagger-fade > *:nth-child(4) { animation-delay: 0.4s; }
-  .stagger-fade > *:nth-child(5) { animation-delay: 0.5s; }
-  .stagger-fade > *:nth-child(6) { animation-delay: 0.6s; }
-  .stagger-fade > *:nth-child(7) { animation-delay: 0.7s; }
-  .stagger-fade > *:nth-child(8) { animation-delay: 0.8s; }
-
-  @keyframes fade-in {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
+    animation: counter-up 0.5s ease-out forwards;
   }
 
   /* Floating animation for auth page icons */

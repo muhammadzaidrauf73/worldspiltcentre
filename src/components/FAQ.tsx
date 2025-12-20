@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DOMPurify from "dompurify";
@@ -7,10 +8,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Skeleton } from "@/components/ui/skeleton";
 import { HelpCircle } from "lucide-react";
 
-const FAQ = () => {
+const FAQ = memo(() => {
   const { data: faqs = [], isLoading } = useQuery({
     queryKey: ["faqs"],
     queryFn: async () => {
@@ -30,13 +30,13 @@ const FAQ = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <Skeleton className="w-10 h-10 rounded-full mx-auto mb-3" />
-              <Skeleton className="h-6 w-48 mx-auto mb-2" />
-              <Skeleton className="h-4 w-32 mx-auto" />
+              <div className="w-10 h-10 rounded-full bg-muted mx-auto mb-3 animate-pulse" />
+              <div className="h-6 w-48 bg-muted mx-auto mb-2 rounded animate-pulse" />
+              <div className="h-4 w-32 bg-muted mx-auto rounded animate-pulse" />
             </div>
             <div className="space-y-2">
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                <div key={i} className="h-16 w-full bg-muted rounded-lg animate-pulse" />
               ))}
             </div>
           </div>
@@ -83,6 +83,8 @@ const FAQ = () => {
       </div>
     </section>
   );
-};
+});
+
+FAQ.displayName = "FAQ";
 
 export default FAQ;

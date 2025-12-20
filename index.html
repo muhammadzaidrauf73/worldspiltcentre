@@ -60,31 +60,34 @@
     }
     </script>
 
-    <!-- Preload LCP hero banner image -->
-    <link rel="preload" as="image" href="/banners/washing-machine.jpg" fetchpriority="high" />
-    
     <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://eyjyknyeknlpfgkiccyk.supabase.co" crossorigin />
     
     <!-- DNS Prefetch for external images -->
-    <link rel="dns-prefetch" href="https://pngimg.com" />
-    <link rel="dns-prefetch" href="https://e7.pngegg.com" />
-    <link rel="dns-prefetch" href="https://pel.com.pk" />
-    <link rel="dns-prefetch" href="https://encrypted-tbn0.gstatic.com" />
-    <link rel="dns-prefetch" href="https://fischerpk.com" />
-    <link rel="dns-prefetch" href="https://png.pngtree.com" />
-    <link rel="dns-prefetch" href="https://orient.com.pk" />
-    <link rel="dns-prefetch" href="https://i.pinimg.com" />
-    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://eyjyknyeknlpfgkiccyk.supabase.co" />
 
     <!-- Performance hints -->
     <meta http-equiv="x-dns-prefetch-control" content="on" />
+
+    <!-- Critical CSS for faster FCP -->
+    <style>
+      /* Critical inline styles for initial render */
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+      #root { min-height: 100vh; }
+      .loading-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #fafafa; }
+      @media (prefers-color-scheme: dark) { .loading-screen { background: #1a1a1f; } }
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="loading-screen" aria-label="Loading">
+        <svg width="40" height="40" viewBox="0 0 40 40" style="animation: spin 1s linear infinite;">
+          <circle cx="20" cy="20" r="18" fill="none" stroke="#f97316" stroke-width="3" stroke-dasharray="90 30" stroke-linecap="round"/>
+        </svg>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

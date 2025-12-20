@@ -130,9 +130,12 @@ const Hero = memo(() => {
               <img
                 src={banner.image_url}
                 alt={banner.title}
+                width={1200}
+                height={400}
                 className="w-full h-full object-contain sm:object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
                 fetchPriority={index === 0 ? "high" : "auto"}
+                decoding={index === 0 ? "sync" : "async"}
               />
               {/* Minimal overlay - only at bottom for button visibility */}
               <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-foreground/50 to-transparent" />
