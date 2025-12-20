@@ -214,6 +214,26 @@ const AdminOrders = () => {
         }
       }
       
+      // Send email notification for status change
+      if (order?.customer_email) {
+        try {
+          await supabase.functions.invoke("send-order-status-email", {
+            body: {
+              customerEmail: order.customer_email,
+              customerName: order.customer_name || "Customer",
+              orderId: id,
+              status: status,
+              trackingNumber: order.tracking_number,
+              trackingUrl: order.tracking_url,
+            },
+          });
+          console.log("Order status email sent successfully");
+        } catch (emailError) {
+          console.error("Failed to send status email:", emailError);
+          // Don't fail the status update if email fails
+        }
+      }
+      
       return { id, status, order };
     },
     onSuccess: async ({ id, status, order }) => {
