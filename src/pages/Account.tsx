@@ -350,7 +350,31 @@ const Account = () => {
               ) : (
                 <div className="space-y-4">
                   {orders.map((order: any) => {
-                    const items = order.items as OrderItem[];
+                    // Handle different order item formats
+                    const rawItems = order.items;
+                    let items: OrderItem[] = [];
+                    
+                    if (Array.isArray(rawItems)) {
+                      // Items is directly an array
+                      items = rawItems.map((item: any) => ({
+                        id: item.id || item.product_id,
+                        name: item.name || item.product_name || 'Product',
+                        price: Number(item.price) || 0,
+                        quantity: item.quantity || 1,
+                        image_url: item.image_url,
+                      }));
+                    } else if (rawItems && typeof rawItems === 'object') {
+                      // Items might be wrapped in a products property (with coupon info)
+                      const productItems = rawItems.products || [];
+                      items = productItems.map((item: any) => ({
+                        id: item.id || item.product_id,
+                        name: item.name || item.product_name || 'Product',
+                        price: Number(item.price) || 0,
+                        quantity: item.quantity || 1,
+                        image_url: item.image_url,
+                      }));
+                    }
+                    
                     return (
                       <div key={order.id} className="border border-border rounded-lg overflow-hidden">
                         {/* Order Header */}
