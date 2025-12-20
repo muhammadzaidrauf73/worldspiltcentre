@@ -248,39 +248,34 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // Create order
+      // Create standardized order items format
       const orderItems = cartItems.map(item => ({
-        id: item.product_id,
-        name: item.products?.name,
+        product_id: item.product_id,
+        name: item.products?.name || 'Product',
         quantity: item.quantity,
-        price: item.products?.price,
-        image_url: item.products?.image_url,
-        specifications: item.products?.specifications || {},
+        price: Number(item.products?.price) || 0,
+        image_url: item.products?.image_url || null,
       }));
 
+      // Build order data with consistent structure
       const orderData: any = {
         user_id: user.id,
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
         shipping_address: formData.address,
-        items: orderItems,
-        total: total,
-        status: "pending",
-      };
-
-      // Add coupon info to order items for tracking
-      if (appliedCoupon) {
-        orderData.items = {
+        items: {
           products: orderItems,
-          coupon: {
+          coupon: appliedCoupon ? {
             code: appliedCoupon.code,
             discount_type: appliedCoupon.discount_type,
             discount_value: appliedCoupon.discount_value,
             discount_amount: discount,
-          },
-        };
-      }
+          } : null,
+        },
+        total: total,
+        status: "pending",
+      };
 
       const { data: orderResult, error: orderError } = await supabase
         .from("orders")
