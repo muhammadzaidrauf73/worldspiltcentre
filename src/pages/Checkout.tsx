@@ -333,10 +333,15 @@ const Checkout = () => {
           body: {
             customerEmail: formData.email,
             customerName: formData.name,
+            customerPhone: formData.phone,
             orderId: orderResult.id,
             items: emailItems,
             total: total,
             shippingAddress: formData.address,
+            coupon: appliedCoupon ? {
+              code: appliedCoupon.code,
+              discount: discount,
+            } : null,
           },
         });
         console.log("Order confirmation email sent");
