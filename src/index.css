@@ -7,12 +7,13 @@ section, footer, header, nav, main {
   contain: layout style;
 }
 
-/* Reduced motion support */
+/* Reduced motion support - respects user preference */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .animate-spin,
+  .animate-pulse,
+  .animate-ticker,
+  .animate-float {
+    animation: none !important;
   }
 }
 

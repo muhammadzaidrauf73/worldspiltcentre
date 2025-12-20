@@ -31,7 +31,10 @@ export function usePullToRefresh({
     const diff = currentY - startY.current;
     
     if (diff > 0 && window.scrollY === 0) {
-      e.preventDefault();
+      // Only prevent default if we're actually pulling down
+      if (diff > 10) {
+        e.preventDefault();
+      }
       const distance = Math.min(diff * 0.5, maxPull);
       setPullDistance(distance);
     }
@@ -61,7 +64,9 @@ export function usePullToRefresh({
     const container = containerRef.current;
     if (!container) return;
 
+    // Use passive: true for touchstart for better scroll performance
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    // touchmove needs passive: false only when we need to prevent default
     container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
 
