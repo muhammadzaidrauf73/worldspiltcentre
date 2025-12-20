@@ -19,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2 } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download } from "lucide-react";
 import { format } from "date-fns";
 
 interface Profile {
@@ -76,6 +76,7 @@ const Account = () => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [downloadingInvoice, setDownloadingInvoice] = useState<string | null>(null);
 
   // Fetch user orders
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
@@ -147,6 +148,51 @@ const Account = () => {
   const submitCancelRequest = () => {
     if (!selectedOrderId || !cancelReason.trim()) return;
     cancelRequestMutation.mutate({ orderId: selectedOrderId, reason: cancelReason });
+  };
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    setDownloadingInvoice(orderId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please sign in to download invoice.",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("generate-invoice", {
+        body: { orderId },
+      });
+
+      if (error) throw error;
+
+      if (data?.pdf) {
+        // Create download link
+        const link = document.createElement("a");
+        link.href = data.pdf;
+        link.download = data.filename || `invoice-${orderId.slice(0, 8)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Invoice downloaded",
+          description: "Your invoice has been downloaded successfully.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error downloading invoice:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to download invoice. Please try again.",
+      });
+    } finally {
+      setDownloadingInvoice(null);
+    }
   };
 
   const getCancellationStatus = (orderId: string) => {
@@ -405,9 +451,25 @@ const Account = () => {
                               <span className="font-semibold text-primary">Rs.{Number(order.total).toLocaleString()}</span>
                             </div>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[order.status] || 'bg-muted'}`}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownloadInvoice(order.id)}
+                              disabled={downloadingInvoice === order.id}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              {downloadingInvoice === order.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                              <span className="ml-1 hidden sm:inline">Invoice</span>
+                            </Button>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[order.status] || 'bg-muted'}`}>
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </span>
+                          </div>
                         </div>
                         
                         {/* Order Items */}
