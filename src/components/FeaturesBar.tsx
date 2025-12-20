@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import GIF icons
 import lowestPriceIcon from "@/assets/features/lowest-price.gif";
@@ -16,23 +17,27 @@ const features = [
 ];
 
 const FeaturesBar = memo(() => {
-  // Duplicate features for seamless loop
-  const duplicatedFeatures = [...features, ...features];
+  const isMobile = useIsMobile();
+  
+  // Duplicate features for seamless loop on mobile
+  const displayFeatures = isMobile ? [...features, ...features] : features;
 
   return (
     <div className="bg-card border-b border-border py-3 md:py-4 overflow-hidden relative">
-      {/* Left fade gradient */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
-      
-      {/* Right fade gradient */}
-      <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
+      {/* Fade gradients only on mobile */}
+      {isMobile && (
+        <>
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
+        </>
+      )}
       
       <div className="relative">
-        <div className="flex animate-ticker hover:pause-animation will-change-transform">
-          {duplicatedFeatures.map((feature, index) => (
+        <div className={`flex ${isMobile ? 'animate-ticker hover:pause-animation will-change-transform' : 'justify-center gap-2'}`}>
+          {displayFeatures.map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 md:gap-4 px-5 md:px-10 shrink-0"
+              className={`flex items-center gap-3 md:gap-4 shrink-0 ${isMobile ? 'px-5' : 'px-4 lg:px-6'}`}
             >
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 p-1.5">
                 <img 
