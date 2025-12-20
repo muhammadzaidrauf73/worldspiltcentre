@@ -1,12 +1,18 @@
 import { memo } from "react";
-import { Truck, Tag, RotateCcw, Shield, Headphones } from "lucide-react";
+
+// Import GIF icons
+import lowestPriceIcon from "@/assets/features/lowest-price.gif";
+import customerSupportIcon from "@/assets/features/customer-support.gif";
+import securePaymentIcon from "@/assets/features/secure-payment.gif";
+import returnIcon from "@/assets/features/7-day-return.gif";
+import fastShippingIcon from "@/assets/features/fast-shipping.gif";
 
 const features = [
-  { icon: Headphones, text: "Customer Support", subtext: "Quick Response" },
-  { icon: Tag, text: "Lowest Price", subtext: "Guaranteed" },
-  { icon: Truck, text: "Fast Shipping", subtext: "Nationwide Delivery" },
-  { icon: RotateCcw, text: "7 Days Return", subtext: "T&C Apply" },
-  { icon: Shield, text: "Secure Payments", subtext: "T&C Apply" },
+  { icon: customerSupportIcon, text: "24/7 Support", subtext: "Quick Response" },
+  { icon: lowestPriceIcon, text: "Lowest Price", subtext: "Guaranteed" },
+  { icon: fastShippingIcon, text: "Fast Shipping", subtext: "Nationwide Delivery" },
+  { icon: returnIcon, text: "7 Days Return", subtext: "T&C Apply" },
+  { icon: securePaymentIcon, text: "Secure Payments", subtext: "100% Protected" },
 ];
 
 const FeaturesBar = memo(() => {
@@ -14,7 +20,7 @@ const FeaturesBar = memo(() => {
   const duplicatedFeatures = [...features, ...features];
 
   return (
-    <div className="bg-card border-b border-border py-2 md:py-4 overflow-hidden relative">
+    <div className="bg-card border-b border-border py-3 md:py-4 overflow-hidden relative">
       {/* Left fade gradient */}
       <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
       
@@ -26,14 +32,19 @@ const FeaturesBar = memo(() => {
           {duplicatedFeatures.map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 md:gap-3 px-4 md:px-8 shrink-0"
+              className="flex items-center gap-3 md:gap-4 px-5 md:px-10 shrink-0"
             >
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <feature.icon className="h-4 w-4 md:h-4.5 md:w-4.5 text-primary" />
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 p-1.5">
+                <img 
+                  src={feature.icon} 
+                  alt={feature.text}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                />
               </div>
               <div>
-                <p className="font-semibold text-foreground text-xs md:text-sm whitespace-nowrap">{feature.text}</p>
-                <p className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">{feature.subtext}</p>
+                <p className="font-semibold text-foreground text-sm md:text-base whitespace-nowrap">{feature.text}</p>
+                <p className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">{feature.subtext}</p>
               </div>
             </div>
           ))}
