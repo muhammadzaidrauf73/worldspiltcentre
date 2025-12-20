@@ -40,7 +40,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon } from "lucide-react";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -84,6 +84,12 @@ const AdminOrders = () => {
   const [exportEndDate, setExportEndDate] = useState<Date | undefined>(undefined);
   const [newStatus, setNewStatus] = useState("");
   const [statusNote, setStatusNote] = useState("");
+  
+  // Filter state
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStartDate, setFilterStartDate] = useState<Date | undefined>(undefined);
+  const [filterEndDate, setFilterEndDate] = useState<Date | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -97,7 +103,50 @@ const AdminOrders = () => {
     },
   });
 
-  // Get filtered orders based on date range
+  // Get filtered orders for display
+  const getDisplayFilteredOrders = () => {
+    let filtered = orders;
+    
+    // Filter by status
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((order: any) => order.status === filterStatus);
+    }
+    
+    // Filter by date range
+    if (filterStartDate || filterEndDate) {
+      filtered = filtered.filter((order: any) => {
+        const orderDate = new Date(order.created_at);
+        if (filterStartDate && filterEndDate) {
+          return isWithinInterval(orderDate, {
+            start: startOfDay(filterStartDate),
+            end: endOfDay(filterEndDate),
+          });
+        }
+        if (filterStartDate) {
+          return orderDate >= startOfDay(filterStartDate);
+        }
+        if (filterEndDate) {
+          return orderDate <= endOfDay(filterEndDate);
+        }
+        return true;
+      });
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((order: any) => 
+        order.id.toLowerCase().includes(query) ||
+        order.customer_name?.toLowerCase().includes(query) ||
+        order.customer_email?.toLowerCase().includes(query) ||
+        order.customer_phone?.includes(query)
+      );
+    }
+    
+    return filtered;
+  };
+
+  // Get filtered orders based on export date range (for export functionality)
   const getFilteredOrders = () => {
     if (!exportStartDate && !exportEndDate) return orders;
     
@@ -118,6 +167,15 @@ const AdminOrders = () => {
       return true;
     });
   };
+  
+  const clearFilters = () => {
+    setFilterStatus("all");
+    setFilterStartDate(undefined);
+    setFilterEndDate(undefined);
+    setSearchQuery("");
+  };
+  
+  const hasActiveFilters = filterStatus !== "all" || filterStartDate || filterEndDate || searchQuery.trim();
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, order, notes }: { id: string; status: string; order?: any; notes?: string }) => {
@@ -864,6 +922,106 @@ const AdminOrders = () => {
           </Dialog>
         </div>
 
+        {/* Filter Bar */}
+        <div className="flex flex-wrap items-center gap-3 p-4 bg-card rounded-lg border border-border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Filter className="h-4 w-4" />
+            <span>Filters:</span>
+          </div>
+          
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+          
+          {/* Status Filter */}
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {/* Date Range Filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-9 justify-start text-left font-normal",
+                  !filterStartDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {filterStartDate ? format(filterStartDate, "MMM d") : "Start date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={filterStartDate}
+                onSelect={setFilterStartDate}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <span className="text-muted-foreground">to</span>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-9 justify-start text-left font-normal",
+                  !filterEndDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {filterEndDate ? format(filterEndDate, "MMM d") : "End date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={filterEndDate}
+                onSelect={setFilterEndDate}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+              <X className="h-4 w-4 mr-1" />
+              Clear
+            </Button>
+          )}
+          
+          {/* Results count */}
+          <div className="ml-auto text-sm text-muted-foreground">
+            {getDisplayFilteredOrders().length} of {orders.length} orders
+          </div>
+        </div>
+
         <div className="rounded-lg border border-border overflow-hidden">
           <Table>
             <TableHeader>
@@ -890,14 +1048,14 @@ const AdminOrders = () => {
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   </TableRow>
                 ))
-              ) : orders.length === 0 ? (
+              ) : getDisplayFilteredOrders().length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No orders yet
+                    {hasActiveFilters ? "No orders match the current filters" : "No orders yet"}
                   </TableCell>
                 </TableRow>
               ) : (
-                orders.map((order: any) => {
+                getDisplayFilteredOrders().map((order: any) => {
                   const items = order.items as OrderItem[];
                   return (
                     <TableRow key={order.id} className="hover:bg-muted/30">
