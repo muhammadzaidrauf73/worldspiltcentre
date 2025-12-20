@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WishlistTab from "@/components/WishlistTab";
+import { OrderTimeline } from "@/components/OrderTimeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +19,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download, ChevronDown, Clock } from "lucide-react";
 import { format } from "date-fns";
 
 interface Profile {
@@ -538,6 +544,24 @@ const Account = () => {
                               </div>
                             </div>
                           )}
+
+                          {/* Order Status Timeline */}
+                          <div className="mt-4 pt-4 border-t border-border">
+                            <Collapsible>
+                              <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground hover:text-foreground">
+                                  <span className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4" />
+                                    Order Status Timeline
+                                  </span>
+                                  <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </Button>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <OrderTimeline orderId={order.id} />
+                              </CollapsibleContent>
+                            </Collapsible>
+                          </div>
 
                           {/* Cancel Order Button */}
                           {(order.status === "pending" || order.status === "processing") && (
