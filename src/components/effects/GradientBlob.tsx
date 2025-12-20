@@ -1,10 +1,12 @@
+import { memo } from "react";
+
 interface GradientBlobProps {
   className?: string;
   color?: "primary" | "accent";
   size?: "sm" | "md" | "lg";
 }
 
-const GradientBlob = ({ 
+const GradientBlob = memo(({ 
   className = "", 
   color = "primary",
   size = "md" 
@@ -16,18 +18,18 @@ const GradientBlob = ({
   };
 
   const colorClasses = {
-    primary: "from-primary/30 via-primary/20 to-transparent",
-    accent: "from-accent/30 via-accent/20 to-transparent",
+    primary: "from-primary/20 via-primary/10 to-transparent",
+    accent: "from-accent/20 via-accent/10 to-transparent",
   };
 
   return (
     <div
-      className={`absolute rounded-full bg-gradient-radial blur-3xl animate-pulse pointer-events-none ${sizeClasses[size]} ${colorClasses[color]} ${className}`}
-      style={{
-        animation: "blob-float 8s ease-in-out infinite",
-      }}
+      className={`absolute rounded-full bg-gradient-radial blur-3xl pointer-events-none will-change-transform ${sizeClasses[size]} ${colorClasses[color]} ${className}`}
+      aria-hidden="true"
     />
   );
-};
+});
+
+GradientBlob.displayName = "GradientBlob";
 
 export default GradientBlob;
