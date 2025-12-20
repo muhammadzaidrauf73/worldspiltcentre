@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Check, Clock, Package, Truck, XCircle, CircleDot } from "lucide-react";
@@ -25,6 +26,8 @@ const statusConfig: Record<string, { icon: React.ElementType; label: string; col
 };
 
 export function OrderTimeline({ orderId }: OrderTimelineProps) {
+  const queryClient = useQueryClient();
+  
   const { data: history, isLoading } = useQuery({
     queryKey: ["order-status-history", orderId],
     queryFn: async () => {
@@ -38,6 +41,31 @@ export function OrderTimeline({ orderId }: OrderTimelineProps) {
       return data as StatusHistoryItem[];
     },
   });
+
+  // Subscribe to real-time updates for this order's status history
+  useEffect(() => {
+    const channel = supabase
+      .channel(`order-status-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_status_history',
+          filter: `order_id=eq.${orderId}`,
+        },
+        (payload) => {
+          console.log('Order status update received:', payload);
+          // Invalidate and refetch the query when changes occur
+          queryClient.invalidateQueries({ queryKey: ["order-status-history", orderId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orderId, queryClient]);
 
   if (isLoading) {
     return (
