@@ -179,21 +179,39 @@ const AdminOrders = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, order, notes }: { id: string; status: string; order?: any; notes?: string }) => {
+      // Update the order status (this triggers the auto-note via database trigger)
       const { error } = await supabase
         .from("orders")
         .update({ status })
         .eq("id", id);
       if (error) throw error;
       
-      // Update the status history with notes if provided
+      // If admin provided custom notes, append them to the auto-generated note
       if (notes) {
-        await supabase
+        // Wait a moment for the trigger to create the history entry
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get the latest history entry for this order and status
+        const { data: historyEntry } = await supabase
           .from("order_status_history")
-          .update({ notes })
+          .select("id, notes")
           .eq("order_id", id)
           .eq("status", status)
           .order("created_at", { ascending: false })
-          .limit(1);
+          .limit(1)
+          .single();
+        
+        if (historyEntry) {
+          // Combine auto-note with custom note
+          const combinedNote = historyEntry.notes 
+            ? `${historyEntry.notes} - ${notes}`
+            : notes;
+          
+          await supabase
+            .from("order_status_history")
+            .update({ notes: combinedNote })
+            .eq("id", historyEntry.id);
+        }
       }
       
       return { id, status, order };
