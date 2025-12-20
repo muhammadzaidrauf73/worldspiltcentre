@@ -73,6 +73,7 @@ const AdminReviews = lazy(() => import("./pages/admin/Reviews"));
 const AdminMessages = lazy(() => import("./pages/admin/Messages"));
 const AdminCoupons = lazy(() => import("./pages/admin/Coupons"));
 const AdminCouponAnalytics = lazy(() => import("./pages/admin/CouponAnalytics"));
+const AdminCancellationRequests = lazy(() => import("./pages/admin/CancellationRequests"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -139,6 +140,7 @@ const App = () => (
               <Route path="/admin/messages" element={<AdminMessages />} />
               <Route path="/admin/coupons" element={<AdminCoupons />} />
               <Route path="/admin/coupon-analytics" element={<AdminCouponAnalytics />} />
+              <Route path="/admin/cancellation-requests" element={<AdminCancellationRequests />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

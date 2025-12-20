@@ -21,7 +21,8 @@ import {
   Users,
   MessageSquare,
   Ticket,
-  BarChart3
+  BarChart3,
+  XCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/admin/flash-deals", label: "Flash Deals", icon: Zap },
   { href: "/admin/featured-sections", label: "Featured Sections", icon: Sparkles },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/cancellation-requests", label: "Cancellations", icon: XCircle },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { href: "/admin/messages", label: "Messages", icon: Mail },
