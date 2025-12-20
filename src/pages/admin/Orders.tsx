@@ -40,11 +40,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon, Search, Filter, Clock, RefreshCw, XCircle } from "lucide-react";
+import { Eye, MoreHorizontal, Printer, X, Truck, CheckCircle, Package, AlertCircle, ExternalLink, MapPin, Pencil, Plus, Trash2, Download, CalendarIcon, Search, Filter, Clock, RefreshCw, XCircle, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, subWeeks, startOfWeek, endOfWeek } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -179,6 +179,19 @@ const AdminOrders = () => {
   const hasActiveFilters = filterStatus !== "all" || filterStartDate || filterEndDate || searchQuery.trim();
 
   // Calculate order status counts for statistics cards
+  const now = new Date();
+  const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const thisWeekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+  const lastWeekEnd = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+
+  const getOrdersInRange = (status: string, start: Date, end: Date) => {
+    return orders.filter((o: any) => {
+      const orderDate = new Date(o.created_at);
+      return o.status === status && isWithinInterval(orderDate, { start, end });
+    }).length;
+  };
+
   const orderStatusCounts = {
     pending: orders.filter((o: any) => o.status === "pending").length,
     processing: orders.filter((o: any) => o.status === "processing").length,
@@ -186,6 +199,20 @@ const AdminOrders = () => {
     delivered: orders.filter((o: any) => o.status === "delivered").length,
     cancelled: orders.filter((o: any) => o.status === "cancelled").length,
     total: orders.length,
+  };
+
+  // Calculate this week vs last week trends
+  const getTrend = (status: string) => {
+    const thisWeek = getOrdersInRange(status, thisWeekStart, thisWeekEnd);
+    const lastWeek = getOrdersInRange(status, lastWeekStart, lastWeekEnd);
+    
+    if (lastWeek === 0) {
+      return thisWeek > 0 ? { change: 100, direction: "up" as const } : { change: 0, direction: "neutral" as const };
+    }
+    
+    const change = Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
+    const direction = change > 0 ? "up" as const : change < 0 ? "down" as const : "neutral" as const;
+    return { change: Math.abs(change), direction };
   };
 
   const getPercentage = (count: number) => {
@@ -1001,7 +1028,13 @@ const AdminOrders = () => {
           ) : (
             statusCardConfig.map((config) => {
               const count = orderStatusCounts[config.key as keyof typeof orderStatusCounts] as number;
+              const trend = getTrend(config.key);
               const Icon = config.icon;
+              const TrendIcon = trend.direction === "up" ? TrendingUp : trend.direction === "down" ? TrendingDown : Minus;
+              const trendColor = config.key === "cancelled" 
+                ? (trend.direction === "up" ? "text-red-500" : trend.direction === "down" ? "text-green-500" : "text-muted-foreground")
+                : (trend.direction === "up" ? "text-green-500" : trend.direction === "down" ? "text-red-500" : "text-muted-foreground");
+              
               return (
                 <Card 
                   key={config.key} 
@@ -1019,9 +1052,17 @@ const AdminOrders = () => {
                         <Icon className={cn("h-4 w-4", config.color)} />
                       </div>
                     </div>
-                    <div className={cn("text-2xl font-bold", config.color)}>{count}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {getPercentage(count)}% of total
+                    <div className="flex items-end justify-between">
+                      <div className={cn("text-2xl font-bold", config.color)}>{count}</div>
+                      {trend.change > 0 && (
+                        <div className={cn("flex items-center gap-0.5 text-xs font-medium", trendColor)}>
+                          <TrendIcon className="h-3 w-3" />
+                          <span>{trend.change}%</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {getPercentage(count)}% of total · vs last week
                     </div>
                   </CardContent>
                 </Card>
