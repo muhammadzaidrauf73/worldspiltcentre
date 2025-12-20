@@ -30,11 +30,21 @@ interface Profile {
 }
 
 interface OrderItem {
-  id: string;
+  product_id: string;
   name: string;
   price: number;
   quantity: number;
-  image_url?: string;
+  image_url?: string | null;
+}
+
+interface OrderData {
+  products: OrderItem[];
+  coupon?: {
+    code: string;
+    discount_type: string;
+    discount_value: number;
+    discount_amount: number;
+  } | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -350,29 +360,31 @@ const Account = () => {
               ) : (
                 <div className="space-y-4">
                   {orders.map((order: any) => {
-                    // Handle different order item formats
+                    // Handle different order item formats for backward compatibility
                     const rawItems = order.items;
                     let items: OrderItem[] = [];
+                    let couponInfo = null;
                     
                     if (Array.isArray(rawItems)) {
-                      // Items is directly an array
+                      // Legacy: items is directly an array
                       items = rawItems.map((item: any) => ({
-                        id: item.id || item.product_id,
+                        product_id: item.product_id || item.id || '',
                         name: item.name || item.product_name || 'Product',
                         price: Number(item.price) || 0,
                         quantity: item.quantity || 1,
-                        image_url: item.image_url,
+                        image_url: item.image_url || null,
                       }));
                     } else if (rawItems && typeof rawItems === 'object') {
-                      // Items might be wrapped in a products property (with coupon info)
+                      // New standardized format: { products: [...], coupon: {...} }
                       const productItems = rawItems.products || [];
                       items = productItems.map((item: any) => ({
-                        id: item.id || item.product_id,
+                        product_id: item.product_id || item.id || '',
                         name: item.name || item.product_name || 'Product',
                         price: Number(item.price) || 0,
                         quantity: item.quantity || 1,
-                        image_url: item.image_url,
+                        image_url: item.image_url || null,
                       }));
+                      couponInfo = rawItems.coupon || null;
                     }
                     
                     return (
