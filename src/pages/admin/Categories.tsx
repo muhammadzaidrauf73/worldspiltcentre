@@ -52,7 +52,9 @@ const AdminCategories = () => {
   const [form, setForm] = useState<CategoryForm>(emptyForm);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
-  const [stockQuantity, setStockQuantity] = useState("");
+  const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
+  const [productStocks, setProductStocks] = useState<Record<string, string>>({});
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [bulkStockDialogOpen, setBulkStockDialogOpen] = useState(false);
   const [bulkStockQuantity, setBulkStockQuantity] = useState("");
 
@@ -146,12 +148,15 @@ const AdminCategories = () => {
   });
 
   const updateStockMutation = useMutation({
-    mutationFn: async ({ categoryId, quantity }: { categoryId: string; quantity: number }) => {
-      const { error } = await supabase
-        .from("products")
-        .update({ stock_quantity: quantity })
-        .eq("category_id", categoryId);
-      if (error) throw error;
+    mutationFn: async (updates: { id: string; stock_quantity: number }[]) => {
+      // Update each product individually
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("products")
+          .update({ stock_quantity: update.stock_quantity })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
@@ -159,7 +164,8 @@ const AdminCategories = () => {
       toast.success(`Stock updated for all products in ${selectedCategory?.name}`);
       setStockDialogOpen(false);
       setSelectedCategory(null);
-      setStockQuantity("");
+      setCategoryProducts([]);
+      setProductStocks({});
     },
     onError: (error) => {
       toast.error("Error updating stock: " + error.message);
@@ -167,17 +173,52 @@ const AdminCategories = () => {
   });
 
   const handleUpdateStock = () => {
-    if (!selectedCategory || !stockQuantity) return;
-    updateStockMutation.mutate({
-      categoryId: selectedCategory.id,
-      quantity: parseInt(stockQuantity) || 0,
-    });
+    if (!selectedCategory || categoryProducts.length === 0) return;
+    const updates = categoryProducts.map((product) => ({
+      id: product.id,
+      stock_quantity: parseInt(productStocks[product.id] || "0") || 0,
+    }));
+    updateStockMutation.mutate(updates);
   };
 
-  const openStockDialog = (category: any) => {
+  const openStockDialog = async (category: any) => {
     setSelectedCategory(category);
-    setStockQuantity("");
+    setLoadingProducts(true);
     setStockDialogOpen(true);
+    
+    // Fetch products for this category
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, stock_quantity")
+      .eq("category_id", category.id)
+      .order("name");
+    
+    if (error) {
+      toast.error("Error loading products");
+      setLoadingProducts(false);
+      return;
+    }
+    
+    setCategoryProducts(data || []);
+    // Initialize stock values
+    const stocks: Record<string, string> = {};
+    (data || []).forEach((p: any) => {
+      stocks[p.id] = (p.stock_quantity || 0).toString();
+    });
+    setProductStocks(stocks);
+    setLoadingProducts(false);
+  };
+
+  const handleProductStockChange = (productId: string, value: string) => {
+    setProductStocks((prev) => ({ ...prev, [productId]: value }));
+  };
+
+  const setAllStocksToValue = (value: string) => {
+    const newStocks: Record<string, string> = {};
+    categoryProducts.forEach((p) => {
+      newStocks[p.id] = value;
+    });
+    setProductStocks(newStocks);
   };
 
   const bulkUpdateStockMutation = useMutation({
@@ -410,38 +451,70 @@ const AdminCategories = () => {
           </Table>
         </div>
 
-        {/* Stock Update Dialog */}
-        <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
-          <DialogContent className="max-w-sm">
+        {/* Stock Update Dialog - Per Product */}
+        <Dialog open={stockDialogOpen} onOpenChange={(open) => {
+          setStockDialogOpen(open);
+          if (!open) {
+            setSelectedCategory(null);
+            setCategoryProducts([]);
+            setProductStocks({});
+          }
+        }}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Update Stock for {selectedCategory?.name}</DialogTitle>
               <DialogDescription>
-                Set the stock quantity for all {selectedCategory?.product_count || 0} products in this category.
+                Update stock quantity for each product individually.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="stock-quantity">Stock Quantity</Label>
-                <Input
-                  id="stock-quantity"
-                  type="number"
-                  min="0"
-                  placeholder="Enter stock quantity"
-                  value={stockQuantity}
-                  onChange={(e) => setStockQuantity(e.target.value)}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setStockDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleUpdateStock}
-                  disabled={!stockQuantity || updateStockMutation.isPending}
-                >
-                  {updateStockMutation.isPending ? "Updating..." : "Update All"}
-                </Button>
-              </div>
+            
+            {loadingProducts ? (
+              <div className="py-8 text-center text-muted-foreground">Loading products...</div>
+            ) : categoryProducts.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">No products in this category</div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <Label className="text-sm whitespace-nowrap">Set all to:</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Value"
+                    className="w-24"
+                    onChange={(e) => {
+                      if (e.target.value) setAllStocksToValue(e.target.value);
+                    }}
+                  />
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-2 py-2 max-h-[300px]">
+                  {categoryProducts.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between gap-4 py-2 border-b border-border/50">
+                      <span className="text-sm font-medium truncate flex-1" title={product.name}>
+                        {product.name}
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        className="w-24"
+                        value={productStocks[product.id] || "0"}
+                        onChange={(e) => handleProductStockChange(product.id, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setStockDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateStock}
+                disabled={categoryProducts.length === 0 || updateStockMutation.isPending}
+              >
+                {updateStockMutation.isPending ? "Saving..." : `Save All (${categoryProducts.length})`}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
