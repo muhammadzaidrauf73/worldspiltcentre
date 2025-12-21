@@ -140,23 +140,23 @@ const Index = () => {
 
               {/* Horizontal Scroll Container with Buttons */}
               <div className="relative group">
-                {/* Left Scroll Button - visible on mobile/laptop, hidden on xl+ desktop */}
+                {/* Left Scroll Button - visible on mobile only */}
                 <Button
                   variant="outline"
                   size="icon"
                   aria-label="Scroll categories left"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex xl:hidden"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border flex md:hidden"
                   onClick={() => scrollCategories('left')}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
 
-                {/* Right Scroll Button - visible on mobile/laptop, hidden on xl+ desktop */}
+                {/* Right Scroll Button - visible on mobile only */}
                 <Button
                   variant="outline"
                   size="icon"
                   aria-label="Scroll categories right"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex xl:hidden"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border flex md:hidden"
                   onClick={() => scrollCategories('right')}
                 >
                   <ChevronRight className="h-5 w-5" />
