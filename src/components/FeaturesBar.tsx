@@ -1,5 +1,4 @@
 import { memo } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 // Import GIF icons
 import lowestPriceIcon from "@/assets/features/lowest-price.gif";
@@ -17,28 +16,21 @@ const features = [
 ];
 
 const FeaturesBar = memo(() => {
-  const isMobile = useIsMobile();
-  
-  // Duplicate features for seamless loop on mobile
-  const displayFeatures = isMobile ? [...features, ...features] : features;
+  // Duplicate features for seamless loop
+  const displayFeatures = [...features, ...features];
 
   return (
     <div className="bg-card border-b border-border py-3 md:py-4 overflow-hidden relative">
-      {/* Fade gradients only on mobile */}
-      {isMobile && (
-        <>
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
-        </>
-      )}
+      {/* Fade gradients on all screen sizes */}
+      <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
       
       <div className="relative">
-        <div className={`flex ${isMobile ? 'animate-ticker hover:pause-animation will-change-transform' : 'justify-center gap-2'}`}>
+        <div className="flex animate-ticker hover:pause-animation will-change-transform">
           {displayFeatures.map((feature, index) => (
             <div
               key={index}
-              className={`flex items-center gap-3 md:gap-4 shrink-0 ${isMobile ? 'px-5' : 'px-4 lg:px-6'}`}
-            >
+              className="flex items-center gap-3 md:gap-4 shrink-0 px-5 md:px-8">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/5 flex items-center justify-center shrink-0 p-1.5">
                 <img 
                   src={feature.icon} 
