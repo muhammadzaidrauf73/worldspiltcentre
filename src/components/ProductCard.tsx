@@ -131,10 +131,10 @@ const ProductCard = memo(({
 
       {/* Content */}
       <div className="p-3 sm:p-4 space-y-1.5 sm:space-y-2">
-        <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-medium">
+        <p className="text-xs sm:text-xs text-muted-foreground uppercase tracking-wide font-semibold">
           {brand}
         </p>
-        <h3 className="font-medium text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-smooth min-h-[2.5rem] sm:min-h-[3rem] leading-tight">
+        <h3 className="font-semibold text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-smooth min-h-[2.5rem] sm:min-h-[3rem] leading-snug">
           {name}
         </h3>
 
