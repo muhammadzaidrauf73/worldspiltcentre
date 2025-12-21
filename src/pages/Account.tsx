@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WishlistTab from "@/components/WishlistTab";
 import { OrderTimeline } from "@/components/OrderTimeline";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -274,6 +275,12 @@ const Account = () => {
     });
   };
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["user-orders"] });
+    await queryClient.invalidateQueries({ queryKey: ["cancellation-requests"] });
+    await queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -283,8 +290,9 @@ const Account = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <Navbar />
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-heading font-bold text-foreground mb-6">
@@ -653,7 +661,8 @@ const Account = () => {
       </Dialog>
       
       <Footer />
-    </div>
+      </div>
+    </PullToRefresh>
   );
 };
 

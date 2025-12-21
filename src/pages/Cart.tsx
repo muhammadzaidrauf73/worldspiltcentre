@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
@@ -85,6 +86,11 @@ const Cart = () => {
   const shipping = subtotal > 10000 ? 0 : 500;
   const total = subtotal + shipping;
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["cart"] });
+    await queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -94,13 +100,14 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SEO 
-        title="Shopping Cart - World Spilt Centre"
-        description="Review your cart and checkout. Free delivery on orders above threshold. Secure payment options available."
-        keywords="shopping cart, checkout, buy electronics lahore, online shopping pakistan"
-      />
-      <Navbar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <SEO 
+          title="Shopping Cart - World Spilt Centre"
+          description="Review your cart and checkout. Free delivery on orders above threshold. Secure payment options available."
+          keywords="shopping cart, checkout, buy electronics lahore, online shopping pakistan"
+        />
+        <Navbar />
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-heading font-bold text-foreground mb-6">
@@ -235,8 +242,9 @@ const Cart = () => {
         )}
       </div>
       
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </PullToRefresh>
   );
 };
 
