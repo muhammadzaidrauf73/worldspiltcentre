@@ -175,9 +175,9 @@ const Index = () => {
           </Suspense>
 
           {/* Hot Deals - Featured Products */}
-          <section className="py-8 sm:py-10 bg-card">
+          <section className="py-5 sm:py-8 bg-card">
             <div className="container mx-auto px-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold">
@@ -197,10 +197,10 @@ const Index = () => {
               </div>
 
               {productsLoading ? (
-                <ProductGridSkeleton count={8} />
+                <ProductGridSkeleton count={4} />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                  {displayFeatured.map((product, index) => (
+                  {displayFeatured.slice(0, 4).map((product, index) => (
                     <Link key={product.id} to={`/product/${product.id}`}>
                       <ProductCard
                         id={product.id}
@@ -223,9 +223,9 @@ const Index = () => {
 
           {/* Washing Machines Section */}
           {washingMachines.length > 0 && (
-            <section className="py-8 sm:py-10 bg-secondary/30">
+            <section className="py-5 sm:py-8 bg-secondary/30">
               <div className="container mx-auto px-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
                   <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
                     Washing Machines
                   </h2>
