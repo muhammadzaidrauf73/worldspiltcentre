@@ -1,4 +1,4 @@
-import { Heart, ShoppingCart, Star, Eye, ShoppingBag, MessageCircle } from "lucide-react";
+import { Heart, ShoppingCart, Star, Eye, ShoppingBag, MessageCircle, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -17,6 +17,7 @@ interface ProductCardProps {
   reviews: number;
   badge?: string;
   isOnSale?: boolean;
+  isFreeDelivery?: boolean;
   index?: number;
   hideQuickActions?: boolean;
   buttonText?: string;
@@ -34,6 +35,7 @@ const ProductCard = memo(({
   reviews,
   badge,
   isOnSale,
+  isFreeDelivery,
   index = 0,
   hideQuickActions = false,
   buttonText = "Add to Cart",
@@ -202,6 +204,14 @@ const ProductCard = memo(({
             </span>
           )}
         </div>
+
+        {/* Free Delivery Badge */}
+        {isFreeDelivery && (
+          <div className="flex items-center gap-1.5 text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-md w-fit">
+            <Truck className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">Free Delivery</span>
+          </div>
+        )}
 
         {/* Action Button - Touch-friendly with hover animation and pulse */}
         {price > 0 ? (

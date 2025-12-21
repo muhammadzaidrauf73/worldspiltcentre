@@ -500,6 +500,7 @@ const Products = () => {
                         rating={Number(product.rating) || 0}
                         reviews={product.reviews_count || 0}
                         isOnSale={product.is_on_sale || false}
+                        isFreeDelivery={product.is_free_delivery || false}
                         badge={showDealsOnly ? "⚡ Flash Deal" : undefined}
                         index={index}
                         searchHighlight={searchQuery}

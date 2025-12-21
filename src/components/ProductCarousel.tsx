@@ -15,6 +15,7 @@ interface Product {
   rating?: number | null;
   reviews_count?: number | null;
   discount_percentage?: number | null;
+  is_free_delivery?: boolean | null;
 }
 
 interface ProductCarouselProps {
@@ -108,6 +109,7 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
               rating={Number(product.rating) || 0}
               reviews={product.reviews_count || 0}
               badge={badge}
+              isFreeDelivery={product.is_free_delivery || false}
               index={index}
               hideQuickActions={hideQuickActions}
               buttonText={buttonText}
