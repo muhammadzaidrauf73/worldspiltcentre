@@ -32,34 +32,31 @@ const reviews = [
 
 const CustomerReviews = () => {
   return (
-    <section className="py-10 bg-card">
+    <section className="py-5 sm:py-6 bg-card">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground mb-2">
+        <div className="text-center mb-4">
+          <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground mb-1">
             What Our Customers Say
           </h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Don't just take our word for it
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-3">
+          <div className="flex items-center justify-center gap-2">
             <div className="flex items-center">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
               ))}
             </div>
-            <span className="font-semibold text-foreground text-sm">4.8/5</span>
-            <span className="text-muted-foreground text-sm">(2,453 reviews)</span>
+            <span className="font-semibold text-foreground text-xs">4.8/5</span>
+            <span className="text-muted-foreground text-xs">(2,453 reviews)</span>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-3">
           {reviews.map((review, index) => (
             <div
               key={review.id}
-              className="bg-secondary/50 rounded-lg p-5 border border-border hover:shadow-md transition-smooth animate-fade-in"
+              className="bg-secondary/50 rounded-lg p-4 border border-border hover:shadow-md transition-smooth animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <Quote className="h-6 w-6 text-primary/30 mb-3" />
+              <Quote className="h-5 w-5 text-primary/30 mb-2" />
               
               <div className="flex items-center gap-1 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -74,15 +71,15 @@ const CustomerReviews = () => {
                 ))}
               </div>
 
-              <p className="text-foreground text-sm mb-4 line-clamp-4">
+              <p className="text-foreground text-xs mb-3 line-clamp-3">
                 "{review.review}"
               </p>
 
-              <div className="flex items-center gap-3 pt-3 border-t border-border">
+              <div className="flex items-center gap-2 pt-2 border-t border-border">
                 <img
                   src={review.avatar}
                   alt={review.name}
-                  className="w-9 h-9 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover"
                 />
                 <div>
                   <p className="font-semibold text-foreground text-sm">

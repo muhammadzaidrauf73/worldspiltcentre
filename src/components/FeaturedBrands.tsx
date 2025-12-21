@@ -62,17 +62,17 @@ const FeaturedBrands = memo(() => {
 
   if (isLoading) {
     return (
-      <section className="py-8 sm:py-10 bg-secondary/30 border-y border-border">
+      <section className="py-4 sm:py-6 bg-secondary/30 border-y border-border">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-5 sm:mb-8">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
+          <div className="text-center mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground mb-0.5 sm:mb-1">
               Shop by Brand
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Trusted brands, guaranteed quality
             </p>
           </div>
-          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-10">
+          <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="w-16 h-12 sm:w-20 sm:h-14 md:w-28 md:h-16 rounded-lg" />
             ))}
@@ -85,18 +85,18 @@ const FeaturedBrands = memo(() => {
   if (brands.length === 0) return null;
 
   return (
-    <section className="py-8 sm:py-10 bg-secondary/30 border-y border-border">
+    <section className="py-4 sm:py-6 bg-secondary/30 border-y border-border">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-5 sm:mb-8">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground mb-1 sm:mb-2">
+        <div className="text-center mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground mb-0.5 sm:mb-1">
             Shop by Brand
           </h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Trusted brands, guaranteed quality
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-6 md:gap-10">
+        <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 md:gap-6">
           {brands.map((brand: any, index: number) => (
             <BrandItem key={brand.id} brand={brand} index={index} />
           ))}

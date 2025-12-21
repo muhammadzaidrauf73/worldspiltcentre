@@ -48,17 +48,17 @@ const FAQ = memo(() => {
   if (faqs.length === 0) return null;
 
   return (
-    <section className="py-10 bg-secondary/30" id="faq">
+    <section className="py-5 sm:py-6 bg-secondary/30" id="faq">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-              <HelpCircle className="h-5 w-5 text-primary" />
+          <div className="text-center mb-4">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+              <HelpCircle className="h-4 w-4 text-primary" />
             </div>
-            <h2 className="text-xl md:text-2xl font-heading font-bold text-foreground mb-2">
+            <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-foreground mb-1">
               Frequently Asked Questions
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Find answers to common questions
             </p>
           </div>

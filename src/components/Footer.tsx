@@ -55,8 +55,8 @@ const Footer = () => {
 
   return (
     <footer className="bg-foreground text-card" id="contact">
-      <div className="container mx-auto px-4 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {/* Brand Section */}
           <div className="sm:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-3 sm:mb-4">
@@ -151,7 +151,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-card/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+        <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-card/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
           <p className="text-xs sm:text-sm text-card/60 text-center sm:text-left">
             © {new Date().getFullYear()} {getSetting('company_name', 'World Spilt Centre')}. All rights reserved.
           </p>

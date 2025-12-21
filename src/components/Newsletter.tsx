@@ -57,18 +57,18 @@ const Newsletter = () => {
   };
 
   return (
-    <section className="py-8 sm:py-10 gradient-hero">
+    <section className="py-5 sm:py-6 gradient-hero">
       <div className="container mx-auto px-4">
         <div className="max-w-xl mx-auto text-center">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-foreground/10 backdrop-blur flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-foreground/10 backdrop-blur flex items-center justify-center mx-auto mb-2">
+            <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
           </div>
           
-          <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-primary-foreground mb-2">
+          <h2 className="text-base sm:text-lg md:text-xl font-heading font-bold text-primary-foreground mb-1">
             Get Exclusive Deals
           </h2>
-          <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm">
-            Subscribe to our newsletter and get 10% off your first order
+          <p className="text-primary-foreground/80 mb-3 text-xs">
+            Subscribe and get 10% off your first order
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
