@@ -67,69 +67,52 @@ const FlashDeal = () => {
   }, [deals]);
 
   return (
-    <section className="py-8 sm:py-12 relative overflow-hidden" id="deals">
-      {/* Animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-deal/10 via-primary/5 to-accent/10" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_hsl(var(--deal)/0.15)_0%,_transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_hsl(var(--primary)/0.1)_0%,_transparent_50%)]" />
+    <section className="py-5 sm:py-6 relative overflow-hidden" id="deals">
+      {/* Subtle background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-deal/5 via-transparent to-primary/5" />
       
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header with enhanced styling */}
-        <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-3 mb-3">
+        {/* Compact Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-5">
+          <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-deal/30 animate-ping" />
-              <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-deal to-primary flex items-center justify-center shadow-lg shadow-deal/30">
-                <Zap className="h-6 w-6 sm:h-7 sm:w-7 text-white" fill="currentColor" />
+              <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-deal to-primary flex items-center justify-center shadow-md">
+                <Zap className="h-5 w-5 sm:h-5 sm:w-5 text-white" fill="currentColor" />
               </div>
             </div>
-            <div className="text-left">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-deal via-primary to-deal bg-clip-text text-transparent">
+            <div>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold bg-gradient-to-r from-deal via-primary to-deal bg-clip-text text-transparent">
                 Flash Deals
               </h2>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Limited time offers! Grab them before they're gone
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Limited time offers!
               </p>
             </div>
           </div>
 
-          {/* Enhanced Countdown Timer */}
-          <div className="mt-4 sm:mt-6 p-4 sm:p-6 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 shadow-xl">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-deal opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-deal"></span>
-              </span>
-              <span className="text-sm font-semibold text-deal uppercase tracking-widest">
-                Ends In
-              </span>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center shadow-lg">
-                  <span className="text-2xl sm:text-3xl font-bold text-background font-mono">
-                    {String(timeLeft.hours).padStart(2, '0')}
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 uppercase tracking-wide">Hours</span>
+          {/* Compact Countdown Timer */}
+          <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm">
+            <span className="text-xs font-semibold text-deal uppercase tracking-wide hidden sm:block">
+              Ends In:
+            </span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-foreground flex items-center justify-center">
+                <span className="text-base sm:text-lg font-bold text-background font-mono">
+                  {String(timeLeft.hours).padStart(2, '0')}
+                </span>
               </div>
-              <span className="text-2xl sm:text-3xl font-bold text-deal animate-pulse mb-5">:</span>
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center shadow-lg">
-                  <span className="text-2xl sm:text-3xl font-bold text-background font-mono">
-                    {String(timeLeft.minutes).padStart(2, '0')}
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 uppercase tracking-wide">Minutes</span>
+              <span className="text-lg font-bold text-deal">:</span>
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-foreground flex items-center justify-center">
+                <span className="text-base sm:text-lg font-bold text-background font-mono">
+                  {String(timeLeft.minutes).padStart(2, '0')}
+                </span>
               </div>
-              <span className="text-2xl sm:text-3xl font-bold text-deal animate-pulse mb-5">:</span>
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-deal to-primary flex items-center justify-center shadow-lg shadow-deal/30 animate-pulse">
-                  <span className="text-2xl sm:text-3xl font-bold text-white font-mono">
-                    {String(timeLeft.seconds).padStart(2, '0')}
-                  </span>
-                </div>
-                <span className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 uppercase tracking-wide">Seconds</span>
+              <span className="text-lg font-bold text-deal">:</span>
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gradient-to-br from-deal to-primary flex items-center justify-center animate-pulse">
+                <span className="text-base sm:text-lg font-bold text-white font-mono">
+                  {String(timeLeft.seconds).padStart(2, '0')}
+                </span>
               </div>
             </div>
           </div>
@@ -219,10 +202,11 @@ const FlashDeal = () => {
           )}
         </div>
 
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-5">
           <Link to="/products?deals=true">
             <Button 
-              className="bg-gradient-to-r from-deal to-primary hover:from-deal/90 hover:to-primary/90 text-white font-semibold px-6 py-3 h-auto rounded-full shadow-lg shadow-deal/25 hover:shadow-xl hover:shadow-deal/30 transition-all duration-300 hover:scale-105"
+              variant="outline"
+              className="border-deal text-deal hover:bg-deal hover:text-white font-semibold px-5 py-2 h-auto rounded-full transition-all duration-300 hover:scale-105"
             >
               View All Deals
               <ArrowRight className="ml-2 h-4 w-4" />
