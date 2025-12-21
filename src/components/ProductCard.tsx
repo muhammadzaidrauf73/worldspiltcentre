@@ -92,17 +92,25 @@ const ProductCard = memo(({
 
       {/* Image - Taller on mobile for better visibility */}
       <div className="relative aspect-[4/3] sm:aspect-square bg-secondary/30 overflow-hidden">
-        {/* Skeleton placeholder */}
+        {/* Skeleton placeholder - show until loaded or error */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 bg-secondary/50 animate-pulse" />
+          <div className="absolute inset-0 bg-secondary/50 animate-pulse flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-muted-foreground/20 border-t-primary rounded-full animate-spin" />
+          </div>
         )}
         <img
-          src={imageError ? "/placeholder.svg" : (image || "/placeholder.svg")}
+          src={image || "/placeholder.svg"}
           alt={name}
           loading="lazy"
           decoding="async"
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
           onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
+          onError={(e) => {
+            setImageError(true);
+            setImageLoaded(true);
+            e.currentTarget.src = "/placeholder.svg";
+          }}
           className={cn(
             "w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-smooth",
             imageLoaded ? "opacity-100" : "opacity-0"
