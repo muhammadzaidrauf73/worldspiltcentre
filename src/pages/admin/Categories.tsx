@@ -23,7 +23,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -55,6 +55,7 @@ const AdminCategories = () => {
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const [productStocks, setProductStocks] = useState<Record<string, string>>({});
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productSearchQuery, setProductSearchQuery] = useState("");
   const [bulkStockDialogOpen, setBulkStockDialogOpen] = useState(false);
   const [bulkStockQuantity, setBulkStockQuantity] = useState("");
 
@@ -185,11 +186,12 @@ const AdminCategories = () => {
     setSelectedCategory(category);
     setLoadingProducts(true);
     setStockDialogOpen(true);
+    setProductSearchQuery("");
     
-    // Fetch products for this category
+    // Fetch products for this category with more details
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, stock_quantity")
+      .select("id, name, stock_quantity, image_url, price, brand")
       .eq("category_id", category.id)
       .order("name");
     
@@ -208,6 +210,12 @@ const AdminCategories = () => {
     setProductStocks(stocks);
     setLoadingProducts(false);
   };
+
+  // Filter products based on search query
+  const filteredProducts = categoryProducts.filter((product) =>
+    product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+    product.brand?.toLowerCase().includes(productSearchQuery.toLowerCase())
+  );
 
   const handleProductStockChange = (productId: string, value: string) => {
     setProductStocks((prev) => ({ ...prev, [productId]: value }));
@@ -458,13 +466,14 @@ const AdminCategories = () => {
             setSelectedCategory(null);
             setCategoryProducts([]);
             setProductStocks({});
+            setProductSearchQuery("");
           }
         }}>
-          <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Update Stock for {selectedCategory?.name}</DialogTitle>
               <DialogDescription>
-                Update stock quantity for each product individually.
+                Update stock quantity for each product. Total: {categoryProducts.length} products
               </DialogDescription>
             </DialogHeader>
             
@@ -474,34 +483,85 @@ const AdminCategories = () => {
               <div className="py-8 text-center text-muted-foreground">No products in this category</div>
             ) : (
               <>
-                <div className="flex items-center gap-2 pb-2 border-b">
-                  <Label className="text-sm whitespace-nowrap">Set all to:</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="Value"
-                    className="w-24"
-                    onChange={(e) => {
-                      if (e.target.value) setAllStocksToValue(e.target.value);
-                    }}
-                  />
+                {/* Search and Set All */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pb-3 border-b">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name or brand..."
+                      className="pl-9"
+                      value={productSearchQuery}
+                      onChange={(e) => setProductSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm whitespace-nowrap">Set all to:</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Value"
+                      className="w-20"
+                      onChange={(e) => {
+                        if (e.target.value) setAllStocksToValue(e.target.value);
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="flex-1 overflow-y-auto space-y-2 py-2 max-h-[300px]">
-                  {categoryProducts.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between gap-4 py-2 border-b border-border/50">
-                      <span className="text-sm font-medium truncate flex-1" title={product.name}>
-                        {product.name}
-                      </span>
-                      <Input
-                        type="number"
-                        min="0"
-                        className="w-24"
-                        value={productStocks[product.id] || "0"}
-                        onChange={(e) => handleProductStockChange(product.id, e.target.value)}
-                      />
+
+                {/* Products List */}
+                <div className="flex-1 overflow-y-auto py-2 max-h-[400px]">
+                  {filteredProducts.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      No products match your search
                     </div>
-                  ))}
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredProducts.map((product) => (
+                        <div 
+                          key={product.id} 
+                          className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          {/* Product Image */}
+                          <img
+                            src={product.image_url || "/placeholder.svg"}
+                            alt={product.name}
+                            className="h-14 w-14 rounded-md object-cover flex-shrink-0 border border-border"
+                          />
+                          
+                          {/* Product Details */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate" title={product.name}>
+                              {product.name}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{product.brand}</span>
+                              <span>•</span>
+                              <span>Rs {product.price?.toLocaleString()}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Stock Input */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Label className="text-xs text-muted-foreground">Stock:</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              className="w-20 h-9"
+                              value={productStocks[product.id] || "0"}
+                              onChange={(e) => handleProductStockChange(product.id, e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {productSearchQuery && (
+                  <p className="text-xs text-muted-foreground pt-2">
+                    Showing {filteredProducts.length} of {categoryProducts.length} products
+                  </p>
+                )}
               </>
             )}
             
