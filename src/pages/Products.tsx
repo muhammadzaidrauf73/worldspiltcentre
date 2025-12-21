@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,8 +22,9 @@ const Products = () => {
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
   const dealsParam = searchParams.get("deals");
+  const searchParam = searchParams.get("search");
   
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParam || "");
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || "");
   const [selectedBrands, setSelectedBrands] = useState<string[]>(brandParam ? [brandParam] : []);
   const [sortBy, setSortBy] = useState("newest");
@@ -31,6 +32,13 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [isPriceFiltered, setIsPriceFiltered] = useState(false);
   const showDealsOnly = dealsParam === "true";
+  
+  // Update search query when URL param changes
+  useEffect(() => {
+    if (searchParam !== null) {
+      setSearchQuery(searchParam);
+    }
+  }, [searchParam]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["products"] });
