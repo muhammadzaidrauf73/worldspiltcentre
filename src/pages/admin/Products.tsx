@@ -98,6 +98,7 @@ const AdminProducts = () => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [bulkCategoryDialogOpen, setBulkCategoryDialogOpen] = useState(false);
   const [bulkCsvData, setBulkCsvData] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -326,7 +327,19 @@ const AdminProducts = () => {
       case "top-seller":
         bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_top_seller: true } });
         break;
+      case "change-category":
+        setBulkCategoryDialogOpen(true);
+        break;
     }
+  };
+
+  const handleBulkCategoryChange = (categoryId: string) => {
+    if (selectedProducts.length === 0) return;
+    bulkUpdateMutation.mutate({ 
+      ids: selectedProducts, 
+      updates: { category_id: categoryId || null } 
+    });
+    setBulkCategoryDialogOpen(false);
   };
 
   // Parse CSV line handling quoted values with commas
@@ -818,6 +831,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   <SelectItem value="unfeature">Remove Featured</SelectItem>
                   <SelectItem value="new-arrival">Mark as New Arrival</SelectItem>
                   <SelectItem value="top-seller">Mark as Top Seller</SelectItem>
+                  <SelectItem value="change-category">Change Category</SelectItem>
                   <SelectItem value="delete">Delete Selected</SelectItem>
                 </SelectContent>
               </Select>
@@ -831,6 +845,37 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
             </div>
           )}
         </div>
+
+        {/* Bulk Category Change Dialog */}
+        <Dialog open={bulkCategoryDialogOpen} onOpenChange={setBulkCategoryDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change Category for {selectedProducts.length} Products</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Select a new category to assign to all selected products.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {categories.map((cat) => (
+                  <Button
+                    key={cat.id}
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => handleBulkCategoryChange(cat.id)}
+                  >
+                    {cat.name}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setBulkCategoryDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="rounded-lg border border-border overflow-x-auto">
           <Table>
