@@ -193,12 +193,12 @@ const ProductDetail = () => {
           <span className="text-foreground truncate max-w-[200px]">{product.name}</span>
         </nav>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
           {/* Image Gallery */}
-          <div className="space-y-4">
-            <div className="relative aspect-square bg-secondary/30 rounded-lg overflow-hidden">
+          <div className="space-y-3 md:space-y-4">
+            <div className="relative aspect-[4/3] md:aspect-square bg-secondary/30 rounded-lg overflow-hidden">
               {discount > 0 && (
-                <Badge className="absolute top-4 left-4 z-10 bg-deal text-deal-foreground">
+                <Badge className="absolute top-3 left-3 md:top-4 md:left-4 z-10 bg-deal text-deal-foreground text-xs">
                   {discount}% OFF
                 </Badge>
               )}
@@ -208,23 +208,23 @@ const ProductDetail = () => {
                 onError={(e) => {
                   e.currentTarget.src = "/placeholder.svg";
                 }}
-                className="w-full h-full object-contain p-8"
+                className="w-full h-full object-contain p-4 md:p-8"
               />
               {images.length > 1 && (
                 <>
                   <button
                     onClick={() => setSelectedImage(prev => Math.max(0, prev - 1))}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
                     disabled={selectedImage === 0}
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
                   <button
                     onClick={() => setSelectedImage(prev => Math.min(images.length - 1, prev + 1))}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
                     disabled={selectedImage === images.length - 1}
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
                 </>
               )}
@@ -237,7 +237,7 @@ const ProductDetail = () => {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-md border-2 overflow-hidden bg-secondary/30 transition-all ${
+                    className={`shrink-0 w-14 h-14 md:w-20 md:h-20 rounded-md border-2 overflow-hidden bg-secondary/30 transition-all ${
                       selectedImage === idx 
                         ? "border-primary ring-1 ring-primary" 
                         : "border-border hover:border-primary/50"
