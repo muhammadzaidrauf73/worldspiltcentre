@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,10 @@ import {
   Image as ImageIcon,
   Package,
   AlertCircle,
-  Upload
+  Upload,
+  Pause,
+  Play,
+  Clock
 } from 'lucide-react';
 import {
   Select,
@@ -74,7 +77,15 @@ export default function ProductImport() {
   const [currentAction, setCurrentAction] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceMarkup, setPriceMarkup] = useState<number>(0);
-  const [turboMode, setTurboMode] = useState(true); // Turbo mode enabled by default
+  const [turboMode, setTurboMode] = useState(true);
+  
+  // Pause/Resume state
+  const [isPaused, setIsPaused] = useState(false);
+  const pauseRef = useRef(false);
+  
+  // Time tracking for ETA
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('');
 
   // Fetch existing categories
   const { data: categories = [] } = useQuery({
@@ -177,16 +188,29 @@ export default function ProductImport() {
     }
 
     setIsImporting(true);
+    setIsPaused(false);
+    pauseRef.current = false;
     setProgress(0);
+    setStartTime(Date.now());
+    setEstimatedTimeRemaining('Calculating...');
     
     // Larger batch size for faster imports
     const BATCH_SIZE = turboMode ? 8 : 5;
     let successCount = 0;
     let errorCount = 0;
     let processed = 0;
+    const batchTimes: number[] = [];
 
     // Process in batches for real-time progress
     for (let i = 0; i < selectedProducts.length; i += BATCH_SIZE) {
+      // Check for pause
+      while (pauseRef.current) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Check if import was cancelled while paused
+        if (!isImporting) return;
+      }
+      
+      const batchStartTime = Date.now();
       const batch = selectedProducts.slice(i, i + BATCH_SIZE);
       const batchUrls = batch.map(p => p.url);
       
@@ -195,7 +219,9 @@ export default function ProductImport() {
         batchUrls.includes(p.url) ? { ...p, status: 'importing' as const } : p
       ));
       
-      setCurrentAction(`${turboMode ? '⚡ Turbo: ' : ''}Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(selectedProducts.length / BATCH_SIZE)} (${batch.length} products)`);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(selectedProducts.length / BATCH_SIZE);
+      setCurrentAction(`${turboMode ? '⚡ Turbo: ' : ''}Batch ${batchNumber}/${totalBatches} (${batch.length} products)`);
 
       try {
         const { data, error } = await supabase.functions.invoke('scrape-product', {
@@ -240,14 +266,62 @@ export default function ProductImport() {
 
       processed += batch.length;
       setProgress((processed / selectedProducts.length) * 100);
+      
+      // Calculate ETA
+      const batchTime = Date.now() - batchStartTime;
+      batchTimes.push(batchTime);
+      const avgBatchTime = batchTimes.reduce((a, b) => a + b, 0) / batchTimes.length;
+      const remainingBatches = totalBatches - batchNumber;
+      const remainingMs = avgBatchTime * remainingBatches;
+      
+      if (remainingMs > 0) {
+        const remainingSecs = Math.ceil(remainingMs / 1000);
+        if (remainingSecs < 60) {
+          setEstimatedTimeRemaining(`~${remainingSecs}s remaining`);
+        } else {
+          const mins = Math.floor(remainingSecs / 60);
+          const secs = remainingSecs % 60;
+          setEstimatedTimeRemaining(`~${mins}m ${secs}s remaining`);
+        }
+      } else {
+        setEstimatedTimeRemaining('Almost done...');
+      }
     }
 
     setIsImporting(false);
+    setIsPaused(false);
     setCurrentAction('');
+    setEstimatedTimeRemaining('');
     
+    const totalTime = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
     toast({
       title: 'Import Complete',
-      description: `Imported ${successCount} products${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
+      description: `Imported ${successCount} products${errorCount > 0 ? `, ${errorCount} failed` : ''} in ${totalTime}s`,
+    });
+  };
+
+  // Toggle pause state
+  const togglePause = () => {
+    pauseRef.current = !pauseRef.current;
+    setIsPaused(!isPaused);
+  };
+
+  // Cancel import
+  const cancelImport = () => {
+    pauseRef.current = false;
+    setIsPaused(false);
+    setIsImporting(false);
+    setCurrentAction('');
+    setEstimatedTimeRemaining('');
+    
+    // Reset importing status back to pending
+    setListedProducts(prev => prev.map(p => 
+      p.status === 'importing' ? { ...p, status: 'pending' as const } : p
+    ));
+    
+    toast({
+      title: 'Import Cancelled',
+      description: 'You can resume importing the remaining products',
     });
   };
 
@@ -418,29 +492,50 @@ export default function ProductImport() {
                   {selectedCount > 0 && <Badge variant="outline">{selectedCount} selected</Badge>}
                   {importedCount > 0 && <Badge className="bg-green-500">{importedCount} imported</Badge>}
                 </span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={selectAll}>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" onClick={selectAll} disabled={isImporting}>
                     Select All
                   </Button>
-                  <Button variant="outline" size="sm" onClick={deselectAll}>
+                  <Button variant="outline" size="sm" onClick={deselectAll} disabled={isImporting}>
                     Deselect All
                   </Button>
-                  <Button
-                    onClick={importSelectedProducts}
-                    disabled={isImporting || selectedCount === 0}
-                  >
-                    {isImporting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Import Selected ({selectedCount})
-                      </>
-                    )}
-                  </Button>
+                  {isImporting ? (
+                    <>
+                      <Button
+                        variant={isPaused ? "default" : "outline"}
+                        size="sm"
+                        onClick={togglePause}
+                      >
+                        {isPaused ? (
+                          <>
+                            <Play className="h-4 w-4 mr-1" />
+                            Resume
+                          </>
+                        ) : (
+                          <>
+                            <Pause className="h-4 w-4 mr-1" />
+                            Pause
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={cancelImport}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={importSelectedProducts}
+                      disabled={selectedCount === 0}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import Selected ({selectedCount})
+                    </Button>
+                  )}
                 </div>
               </CardTitle>
             </CardHeader>
@@ -449,10 +544,24 @@ export default function ProductImport() {
               <CardContent className="pt-0 pb-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="truncate flex-1 mr-4">{currentAction}</span>
-                    <span>{Math.round(progress)}%</span>
+                    <span className="truncate flex-1 mr-4">
+                      {isPaused ? (
+                        <span className="text-yellow-600 font-medium">⏸ Paused - {currentAction}</span>
+                      ) : (
+                        currentAction
+                      )}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {estimatedTimeRemaining && (
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {estimatedTimeRemaining}
+                        </span>
+                      )}
+                      <span className="font-medium">{Math.round(progress)}%</span>
+                    </div>
                   </div>
-                  <Progress value={progress} />
+                  <Progress value={progress} className={isPaused ? 'opacity-50' : ''} />
                 </div>
               </CardContent>
             )}
