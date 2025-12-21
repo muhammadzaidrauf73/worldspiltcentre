@@ -16,10 +16,10 @@ const CategoryCard = memo(({ name, icon: Icon, count, image }: CategoryCardProps
   return (
     <Link
       to={`/products?category=${encodeURIComponent(name)}`}
-      className="group flex flex-col items-center min-w-[70px] sm:min-w-[80px] md:min-w-0 md:flex-1"
+      className="group flex flex-col items-center min-w-[70px] sm:min-w-[80px] md:min-w-0 md:w-full"
     >
       {/* Circular Image Container */}
-      <div className="relative w-14 h-14 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden border-2 border-border group-hover:border-primary shadow-card group-hover:shadow-lg transition-smooth">
+      <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden border-2 border-border group-hover:border-primary shadow-card group-hover:shadow-lg transition-smooth">
         {image && !imageError ? (
           <>
             {/* Skeleton placeholder */}

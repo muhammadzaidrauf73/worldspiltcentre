@@ -164,7 +164,7 @@ const Index = () => {
 
                 <div 
                   ref={categoriesScrollRef}
-                  className="flex gap-2 sm:gap-4 md:gap-2 lg:gap-4 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap"
+                  className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between"
                   style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) transparent' }}
                 >
                   {categoriesLoading ? (
