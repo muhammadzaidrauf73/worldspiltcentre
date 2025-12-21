@@ -449,7 +449,6 @@ const Products = () => {
                       image={product.image_url || ""}
                       rating={Number(product.rating) || 0}
                       reviews={product.reviews_count || 0}
-                      badge={product.discount_percentage ? `${product.discount_percentage}% OFF` : undefined}
                       index={index}
                     />
                   </Link>
