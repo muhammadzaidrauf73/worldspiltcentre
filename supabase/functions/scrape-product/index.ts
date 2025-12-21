@@ -25,6 +25,8 @@ interface ListedProduct {
   name: string;
   image: string;
   price: number;
+  original_price?: number;
+  specifications?: Record<string, string>;
 }
 
 async function fetchPage(url: string): Promise<string> {
@@ -46,53 +48,163 @@ async function fetchPage(url: string): Promise<string> {
 function extractProductsFromListing(html: string): ListedProduct[] {
   const products: ListedProduct[] = [];
 
-  // Match WooCommerce product sections: <section class="product ...">...</section>
-  const sectionPattern = /<section[^>]*class="[^"]*product[^"]*"[^>]*data-product_id="[^"]*"[^>]*>([\s\S]*?)<\/section>/gi;
-  let sectionMatch;
+  console.log('Parsing listing HTML, length:', html.length);
 
-  while ((sectionMatch = sectionPattern.exec(html)) !== null) {
-    const sectionHtml = sectionMatch[0];
+  // More flexible product pattern for various WooCommerce layouts
+  // Look for product containers with common WooCommerce classes
+  const productPatterns = [
+    // Pattern 1: li.product elements (common WooCommerce layout)
+    /<li[^>]*class="[^"]*product[^"]*"[^>]*>([\s\S]*?)<\/li>/gi,
+    // Pattern 2: section.product elements
+    /<section[^>]*class="[^"]*product[^"]*"[^>]*>([\s\S]*?)<\/section>/gi,
+    // Pattern 3: div.product elements
+    /<div[^>]*class="[^"]*product[^"]*type-product[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
+    // Pattern 4: article.product elements
+    /<article[^>]*class="[^"]*product[^"]*"[^>]*>([\s\S]*?)<\/article>/gi,
+  ];
 
-    // Extract product URL from thumbnail link
-    const urlMatch = sectionHtml.match(/<div[^>]*class="[^"]*thumbnail-wrapper[^"]*"[^>]*>[\s\S]*?<a[^>]*href="(https?:\/\/[^"]+)"[^>]*>/i);
-    if (!urlMatch) continue;
+  for (const pattern of productPatterns) {
+    let productMatch;
+    while ((productMatch = pattern.exec(html)) !== null) {
+      const productHtml = productMatch[0] + productMatch[1];
+      
+      // Extract product URL - look for links to product pages
+      const urlPatterns = [
+        /<a[^>]*href="(https?:\/\/[^"]*lahorecentre\.com\/[^"]*)"[^>]*class="[^"]*woocommerce-loop-product__link[^"]*"/i,
+        /<a[^>]*class="[^"]*woocommerce-loop-product__link[^"]*"[^>]*href="(https?:\/\/[^"]+)"/i,
+        /href="(https?:\/\/[^"]*lahorecentre\.com\/product\/[^"]+)"/i,
+        /href="(https?:\/\/www\.lahorecentre\.com\/[a-zA-Z0-9][^"]*-[^"]+)"/i,
+      ];
+      
+      let url = '';
+      for (const urlPattern of urlPatterns) {
+        const urlMatch = productHtml.match(urlPattern);
+        if (urlMatch) {
+          url = urlMatch[1];
+          break;
+        }
+      }
 
-    const url = urlMatch[1];
+      // Skip non-product URLs
+      if (!url || 
+          url.includes('/product-category/') || 
+          url.includes('/product-brand/') || 
+          url.includes('/cart') || 
+          url.includes('/checkout') ||
+          url.includes('/page/') ||
+          url.includes('add-to-cart') ||
+          url.includes('.jpg') ||
+          url.includes('.png') ||
+          url.includes('.webp')) {
+        continue;
+      }
 
-    // Skip non-product URLs
-    if (url.includes('/product-category/') || 
-        url.includes('/product-brand/') || 
-        url.includes('/cart') || 
-        url.includes('/checkout') ||
-        url.includes('add-to-cart')) {
-      continue;
+      // Extract product name
+      const namePatterns = [
+        /<h2[^>]*class="[^"]*woocommerce-loop-product__title[^"]*"[^>]*>([^<]+)<\/h2>/i,
+        /<h2[^>]*>([^<]+)<\/h2>/i,
+        /<span[^>]*class="[^"]*product-name[^"]*"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/i,
+        /<a[^>]*href="[^"]*"[^>]*title="([^"]+)"/i,
+        /<a[^>]*title="([^"]+)"[^>]*href="[^"]*"/i,
+      ];
+      
+      let name = '';
+      for (const namePattern of namePatterns) {
+        const nameMatch = productHtml.match(namePattern);
+        if (nameMatch) {
+          name = nameMatch[1].trim();
+          break;
+        }
+      }
+
+      if (!name) continue;
+
+      // Extract product image
+      const imagePatterns = [
+        /src="([^"]+)"[^>]*class="[^"]*attachment-woocommerce[^"]*"/i,
+        /class="[^"]*attachment-woocommerce[^"]*"[^>]*src="([^"]+)"/i,
+        /<img[^>]*src="(https?:\/\/[^"]+\/uploads\/[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/i,
+        /<img[^>]*data-src="(https?:\/\/[^"]+\/uploads\/[^"]+)"/i,
+        /data-large_image="([^"]+)"/i,
+      ];
+      
+      let image = '';
+      for (const imagePattern of imagePatterns) {
+        const imageMatch = productHtml.match(imagePattern);
+        if (imageMatch) {
+          image = imageMatch[1];
+          break;
+        }
+      }
+      
+      // Convert thumbnail to full size image
+      if (image) {
+        image = image.replace(/-\d+x\d+\./, '.');
+      }
+
+      // Extract current price
+      const pricePatterns = [
+        /<ins[^>]*>[\s\S]*?<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)/i,
+        /<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?<bdi>[\s\S]*?₨[\s\S]*?([0-9,]+)/i,
+        /₨\s*([0-9,]+(?:\.[0-9]+)?)/i,
+        /Rs\.?\s*([0-9,]+)/i,
+      ];
+      
+      let price = 0;
+      for (const pricePattern of pricePatterns) {
+        const priceMatch = productHtml.match(pricePattern);
+        if (priceMatch) {
+          price = parseInt(priceMatch[1].replace(/,/g, ''));
+          break;
+        }
+      }
+
+      // Extract original price (for sale items)
+      const originalPriceMatch = productHtml.match(/<del[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)[\s\S]*?<\/del>/i);
+      const originalPrice = originalPriceMatch ? parseInt(originalPriceMatch[1].replace(/,/g, '')) : undefined;
+
+      // Check for duplicates
+      if (!products.some(p => p.url === url)) {
+        products.push({ 
+          url, 
+          name, 
+          image, 
+          price,
+          original_price: originalPrice 
+        });
+        console.log(`Found product: ${name}, Price: ${price}, Image: ${image ? 'yes' : 'no'}`);
+      }
     }
+  }
 
-    // Extract product name from heading-title product-name
-    const nameMatch = sectionHtml.match(/<span[^>]*class="[^"]*heading-title[^"]*product-name[^"]*"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/i)
-      || sectionHtml.match(/<a[^>]*href="[^"]*"[^>]*>([^<]+)<\/a>[\s\S]*?<\/span[^>]*>/i);
-    const name = nameMatch ? nameMatch[1].trim() : '';
-
-    if (!name) continue;
-
-    // Extract product image - get the main thumbnail image
-    const imageMatch = sectionHtml.match(/<figure[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"[^>]*>/i);
-    let image = imageMatch ? imageMatch[1] : '';
+  // If no products found with patterns, try a more aggressive search
+  if (products.length === 0) {
+    console.log('No products found with standard patterns, trying aggressive search...');
     
-    // Convert thumbnail to full size image by removing dimension suffix
-    if (image) {
-      image = image.replace(/-\d+x\d+\./, '.');
-    }
-
-    // Extract price
-    const priceMatch = sectionHtml.match(/<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?<bdi>[\s\S]*?₨[\s\S]*?([0-9,]+)[\s\S]*?<\/bdi>/i)
-      || sectionHtml.match(/₨\s*([0-9,]+)/);
-    const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : 0;
-
-    // Check for duplicates
-    if (!products.some(p => p.url === url)) {
-      products.push({ url, name, image, price });
-      console.log(`Found product: ${name}, Price: ${price}, Image: ${image ? 'yes' : 'no'}`);
+    // Look for all links that look like product URLs
+    const linkPattern = /<a[^>]*href="(https?:\/\/www\.lahorecentre\.com\/[a-zA-Z0-9][a-zA-Z0-9-]+\/)"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"[\s\S]*?<\/a>/gi;
+    let linkMatch;
+    
+    while ((linkMatch = linkPattern.exec(html)) !== null) {
+      const url = linkMatch[1];
+      let image = linkMatch[2];
+      
+      // Skip category/brand pages
+      if (url.includes('/product-category/') || 
+          url.includes('/product-brand/') ||
+          url.includes('/page/')) {
+        continue;
+      }
+      
+      // Get name from URL
+      const slugMatch = url.match(/lahorecentre\.com\/([^\/]+)\/?$/);
+      const name = slugMatch ? slugMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
+      
+      if (name && !products.some(p => p.url === url)) {
+        image = image.replace(/-\d+x\d+\./, '.');
+        products.push({ url, name, image, price: 0 });
+        console.log(`Found product (aggressive): ${name}`);
+      }
     }
   }
 
@@ -113,11 +225,13 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
     }
 
     // Extract price - look for the main product price
-    const priceMatch = html.match(/₨([0-9,]+)/) || html.match(/Rs\.?\s*([0-9,]+)/);
+    const priceMatch = html.match(/<p[^>]*class="[^"]*price[^"]*"[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)/i)
+      || html.match(/₨([0-9,]+)/) 
+      || html.match(/Rs\.?\s*([0-9,]+)/);
     const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : 0;
 
     // Extract original price if on sale
-    const originalPriceMatch = html.match(/<del[^>]*>.*?₨([0-9,]+).*?<\/del>/is);
+    const originalPriceMatch = html.match(/<del[^>]*>.*?₨[\s\S]*?([0-9,]+).*?<\/del>/is);
     const originalPrice = originalPriceMatch ? parseInt(originalPriceMatch[1].replace(/,/g, '')) : undefined;
 
     // Extract description - try multiple patterns
@@ -133,7 +247,15 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
     if (!description) {
       const descTabMatch = html.match(/<div[^>]*id="tab-description"[^>]*>([\s\S]*?)<\/div>/i);
       if (descTabMatch) {
-        description = descTabMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 500);
+        description = descTabMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 1000);
+      }
+    }
+
+    // Also try to get description from meta
+    if (!description) {
+      const metaDescMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
+      if (metaDescMatch) {
+        description = metaDescMatch[1].trim();
       }
     }
 
@@ -149,7 +271,7 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
     // Extract category
     const categoryMatch = html.match(/Categories?:.*?<a[^>]*>([^<]+)<\/a>/i)
       || html.match(/product_cat-([a-z0-9-]+)/i);
-    let category = categoryMatch ? categoryMatch[1].trim() : 'Air Fryer';
+    let category = categoryMatch ? categoryMatch[1].trim() : 'General';
     category = category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
     // Extract SKU
@@ -191,13 +313,19 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
     // Extract specifications from tables and description
     const specifications: Record<string, string> = {};
     
-    // Try to extract from specification tables
-    const specTablePattern = /<tr[^>]*>\s*<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]+)<\/td>\s*<\/tr>/gi;
-    while ((imgMatch = specTablePattern.exec(html)) !== null) {
-      const key = imgMatch[1].trim();
-      const value = imgMatch[2].trim();
-      if (key && value && key.length < 50 && value.length < 100) {
-        specifications[key] = value;
+    // Try to extract from specification tables - multiple patterns
+    const specPatterns = [
+      /<tr[^>]*>\s*<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([^<]+)<\/td>\s*<\/tr>/gi,
+      /<tr[^>]*>\s*<th[^>]*>([^<]+)<\/th>\s*<td[^>]*>([^<]+)<\/td>\s*<\/tr>/gi,
+    ];
+    
+    for (const specPattern of specPatterns) {
+      while ((imgMatch = specPattern.exec(html)) !== null) {
+        const key = imgMatch[1].replace(/<[^>]+>/g, '').trim();
+        const value = imgMatch[2].replace(/<[^>]+>/g, '').trim();
+        if (key && value && key.length < 50 && value.length < 200 && !specifications[key]) {
+          specifications[key] = value;
+        }
       }
     }
 
@@ -223,7 +351,7 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
     const slugMatch = sourceUrl.match(/lahorecentre\.com\/([^\/]+)\/?$/);
     const slug = slugMatch ? slugMatch[1] : name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-    console.log(`Extracted product: ${name}, Price: ${price}, Images: ${images.length}, Description: ${description.substring(0, 50)}...`);
+    console.log(`Extracted product: ${name}, Price: ${price}, Images: ${images.length}, Specs: ${Object.keys(specifications).length}`);
 
     return {
       name,
@@ -360,7 +488,7 @@ serve(async (req) => {
         .from('categories')
         .select('id')
         .eq('name', product.category)
-        .single();
+        .maybeSingle();
 
       if (existingCategory) {
         categoryId = existingCategory.id;
@@ -381,7 +509,7 @@ serve(async (req) => {
         .from('products')
         .select('id')
         .eq('slug', product.slug)
-        .single();
+        .maybeSingle();
 
       const productRecord = {
         name: product.name,
@@ -414,6 +542,92 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, message: 'Product imported successfully' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Quick import - scrape and import in one step
+    if (action === 'quick-import') {
+      const html = await fetchPage(url);
+      const productData = extractProductData(html, url);
+
+      if (!productData) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Could not extract product data' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Download images
+      const uploadedImages: string[] = [];
+      for (let i = 0; i < productData.images.length; i++) {
+        const uploadedUrl = await downloadImage(productData.images[i], supabase, productData.slug, i);
+        if (uploadedUrl) {
+          uploadedImages.push(uploadedUrl);
+        }
+      }
+      productData.images = uploadedImages;
+
+      // Get or create category
+      let categoryId = null;
+      const { data: existingCategory } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('name', productData.category)
+        .maybeSingle();
+
+      if (existingCategory) {
+        categoryId = existingCategory.id;
+      } else {
+        const { data: newCategory } = await supabase
+          .from('categories')
+          .insert({
+            name: productData.category,
+            slug: productData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          })
+          .select('id')
+          .single();
+        if (newCategory) categoryId = newCategory.id;
+      }
+
+      // Check if product already exists
+      const { data: existingProduct } = await supabase
+        .from('products')
+        .select('id')
+        .eq('slug', productData.slug)
+        .maybeSingle();
+
+      const productRecord = {
+        name: productData.name,
+        slug: productData.slug,
+        price: productData.price,
+        original_price: productData.original_price,
+        description: productData.description,
+        brand: productData.brand,
+        category_id: categoryId,
+        image_url: productData.images[0] || null,
+        gallery_images: productData.images.slice(1),
+        specifications: productData.specifications,
+        is_active: true,
+        is_new_arrival: true,
+        discount_percentage: productData.original_price 
+          ? Math.round((1 - productData.price / productData.original_price) * 100) 
+          : null,
+      };
+
+      if (existingProduct) {
+        await supabase
+          .from('products')
+          .update(productRecord)
+          .eq('id', existingProduct.id);
+      } else {
+        await supabase
+          .from('products')
+          .insert(productRecord);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, product: productData, message: 'Product imported successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
