@@ -74,6 +74,7 @@ export default function ProductImport() {
   const [currentAction, setCurrentAction] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceMarkup, setPriceMarkup] = useState<number>(0);
+  const [turboMode, setTurboMode] = useState(true); // Turbo mode enabled by default
 
   // Fetch existing categories
   const { data: categories = [] } = useQuery({
@@ -178,7 +179,8 @@ export default function ProductImport() {
     setIsImporting(true);
     setProgress(0);
     
-    const BATCH_SIZE = 3; // Process 3 products at a time
+    // Larger batch size for faster imports
+    const BATCH_SIZE = turboMode ? 8 : 5;
     let successCount = 0;
     let errorCount = 0;
     let processed = 0;
@@ -193,7 +195,7 @@ export default function ProductImport() {
         batchUrls.includes(p.url) ? { ...p, status: 'importing' as const } : p
       ));
       
-      setCurrentAction(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(selectedProducts.length / BATCH_SIZE)}: ${batch.map(p => p.name.substring(0, 20)).join(', ')}...`);
+      setCurrentAction(`${turboMode ? '⚡ Turbo: ' : ''}Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(selectedProducts.length / BATCH_SIZE)} (${batch.length} products)`);
 
       try {
         const { data, error } = await supabase.functions.invoke('scrape-product', {
@@ -203,6 +205,7 @@ export default function ProductImport() {
             categoryOverride: selectedCategory || undefined,
             priceMarkup: priceMarkup || 0,
             concurrency: BATCH_SIZE,
+            turboMode: turboMode,
           },
         });
 
@@ -352,7 +355,7 @@ export default function ProductImport() {
                 Fetch
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Assign Category (optional)</label>
                 <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val === "auto" ? "" : val)}>
@@ -385,9 +388,20 @@ export default function ProductImport() {
                     {priceMarkup > 0 ? `+${priceMarkup}%` : priceMarkup < 0 ? `${priceMarkup}%` : 'No markup'}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Increase or decrease prices by percentage
-                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Import Speed</label>
+                <div className="flex items-center gap-3 mt-2">
+                  <Checkbox
+                    id="turboMode"
+                    checked={turboMode}
+                    onCheckedChange={(checked) => setTurboMode(checked === true)}
+                  />
+                  <label htmlFor="turboMode" className="text-sm cursor-pointer flex items-center gap-1">
+                    ⚡ Turbo Mode
+                    <span className="text-xs text-muted-foreground">(faster, gallery images load after)</span>
+                  </label>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -551,49 +551,122 @@ async function downloadImagesParallel(images: string[], supabase: any, productSl
   return results.filter((url): url is string => url !== null);
 }
 
-// Process a single product for batch import
-async function processProductForBatch(
+// Faster fetch with timeout
+async function fetchPageFast(url: string, timeoutMs = 8000): Promise<string> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html',
+      },
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) throw new Error(`Failed: ${response.status}`);
+    return response.text();
+  } catch (e) {
+    clearTimeout(timeoutId);
+    throw e;
+  }
+}
+
+// Download only the first image (faster), queue rest for background
+async function downloadFirstImage(images: string[], supabase: any, productSlug: string): Promise<string[]> {
+  if (images.length === 0) return [];
+  
+  // Download first image only for immediate use
+  const firstImage = await downloadImage(images[0], supabase, productSlug, 0);
+  const uploadedImages = firstImage ? [firstImage] : [];
+  
+  // Download remaining images in parallel but don't wait for them
+  if (images.length > 1) {
+    const remainingImages = images.slice(1);
+    // Fire and forget - don't await
+    Promise.all(
+      remainingImages.map((img, idx) => 
+        downloadImage(img, supabase, productSlug, idx + 1)
+      )
+    ).then(async results => {
+      const validUrls = results.filter((url): url is string => url !== null);
+      if (validUrls.length > 0) {
+        // Update product with additional images
+        await supabase
+          .from('products')
+          .update({ gallery_images: validUrls })
+          .eq('slug', productSlug);
+        console.log(`Updated gallery for ${productSlug} with ${validUrls.length} images`);
+      }
+    }).catch(err => console.error('Background image download error:', err));
+  }
+  
+  return uploadedImages;
+}
+
+// Category cache for batch operations
+const categoryCache = new Map<string, string | null>();
+
+async function getOrCreateCategoryFast(supabase: any, categoryName: string): Promise<string | null> {
+  if (!categoryName) return null;
+  
+  // Check cache first
+  if (categoryCache.has(categoryName)) {
+    return categoryCache.get(categoryName) || null;
+  }
+  
+  const { data: existingCategory } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('name', categoryName)
+    .maybeSingle();
+
+  if (existingCategory) {
+    categoryCache.set(categoryName, existingCategory.id);
+    return existingCategory.id;
+  }
+  
+  const { data: newCategory } = await supabase
+    .from('categories')
+    .insert({
+      name: categoryName,
+      slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    })
+    .select('id')
+    .single();
+    
+  const categoryId = newCategory?.id || null;
+  categoryCache.set(categoryName, categoryId);
+  return categoryId;
+}
+
+// Process a single product for batch import (optimized)
+async function processProductForBatchFast(
   url: string,
   supabase: any,
   categoryOverride?: string,
-  priceMarkup?: number
+  priceMarkup?: number,
+  skipGallery = false
 ): Promise<{ success: boolean; name?: string; error?: string }> {
   try {
-    const html = await fetchPage(url);
+    const html = await fetchPageFast(url);
     const productData = extractProductData(html, url);
 
     if (!productData) {
       return { success: false, error: 'Could not extract product data' };
     }
 
-    // Download images in parallel
-    const uploadedImages = await downloadImagesParallel(productData.images, supabase, productData.slug);
+    // Download only first image for speed (gallery downloads in background)
+    const uploadedImages = skipGallery 
+      ? await downloadFirstImage(productData.images, supabase, productData.slug)
+      : await downloadImagesParallel(productData.images, supabase, productData.slug);
+    
     productData.images = uploadedImages;
 
-    // Use category override if provided
+    // Use cached category lookup
     const categoryName = categoryOverride || productData.category;
-
-    // Get or create category
-    let categoryId = null;
-    const { data: existingCategory } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('name', categoryName)
-      .maybeSingle();
-
-    if (existingCategory) {
-      categoryId = existingCategory.id;
-    } else if (categoryName) {
-      const { data: newCategory } = await supabase
-        .from('categories')
-        .insert({
-          name: categoryName,
-          slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        })
-        .select('id')
-        .single();
-      if (newCategory) categoryId = newCategory.id;
-    }
+    const categoryId = await getOrCreateCategoryFast(supabase, categoryName);
 
     // Check if product already exists
     const { data: existingProduct } = await supabase
@@ -643,6 +716,16 @@ async function processProductForBatch(
     console.error(`Error processing ${url}:`, error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
+}
+
+// Legacy function for backwards compatibility
+async function processProductForBatch(
+  url: string,
+  supabase: any,
+  categoryOverride?: string,
+  priceMarkup?: number
+): Promise<{ success: boolean; name?: string; error?: string }> {
+  return processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, false);
 }
 
 serve(async (req) => {
@@ -871,7 +954,7 @@ serve(async (req) => {
 
     // Batch import - process multiple products in parallel for speed
     if (action === 'batch-import') {
-      const { urls, categoryOverride, priceMarkup, concurrency = 3 } = body;
+      const { urls, categoryOverride, priceMarkup, concurrency = 5, turboMode = false } = body;
       
       if (!urls || !Array.isArray(urls) || urls.length === 0) {
         return new Response(
@@ -880,22 +963,27 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Batch importing ${urls.length} products with concurrency ${concurrency}`);
+      // Clear category cache at start of batch
+      categoryCache.clear();
+
+      const effectiveConcurrency = turboMode ? Math.min(concurrency * 2, 10) : concurrency;
+      console.log(`Batch importing ${urls.length} products with concurrency ${effectiveConcurrency} (turbo: ${turboMode})`);
       
       const results: { url: string; success: boolean; name?: string; error?: string }[] = [];
       
-      // Process in batches based on concurrency
-      for (let i = 0; i < urls.length; i += concurrency) {
-        const batch = urls.slice(i, i + concurrency);
+      // Process all URLs in parallel batches
+      for (let i = 0; i < urls.length; i += effectiveConcurrency) {
+        const batch = urls.slice(i, i + effectiveConcurrency);
         const batchPromises = batch.map((url: string) => 
-          processProductForBatch(url, supabase, categoryOverride, priceMarkup)
+          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode)
             .then(result => ({ url, ...result }))
+            .catch(error => ({ url, success: false, error: error.message }))
         );
         
         const batchResults = await Promise.all(batchPromises);
         results.push(...batchResults);
         
-        console.log(`Processed batch ${Math.floor(i / concurrency) + 1}, total: ${results.length}/${urls.length}`);
+        console.log(`Processed batch ${Math.floor(i / effectiveConcurrency) + 1}, total: ${results.length}/${urls.length}`);
       }
 
       const successCount = results.filter(r => r.success).length;
