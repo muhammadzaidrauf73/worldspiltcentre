@@ -11,7 +11,8 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Package, ShoppingCart, Users, TrendingUp, DollarSign, CalendarIcon, 
   ArrowUpRight, ArrowDownRight, Heart, Eye, Activity, Zap, Target,
-  Clock, Star, TrendingDown, ShoppingBag, Sparkles
+  Clock, Star, TrendingDown, ShoppingBag, Sparkles, Crown, UserCheck,
+  Repeat, Award, Gem
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -217,6 +218,105 @@ const Dashboard = () => {
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Customer Lifetime Value (CLV) Analysis
+  const { data: clvData, isLoading: clvLoading } = useQuery({
+    queryKey: ["admin-clv-analysis"],
+    queryFn: async () => {
+      const { data: allOrders, error } = await supabase
+        .from("orders")
+        .select("id, user_id, customer_name, customer_email, total, created_at, status")
+        .not("user_id", "is", null);
+
+      if (error) throw error;
+
+      // Group orders by user
+      const customerOrders: Record<string, {
+        userId: string;
+        name: string;
+        email: string;
+        orders: number;
+        totalSpent: number;
+        firstOrder: Date;
+        lastOrder: Date;
+        avgOrderValue: number;
+      }> = {};
+
+      allOrders?.forEach(order => {
+        if (!order.user_id) return;
+        
+        if (!customerOrders[order.user_id]) {
+          customerOrders[order.user_id] = {
+            userId: order.user_id,
+            name: order.customer_name || "Customer",
+            email: order.customer_email || "",
+            orders: 0,
+            totalSpent: 0,
+            firstOrder: new Date(order.created_at),
+            lastOrder: new Date(order.created_at),
+            avgOrderValue: 0,
+          };
+        }
+
+        const customer = customerOrders[order.user_id];
+        customer.orders += 1;
+        customer.totalSpent += Number(order.total);
+        
+        const orderDate = new Date(order.created_at);
+        if (orderDate < customer.firstOrder) customer.firstOrder = orderDate;
+        if (orderDate > customer.lastOrder) customer.lastOrder = orderDate;
+      });
+
+      // Calculate average order value for each customer
+      Object.values(customerOrders).forEach(customer => {
+        customer.avgOrderValue = customer.totalSpent / customer.orders;
+      });
+
+      const customers = Object.values(customerOrders);
+      
+      // Calculate metrics
+      const totalCustomers = customers.length;
+      const repeatCustomers = customers.filter(c => c.orders > 1);
+      const repeatRate = totalCustomers > 0 ? (repeatCustomers.length / totalCustomers) * 100 : 0;
+      
+      const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+      const avgCLV = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+      
+      const avgOrdersPerCustomer = totalCustomers > 0 
+        ? customers.reduce((sum, c) => sum + c.orders, 0) / totalCustomers 
+        : 0;
+
+      // Top customers by value
+      const topCustomers = [...customers]
+        .sort((a, b) => b.totalSpent - a.totalSpent)
+        .slice(0, 5);
+
+      // Most loyal (most orders)
+      const mostLoyal = [...customers]
+        .sort((a, b) => b.orders - a.orders)
+        .slice(0, 5);
+
+      // Customer segments
+      const segments = {
+        vip: customers.filter(c => c.totalSpent >= 50000).length,
+        regular: customers.filter(c => c.totalSpent >= 10000 && c.totalSpent < 50000).length,
+        occasional: customers.filter(c => c.totalSpent >= 1000 && c.totalSpent < 10000).length,
+        new: customers.filter(c => c.totalSpent < 1000).length,
+      };
+
+      return {
+        totalCustomers,
+        repeatCustomers: repeatCustomers.length,
+        repeatRate,
+        avgCLV,
+        avgOrdersPerCustomer,
+        topCustomers,
+        mostLoyal,
+        segments,
+        totalRevenue,
+      };
     },
   });
 
@@ -810,6 +910,230 @@ const Dashboard = () => {
             ) : (
               <div className="h-[100px] flex items-center justify-center text-muted-foreground">
                 No products yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Customer Lifetime Value Analysis */}
+        <Card className="border-2 border-gradient-to-r from-purple-500/20 to-pink-500/20 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Gem className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold">Customer Lifetime Value</CardTitle>
+                  <p className="text-xs text-muted-foreground">Insights into customer spending patterns</p>
+                </div>
+              </div>
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Analytics
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {clvLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : clvData ? (
+              <>
+                {/* CLV Stats Row */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-4 w-4 text-purple-500" />
+                      <span className="text-xs text-muted-foreground">Avg. CLV</span>
+                    </div>
+                    <p className="text-2xl font-bold text-purple-600">
+                      Rs.{Math.round(clvData.avgCLV).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">per customer</p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-pink-500/10 to-pink-500/5 border border-pink-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Repeat className="h-4 w-4 text-pink-500" />
+                      <span className="text-xs text-muted-foreground">Repeat Rate</span>
+                    </div>
+                    <p className="text-2xl font-bold text-pink-600">
+                      {clvData.repeatRate.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {clvData.repeatCustomers} of {clvData.totalCustomers} customers
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ShoppingBag className="h-4 w-4 text-cyan-500" />
+                      <span className="text-xs text-muted-foreground">Avg. Orders</span>
+                    </div>
+                    <p className="text-2xl font-bold text-cyan-600">
+                      {clvData.avgOrdersPerCustomer.toFixed(1)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">per customer</p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserCheck className="h-4 w-4 text-emerald-500" />
+                      <span className="text-xs text-muted-foreground">Total Customers</span>
+                    </div>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {clvData.totalCustomers}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">with orders</p>
+                  </div>
+                </div>
+
+                {/* Customer Segments */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="p-4 rounded-xl border bg-card">
+                    <h4 className="font-semibold mb-4 flex items-center gap-2">
+                      <Crown className="h-4 w-4 text-yellow-500" />
+                      Customer Segments
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500" />
+                          <span className="text-sm">VIP (Rs.50,000+)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-0">
+                            {clvData.segments.vip}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-violet-500" />
+                          <span className="text-sm">Regular (Rs.10k-50k)</span>
+                        </div>
+                        <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 border-0">
+                          {clvData.segments.regular}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500" />
+                          <span className="text-sm">Occasional (Rs.1k-10k)</span>
+                        </div>
+                        <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-0">
+                          {clvData.segments.occasional}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-gray-400 to-slate-500" />
+                          <span className="text-sm">New (&lt;Rs.1,000)</span>
+                        </div>
+                        <Badge variant="secondary" className="bg-gray-500/10 text-gray-600 border-0">
+                          {clvData.segments.new}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {/* Segment Progress Bars */}
+                    <div className="mt-4 h-3 rounded-full overflow-hidden flex bg-secondary">
+                      {clvData.totalCustomers > 0 && (
+                        <>
+                          <div 
+                            className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 transition-all" 
+                            style={{ width: `${(clvData.segments.vip / clvData.totalCustomers) * 100}%` }}
+                          />
+                          <div 
+                            className="h-full bg-gradient-to-r from-purple-400 to-violet-500 transition-all" 
+                            style={{ width: `${(clvData.segments.regular / clvData.totalCustomers) * 100}%` }}
+                          />
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-400 to-cyan-500 transition-all" 
+                            style={{ width: `${(clvData.segments.occasional / clvData.totalCustomers) * 100}%` }}
+                          />
+                          <div 
+                            className="h-full bg-gradient-to-r from-gray-400 to-slate-500 transition-all" 
+                            style={{ width: `${(clvData.segments.new / clvData.totalCustomers) * 100}%` }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Top Customers by Value */}
+                  <div className="p-4 rounded-xl border bg-card">
+                    <h4 className="font-semibold mb-4 flex items-center gap-2">
+                      <Award className="h-4 w-4 text-emerald-500" />
+                      Top Customers by Value
+                    </h4>
+                    {clvData.topCustomers.length > 0 ? (
+                      <div className="space-y-2">
+                        {clvData.topCustomers.map((customer, index) => (
+                          <div key={customer.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+                            <div className={cn(
+                              "w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0",
+                              index === 0 ? "bg-gradient-to-br from-yellow-400 to-amber-500 text-white" :
+                              index === 1 ? "bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700" :
+                              index === 2 ? "bg-gradient-to-br from-orange-400 to-amber-600 text-white" :
+                              "bg-secondary text-muted-foreground"
+                            )}>
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{customer.name}</p>
+                              <p className="text-xs text-muted-foreground">{customer.orders} orders</p>
+                            </div>
+                            <p className="text-sm font-bold text-emerald-600">
+                              Rs.{customer.totalSpent.toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No customer data yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Most Loyal Customers */}
+                <div className="p-4 rounded-xl border bg-card">
+                  <h4 className="font-semibold mb-4 flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-pink-500" />
+                    Most Loyal Customers (by order frequency)
+                  </h4>
+                  {clvData.mostLoyal.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                      {clvData.mostLoyal.map((customer, index) => (
+                        <div key={customer.userId} className="flex items-center gap-3 p-3 rounded-lg border bg-gradient-to-br from-pink-500/5 to-transparent hover:shadow-md transition-all">
+                          <div className={cn(
+                            "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+                            index === 0 ? "bg-pink-500 text-white" : "bg-pink-500/20 text-pink-600"
+                          )}>
+                            <Heart className={cn("h-4 w-4", index === 0 && "fill-current")} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{customer.name}</p>
+                            <div className="flex items-center gap-1">
+                              <Repeat className="h-3 w-3 text-pink-500" />
+                              <span className="text-xs text-pink-600 font-semibold">{customer.orders} orders</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No customer data yet
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+                No customer data available
               </div>
             )}
           </CardContent>
