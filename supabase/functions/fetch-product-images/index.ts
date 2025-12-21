@@ -36,13 +36,12 @@ serve(async (req) => {
     }
 
     const html = await response.text();
-    console.log('Page fetched, extracting images...');
+    console.log('Page fetched, extracting product images...');
 
-    // Extract image URLs from the page
     const images: string[] = [];
 
-    // Pattern 1: WooCommerce product gallery images (data-large_image or data-src)
-    const wooGalleryPattern = /data-large_image="([^"]+)"/g;
+    // Pattern 1: WooCommerce product gallery - data-large_image (primary product images)
+    const wooGalleryPattern = /woocommerce-product-gallery__image[^>]*data-large_image="([^"]+)"/g;
     let match;
     while ((match = wooGalleryPattern.exec(html)) !== null) {
       if (match[1] && !images.includes(match[1])) {
@@ -50,76 +49,39 @@ serve(async (req) => {
       }
     }
 
-    // Pattern 2: WooCommerce main product image
-    const mainImagePattern = /woocommerce-product-gallery__image[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"/g;
-    while ((match = mainImagePattern.exec(html)) !== null) {
+    // Pattern 2: data-large_image attribute (product gallery images)
+    const largeImagePattern = /data-large_image="([^"]+)"/g;
+    while ((match = largeImagePattern.exec(html)) !== null) {
+      const imgUrl = match[1];
+      if (imgUrl && !images.includes(imgUrl) && imgUrl.includes('/uploads/')) {
+        images.push(imgUrl);
+      }
+    }
+
+    // Pattern 3: Product gallery href links
+    const galleryHrefPattern = /woocommerce-product-gallery__image[^>]*>[\s\S]*?<a[^>]*href="([^"]+\.(jpg|jpeg|png|webp))"/gi;
+    while ((match = galleryHrefPattern.exec(html)) !== null) {
       if (match[1] && !images.includes(match[1])) {
         images.push(match[1]);
       }
     }
 
-    // Pattern 3: Product thumbnails
-    const thumbnailPattern = /data-thumb="([^"]+)"/g;
-    while ((match = thumbnailPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        // Convert thumbnail to full size by removing size suffix
-        const fullSizeUrl = match[1].replace(/-\d+x\d+\./, '.');
-        if (!images.includes(fullSizeUrl)) {
-          images.push(fullSizeUrl);
-        }
-      }
-    }
+    // Remove duplicates and filter to only product images
+    const uniqueImages = [...new Set(images)].filter(img => {
+      // Must be a valid URL
+      if (!img.startsWith('http')) return false;
+      // Must be from uploads folder (product images)
+      if (!img.includes('/uploads/')) return false;
+      // Exclude common non-product images
+      if (img.includes('placeholder')) return false;
+      if (img.includes('logo')) return false;
+      if (img.includes('icon')) return false;
+      if (img.includes('banner')) return false;
+      if (img.includes('favicon')) return false;
+      return true;
+    });
 
-    // Pattern 4: Direct image URLs in src attributes for product images
-    const imgSrcPattern = /<img[^>]*class="[^"]*wp-post-image[^"]*"[^>]*src="([^"]+)"/g;
-    while ((match = imgSrcPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        // Convert to full size
-        const fullSizeUrl = match[1].replace(/-\d+x\d+\./, '.');
-        if (!images.includes(fullSizeUrl)) {
-          images.push(fullSizeUrl);
-        }
-      }
-    }
-
-    // Pattern 5: srcset for higher resolution images
-    const srcsetPattern = /srcset="([^"]+)"/g;
-    while ((match = srcsetPattern.exec(html)) !== null) {
-      const srcset = match[1];
-      // Get the largest image from srcset
-      const srcsetParts = srcset.split(',').map(s => s.trim());
-      for (const part of srcsetParts) {
-        const [imgUrl] = part.split(' ');
-        if (imgUrl && imgUrl.includes('lahorecentre.com') && imgUrl.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
-          // Convert to full size
-          const fullSizeUrl = imgUrl.replace(/-\d+x\d+\./, '.');
-          if (!images.includes(fullSizeUrl)) {
-            images.push(fullSizeUrl);
-          }
-        }
-      }
-    }
-
-    // Pattern 6: General product images from wp-content/uploads
-    const generalPattern = /https?:\/\/www\.lahorecentre\.com\/wp-content\/uploads\/[^"'\s)]+\.(jpg|jpeg|png|webp)/gi;
-    while ((match = generalPattern.exec(html)) !== null) {
-      let imgUrl = match[0];
-      // Convert to full size by removing dimensions
-      const fullSizeUrl = imgUrl.replace(/-\d+x\d+\./, '.');
-      if (!images.includes(fullSizeUrl)) {
-        images.push(fullSizeUrl);
-      }
-    }
-
-    // Remove duplicates and filter valid images
-    const uniqueImages = [...new Set(images)].filter(img => 
-      img.startsWith('http') && 
-      !img.includes('placeholder') &&
-      !img.includes('logo') &&
-      !img.includes('icon')
-    );
-
-    console.log(`Found ${uniqueImages.length} unique images`);
+    console.log(`Found ${uniqueImages.length} product images`);
 
     return new Response(
       JSON.stringify({ 

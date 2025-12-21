@@ -533,6 +533,18 @@ const GalleryUpload = ({
                     >
                       {selectedFetchedImages.size === fetchedImages.length ? 'Deselect All' : 'Select All'}
                     </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setFetchedImages([]);
+                        setSelectedFetchedImages(new Set());
+                      }}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Clear
+                    </Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-2 max-h-[200px] overflow-y-auto p-1">
