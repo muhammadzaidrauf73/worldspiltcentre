@@ -255,37 +255,26 @@ serve(async (req) => {
     if (action === 'list-products') {
       // Fetch listing page and extract product URLs
       const html = await fetchPage(url);
-      
-      // Extract product URLs from the listing page
-      const productUrlsFromPage: string[] = [];
-      
-      // Pattern for product links
-      const patterns = [
-        /href="(https:\/\/www\.lahorecentre\.com\/[a-z0-9-]+-air-fryer[^"]*\/)"/gi,
-        /href="(https:\/\/www\.lahorecentre\.com\/[a-z0-9-]*fryer[^"]*\/)"/gi,
-        /href="(https:\/\/www\.lahorecentre\.com\/(?:anex|philips|dawlance|haier|midea|izone|kenwood|ninja|braun|anko|mi-smart)[^"]*\/)"/gi,
-      ];
 
-      for (const pattern of patterns) {
-        let match;
-        while ((match = pattern.exec(html)) !== null) {
-          const productUrl = match[1];
-          // Filter out non-product URLs
-          if (!productUrl.includes('/page/') && 
-              !productUrl.includes('/product-category/') &&
-              !productUrl.includes('/product-brand/') &&
-              !productUrl.includes('/my-account') &&
-              !productUrl.includes('/shop') &&
-              !productUrl.includes('/installment') &&
-              !productUrl.includes('add-to-cart') &&
-              !productUrlsFromPage.includes(productUrl)) {
-            productUrlsFromPage.push(productUrl);
-          }
-        }
-      }
+      const productUrlsFromPage = extractProductUrls(html).filter((u) => {
+        // Filter out non-product URLs / noise
+        return (
+          u.startsWith('https://www.lahorecentre.com/') &&
+          !u.includes('?') &&
+          !u.includes('#') &&
+          !u.includes('/page/') &&
+          !u.includes('/product-category/') &&
+          !u.includes('/product-brand/') &&
+          !u.includes('/my-account') &&
+          !u.includes('/cart') &&
+          !u.includes('/checkout') &&
+          !u.includes('/shop') &&
+          !u.includes('/installment')
+        );
+      });
 
       console.log(`Found ${productUrlsFromPage.length} product URLs`);
-      
+
       return new Response(
         JSON.stringify({ success: true, productUrls: productUrlsFromPage }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

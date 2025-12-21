@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,7 @@ const PREDEFINED_URLS = [
 export default function ProductImport() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [searchUrl, setSearchUrl] = useState('');
   const [productUrls, setProductUrls] = useState<string[]>([]);
@@ -62,7 +63,7 @@ export default function ProductImport() {
   const [progress, setProgress] = useState(0);
   const [currentAction, setCurrentAction] = useState('');
 
-  const fetchProductList = async (url: string) => {
+  const fetchProductList = useCallback(async (url: string) => {
     setIsLoading(true);
     setCurrentAction('Fetching product list...');
     
@@ -89,6 +90,12 @@ export default function ProductImport() {
           title: 'Products Found',
           description: `Found ${data.productUrls.length} products`,
         });
+      } else {
+        toast({
+          title: 'No Products Found',
+          description: 'No products were detected on that page.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error fetching product list:', error);
@@ -101,7 +108,15 @@ export default function ProductImport() {
       setIsLoading(false);
       setCurrentAction('');
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    const urlParam = searchParams.get('url');
+    if (urlParam) {
+      setSearchUrl(urlParam);
+      fetchProductList(urlParam);
+    }
+  }, [searchParams, fetchProductList]);
 
   const scrapeAllProducts = async () => {
     if (productUrls.length === 0) {
