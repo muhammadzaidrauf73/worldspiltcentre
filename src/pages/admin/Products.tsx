@@ -306,39 +306,71 @@ const AdminProducts = () => {
     }
   };
 
+  // Parse CSV line handling quoted values with commas
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          // Escaped quote
+          current += '"';
+          i++;
+        } else {
+          // Toggle quote mode
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
   const handleBulkUpload = () => {
     try {
-      const lines = bulkCsvData.trim().split("\n");
+      const lines = bulkCsvData.trim().split(/\r?\n/).filter(line => line.trim());
       if (lines.length < 2) {
         toast.error("Invalid CSV data. Please include header row and at least one product.");
         return;
       }
 
-      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const headers = parseCSVLine(lines[0]).map((h) => h.toLowerCase().replace(/^["']|["']$/g, ''));
       const productsToUpload = [];
 
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map((v) => v.trim());
+        const values = parseCSVLine(lines[i]);
         const product: any = {
           is_active: true,
           stock_quantity: 0,
         };
 
         headers.forEach((header, index) => {
-          const value = values[index] || "";
+          // Remove surrounding quotes from value
+          const rawValue = values[index] || "";
+          const value = rawValue.replace(/^["']|["']$/g, '');
+          
           switch (header) {
             case "name":
               product.name = value;
-              product.slug = value.toLowerCase().replace(/\s+/g, "-");
+              product.slug = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, '');
               break;
             case "brand":
               product.brand = value;
               break;
             case "price":
-              product.price = parseFloat(value) || 0;
+              product.price = parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
               break;
             case "original_price":
-              product.original_price = value ? parseFloat(value) : null;
+              product.original_price = value ? parseFloat(value.replace(/[^0-9.]/g, '')) : null;
               break;
             case "description":
               product.description = value;
@@ -348,7 +380,7 @@ const AdminProducts = () => {
               break;
             case "stock":
             case "stock_quantity":
-              product.stock_quantity = parseInt(value) || 0;
+              product.stock_quantity = parseInt(value.replace(/[^0-9]/g, '')) || 0;
               break;
             case "category":
               const cat = categories.find((c) => c.name.toLowerCase() === value.toLowerCase());
@@ -369,6 +401,7 @@ const AdminProducts = () => {
 
       bulkUploadMutation.mutate(productsToUpload);
     } catch (error) {
+      console.error("CSV parse error:", error);
       toast.error("Error parsing CSV data");
     }
   };
