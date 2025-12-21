@@ -132,7 +132,7 @@ const Hero = memo(() => {
                 alt={banner.title}
                 width={1200}
                 height={400}
-                className="w-full h-full object-contain sm:object-cover object-center"
+                className="w-full h-full object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
                 fetchPriority={index === 0 ? "high" : "auto"}
                 decoding={index === 0 ? "sync" : "async"}
