@@ -92,7 +92,7 @@ const ImageUpload = ({ value, onChange, bucket = "product-images", folder = "pro
           <img
             src={preview}
             alt="Preview"
-            className="w-full h-40 object-cover rounded-lg border border-border"
+            className="w-full h-40 object-contain rounded-lg border border-border bg-white"
           />
           <Button
             type="button"
