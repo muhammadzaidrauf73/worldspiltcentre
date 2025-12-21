@@ -19,10 +19,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, X, Loader2, Plus, GripVertical, Crop, Link, ChevronDown, ChevronUp } from "lucide-react";
+import { Upload, X, Loader2, Plus, GripVertical, Crop, Link, ChevronDown, ChevronUp, Globe, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import ImageCropper from "./ImageCropper";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface GalleryUploadProps {
   value: string[];
@@ -120,6 +121,11 @@ const GalleryUpload = ({
   const [currentCropFile, setCurrentCropFile] = useState<File | null>(null);
   const [showBulkUrl, setShowBulkUrl] = useState(false);
   const [bulkUrls, setBulkUrls] = useState("");
+  const [showFetchUrl, setShowFetchUrl] = useState(false);
+  const [fetchUrl, setFetchUrl] = useState("");
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchedImages, setFetchedImages] = useState<string[]>([]);
+  const [selectedFetchedImages, setSelectedFetchedImages] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -309,6 +315,63 @@ const GalleryUpload = ({
     toast.success(`Added ${urls.length} image(s)`);
   };
 
+  const handleFetchFromUrl = async () => {
+    if (!fetchUrl.trim()) return;
+
+    setIsFetching(true);
+    setFetchedImages([]);
+    setSelectedFetchedImages(new Set());
+
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-product-images', {
+        body: { url: fetchUrl.trim() }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.images?.length > 0) {
+        setFetchedImages(data.images);
+        // Pre-select all images
+        setSelectedFetchedImages(new Set(data.images));
+        toast.success(`Found ${data.images.length} images`);
+      } else {
+        toast.error(data.error || 'No images found on this page');
+      }
+    } catch (error: any) {
+      console.error('Fetch error:', error);
+      toast.error('Failed to fetch images: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const toggleImageSelection = (imageUrl: string) => {
+    const newSelected = new Set(selectedFetchedImages);
+    if (newSelected.has(imageUrl)) {
+      newSelected.delete(imageUrl);
+    } else {
+      newSelected.add(imageUrl);
+    }
+    setSelectedFetchedImages(newSelected);
+  };
+
+  const handleAddSelectedImages = () => {
+    const selectedArray = Array.from(selectedFetchedImages);
+    const remainingSlots = maxImages - value.length;
+    
+    if (selectedArray.length > remainingSlots) {
+      toast.error(`You can only add ${remainingSlots} more image(s)`);
+      return;
+    }
+
+    onChange([...value, ...selectedArray]);
+    setFetchedImages([]);
+    setSelectedFetchedImages(new Set());
+    setFetchUrl("");
+    setShowFetchUrl(false);
+    toast.success(`Added ${selectedArray.length} image(s)`);
+  };
+
   return (
     <div className="space-y-4">
       <Input
@@ -396,6 +459,128 @@ const GalleryUpload = ({
         </label>
       )}
 
+      {/* Fetch from Product URL Section */}
+      <div className="border rounded-lg p-3 bg-primary/5 border-primary/20">
+        <button
+          type="button"
+          onClick={() => setShowFetchUrl(!showFetchUrl)}
+          className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-primary transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" />
+            <span className="text-primary">Auto-fetch images from product URL (lahorecentre.com)</span>
+          </div>
+          {showFetchUrl ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+
+        {showFetchUrl && (
+          <div className="mt-3 space-y-3">
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={fetchUrl}
+                onChange={(e) => setFetchUrl(e.target.value)}
+                placeholder="https://www.lahorecentre.com/product/..."
+                disabled={isFetching || value.length >= maxImages}
+                className="text-sm"
+              />
+              <Button
+                type="button"
+                onClick={handleFetchFromUrl}
+                disabled={isFetching || !fetchUrl.trim() || value.length >= maxImages}
+                size="sm"
+              >
+                {isFetching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    Fetching...
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Fetch Images
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Paste a product page URL to automatically extract all product images
+            </p>
+
+            {/* Fetched Images Preview */}
+            {fetchedImages.length > 0 && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">
+                    Found {fetchedImages.length} images - Select the ones you want:
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (selectedFetchedImages.size === fetchedImages.length) {
+                          setSelectedFetchedImages(new Set());
+                        } else {
+                          setSelectedFetchedImages(new Set(fetchedImages));
+                        }
+                      }}
+                    >
+                      {selectedFetchedImages.size === fetchedImages.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 max-h-[200px] overflow-y-auto p-1">
+                  {fetchedImages.map((imgUrl, idx) => (
+                    <div
+                      key={idx}
+                      className={`relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                        selectedFetchedImages.has(imgUrl) 
+                          ? 'border-primary ring-2 ring-primary/30' 
+                          : 'border-border opacity-60 hover:opacity-100'
+                      }`}
+                      onClick={() => toggleImageSelection(imgUrl)}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`Fetched ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
+                      />
+                      <div className={`absolute top-1 left-1 w-5 h-5 rounded flex items-center justify-center ${
+                        selectedFetchedImages.has(imgUrl) ? 'bg-primary' : 'bg-black/50'
+                      }`}>
+                        {selectedFetchedImages.has(imgUrl) && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleAddSelectedImages}
+                  disabled={selectedFetchedImages.size === 0}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add {selectedFetchedImages.size} Selected Image{selectedFetchedImages.size !== 1 ? 's' : ''}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Bulk URL Section */}
       <div className="border rounded-lg p-3 bg-secondary/30">
         <button
@@ -405,7 +590,7 @@ const GalleryUpload = ({
         >
           <div className="flex items-center gap-2">
             <Link className="h-4 w-4" />
-            <span>Add images by URL (paste from other websites)</span>
+            <span>Add images by URL (paste manually)</span>
           </div>
           {showBulkUrl ? (
             <ChevronUp className="h-4 w-4" />
