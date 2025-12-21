@@ -15,6 +15,7 @@ interface FlashDealItem {
   image_url: string | null;
   sold_percentage: number;
   ends_at: string;
+  product_id: string | null;
 }
 
 const FlashDeal = () => {
@@ -159,7 +160,7 @@ const FlashDeal = () => {
               {deals.map((deal, index) => (
                 <Link
                   key={deal.id}
-                  to={`/product/${deal.id}`}
+                  to={deal.product_id ? `/product/${deal.product_id}` : `/products?deals=true`}
                   className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden shadow-lg hover:shadow-xl hover:border-deal/30 transition-all duration-300 animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
