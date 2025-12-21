@@ -467,6 +467,107 @@ async function downloadImage(imageUrl: string, supabase: any, productSlug: strin
   }
 }
 
+// Download all images in parallel for faster processing
+async function downloadImagesParallel(images: string[], supabase: any, productSlug: string): Promise<string[]> {
+  const promises = images.map((img, idx) => downloadImage(img, supabase, productSlug, idx));
+  const results = await Promise.all(promises);
+  return results.filter((url): url is string => url !== null);
+}
+
+// Process a single product for batch import
+async function processProductForBatch(
+  url: string,
+  supabase: any,
+  categoryOverride?: string,
+  priceMarkup?: number
+): Promise<{ success: boolean; name?: string; error?: string }> {
+  try {
+    const html = await fetchPage(url);
+    const productData = extractProductData(html, url);
+
+    if (!productData) {
+      return { success: false, error: 'Could not extract product data' };
+    }
+
+    // Download images in parallel
+    const uploadedImages = await downloadImagesParallel(productData.images, supabase, productData.slug);
+    productData.images = uploadedImages;
+
+    // Use category override if provided
+    const categoryName = categoryOverride || productData.category;
+
+    // Get or create category
+    let categoryId = null;
+    const { data: existingCategory } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('name', categoryName)
+      .maybeSingle();
+
+    if (existingCategory) {
+      categoryId = existingCategory.id;
+    } else if (categoryName) {
+      const { data: newCategory } = await supabase
+        .from('categories')
+        .insert({
+          name: categoryName,
+          slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        })
+        .select('id')
+        .single();
+      if (newCategory) categoryId = newCategory.id;
+    }
+
+    // Check if product already exists
+    const { data: existingProduct } = await supabase
+      .from('products')
+      .select('id')
+      .eq('slug', productData.slug)
+      .maybeSingle();
+
+    // Apply price markup if specified
+    const markupMultiplier = priceMarkup ? 1 + (priceMarkup / 100) : 1;
+    const finalPrice = Math.round(productData.price * markupMultiplier);
+    const finalOriginalPrice = productData.original_price 
+      ? Math.round(productData.original_price * markupMultiplier) 
+      : null;
+
+    const productRecord = {
+      name: productData.name,
+      slug: productData.slug,
+      price: finalPrice,
+      original_price: finalOriginalPrice,
+      description: productData.description,
+      brand: productData.brand,
+      category_id: categoryId,
+      image_url: productData.images[0] || null,
+      gallery_images: productData.images.slice(1),
+      specifications: productData.specifications,
+      is_active: true,
+      is_new_arrival: true,
+      discount_percentage: finalOriginalPrice 
+        ? Math.round((1 - finalPrice / finalOriginalPrice) * 100) 
+        : null,
+    };
+
+    if (existingProduct) {
+      await supabase
+        .from('products')
+        .update(productRecord)
+        .eq('id', existingProduct.id);
+    } else {
+      await supabase
+        .from('products')
+        .insert(productRecord);
+    }
+
+    return { success: true, name: productData.name };
+  } catch (error) {
+    console.error(`Error processing ${url}:`, error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -687,6 +788,48 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, product: productData, message: 'Product imported successfully' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Batch import - process multiple products in parallel for speed
+    if (action === 'batch-import') {
+      const { urls, categoryOverride, priceMarkup, concurrency = 3 } = body;
+      
+      if (!urls || !Array.isArray(urls) || urls.length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'No URLs provided' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Batch importing ${urls.length} products with concurrency ${concurrency}`);
+      
+      const results: { url: string; success: boolean; name?: string; error?: string }[] = [];
+      
+      // Process in batches based on concurrency
+      for (let i = 0; i < urls.length; i += concurrency) {
+        const batch = urls.slice(i, i + concurrency);
+        const batchPromises = batch.map((url: string) => 
+          processProductForBatch(url, supabase, categoryOverride, priceMarkup)
+            .then(result => ({ url, ...result }))
+        );
+        
+        const batchResults = await Promise.all(batchPromises);
+        results.push(...batchResults);
+        
+        console.log(`Processed batch ${Math.floor(i / concurrency) + 1}, total: ${results.length}/${urls.length}`);
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      const errorCount = results.filter(r => !r.success).length;
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          results,
+          summary: { total: urls.length, success: successCount, errors: errorCount }
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

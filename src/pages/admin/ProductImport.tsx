@@ -162,7 +162,7 @@ export default function ProductImport() {
     setListedProducts(prev => prev.map(p => ({ ...p, selected: false })));
   };
 
-  // Import selected products - scrapes full details and saves to database
+  // Import selected products using batch import for speed
   const importSelectedProducts = async () => {
     const selectedProducts = listedProducts.filter(p => p.selected && p.status !== 'imported');
     
@@ -177,64 +177,69 @@ export default function ProductImport() {
 
     setIsImporting(true);
     setProgress(0);
+    setCurrentAction(`Importing ${selectedProducts.length} products...`);
     
-    let successCount = 0;
-    let errorCount = 0;
+    // Mark all as importing
+    setListedProducts(prev => prev.map(p => 
+      p.selected && p.status !== 'imported' ? { ...p, status: 'importing' as const } : p
+    ));
 
-    for (let i = 0; i < selectedProducts.length; i++) {
-      const product = selectedProducts[i];
-      setCurrentAction(`Importing: ${product.name} (${i + 1}/${selectedProducts.length})`);
-      setProgress(((i + 1) / selectedProducts.length) * 100);
+    try {
+      // Use batch import - processes 3 products in parallel
+      const urls = selectedProducts.map(p => p.url);
+      
+      const { data, error } = await supabase.functions.invoke('scrape-product', {
+        body: { 
+          action: 'batch-import', 
+          urls,
+          categoryOverride: selectedCategory || undefined,
+          priceMarkup: priceMarkup || 0,
+          concurrency: 3, // Process 3 at a time
+        },
+      });
 
-      // Update status to importing
-      setListedProducts(prev => prev.map(p => 
-        p.url === product.url ? { ...p, status: 'importing' as const } : p
-      ));
+      if (error) throw error;
 
-      try {
-        // Use quick-import action which scrapes and imports in one step
-        // Pass the selected category if available
-        const { data, error } = await supabase.functions.invoke('scrape-product', {
-          body: { 
-            action: 'quick-import', 
-            url: product.url,
-            categoryOverride: product.category || selectedCategory || undefined,
-            priceMarkup: priceMarkup || 0,
-          },
+      if (data.success && data.results) {
+        // Update status for each product based on results
+        setListedProducts(prev => prev.map(p => {
+          const result = data.results.find((r: any) => r.url === p.url);
+          if (result) {
+            return {
+              ...p,
+              status: result.success ? 'imported' as const : 'error' as const,
+              error: result.error,
+            };
+          }
+          return p;
+        }));
+
+        setProgress(100);
+        
+        toast({
+          title: 'Import Complete',
+          description: `Imported ${data.summary.success} products${data.summary.errors > 0 ? `, ${data.summary.errors} failed` : ''}`,
         });
-
-        if (error) throw error;
-
-        if (data.success) {
-          successCount++;
-          setListedProducts(prev => prev.map(p => 
-            p.url === product.url ? { ...p, status: 'imported' as const } : p
-          ));
-        } else {
-          errorCount++;
-          setListedProducts(prev => prev.map(p => 
-            p.url === product.url ? { ...p, status: 'error' as const, error: data.error || 'Failed to import' } : p
-          ));
-        }
-      } catch (error) {
-        console.error(`Error importing ${product.url}:`, error);
-        errorCount++;
-        setListedProducts(prev => prev.map(p => 
-          p.url === product.url ? { ...p, status: 'error' as const, error: 'Network error' } : p
-        ));
+      } else {
+        throw new Error(data.error || 'Batch import failed');
       }
-
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    } catch (error) {
+      console.error('Error batch importing:', error);
+      
+      // Mark all as error
+      setListedProducts(prev => prev.map(p => 
+        p.status === 'importing' ? { ...p, status: 'error' as const, error: 'Import failed' } : p
+      ));
+      
+      toast({
+        title: 'Import Failed',
+        description: 'There was an error importing products',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsImporting(false);
+      setCurrentAction('');
     }
-
-    setIsImporting(false);
-    setCurrentAction('');
-    
-    toast({
-      title: 'Import Complete',
-      description: `Imported ${successCount} products${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
-    });
   };
 
   const getStatusBadge = (status?: string) => {
