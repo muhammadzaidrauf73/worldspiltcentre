@@ -15,6 +15,7 @@ interface ProductCardProps {
   rating: number;
   reviews: number;
   badge?: string;
+  isOnSale?: boolean;
   index?: number;
 }
 
@@ -28,6 +29,7 @@ const ProductCard = memo(({
   rating,
   reviews,
   badge,
+  isOnSale,
   index = 0,
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
@@ -51,14 +53,23 @@ const ProductCard = memo(({
       className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
       style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
-      {/* Badge */}
-      {badge && (
+      {/* Sale Badge - Circular */}
+      {isOnSale && (
+        <div className="absolute top-2 left-2 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-destructive rounded-full flex items-center justify-center shadow-lg">
+          <span className="text-destructive-foreground text-[9px] sm:text-[10px] font-bold uppercase tracking-tight">
+            SALE
+          </span>
+        </div>
+      )}
+
+      {/* Badge (for other labels) */}
+      {badge && !isOnSale && (
         <Badge className="absolute top-2 left-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-2 py-0.5">
           {badge}
         </Badge>
       )}
 
-      {/* Discount Badge - Mobile visible */}
+      {/* Discount Badge */}
       {discount > 0 && (
         <Badge className="absolute top-2 right-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5">
           {discount}% OFF
