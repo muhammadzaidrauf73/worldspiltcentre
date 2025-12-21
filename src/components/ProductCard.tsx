@@ -1,4 +1,4 @@
-import { Heart, ShoppingCart, Star, Eye, ShoppingBag } from "lucide-react";
+import { Heart, ShoppingCart, Star, Eye, ShoppingBag, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -170,30 +170,55 @@ const ProductCard = memo(({
 
         {/* Price */}
         <div className="flex items-baseline gap-2 pt-1">
-          <span className="font-bold text-base sm:text-lg text-primary">
-            Rs.{price.toLocaleString()}
-          </span>
-          {originalPrice && originalPrice > price && (
-            <span className="text-xs sm:text-sm text-muted-foreground line-through">
-              Rs.{originalPrice.toLocaleString()}
+          {price > 0 ? (
+            <>
+              <span className="font-bold text-base sm:text-lg text-primary">
+                Rs.{price.toLocaleString()}
+              </span>
+              {originalPrice && originalPrice > price && (
+                <span className="text-xs sm:text-sm text-muted-foreground line-through">
+                  Rs.{originalPrice.toLocaleString()}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="font-semibold text-sm sm:text-base text-green-600">
+              Contact for Price
             </span>
           )}
         </div>
 
         {/* Action Button - Touch-friendly with hover animation and pulse */}
-        <Button 
-          className={cn(
-            "w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-300",
-            buttonText === "Order Now" && "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25 group/btn animate-[pulse-subtle_2s_ease-in-out_infinite]"
-          )}
-        >
-          {buttonText === "Order Now" ? (
-            <ShoppingBag className="h-4 w-4 mr-2 transition-transform duration-300 group-hover/btn:scale-110 group-hover/btn:-rotate-6" />
-          ) : (
-            <ShoppingCart className="h-4 w-4 mr-2" />
-          )}
-          {buttonText}
-        </Button>
+        {price > 0 ? (
+          <Button 
+            className={cn(
+              "w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-300",
+              buttonText === "Order Now" && "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25 group/btn animate-[pulse-subtle_2s_ease-in-out_infinite]"
+            )}
+          >
+            {buttonText === "Order Now" ? (
+              <ShoppingBag className="h-4 w-4 mr-2 transition-transform duration-300 group-hover/btn:scale-110 group-hover/btn:-rotate-6" />
+            ) : (
+              <ShoppingCart className="h-4 w-4 mr-2" />
+            )}
+            {buttonText}
+          </Button>
+        ) : (
+          <a
+            href="https://wa.me/923001234567?text=Hi, I'm interested in getting the latest price for this product"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="block"
+          >
+            <Button 
+              className="w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg touch-manipulation transition-all duration-300"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              WhatsApp for Price
+            </Button>
+          </a>
+        )}
 
         {/* Mobile Quick Actions - Hidden when hideQuickActions is true */}
         {!hideQuickActions && (
