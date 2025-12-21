@@ -419,11 +419,22 @@ const GalleryUpload = ({
         </DndContext>
       )}
 
-      {/* Info text */}
+      {/* Info text and Clear button */}
       {value.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Drag images to reorder. First image will be the main product image.
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            Drag images to reorder. First image will be the main product image.
+          </p>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => onChange([])}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Clear All
+          </Button>
+        </div>
       )}
 
       {/* Upload Area */}
