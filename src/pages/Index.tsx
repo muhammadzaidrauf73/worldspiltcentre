@@ -82,11 +82,15 @@ const Index = () => {
   const featuredProducts = products.filter(p => p.is_featured).slice(0, 10);
   const displayFeatured = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 10);
   
-  // Get washing machines
-  const washingMachineCategory = categories.find(c => c.name === "Washing Machines");
-  const washingMachines = washingMachineCategory 
-    ? products.filter(p => p.category_id === washingMachineCategory.id).slice(0, 6)
-    : [];
+  // Get products by category - show up to 3 different categories
+  const categoryProducts = categories
+    .filter(cat => products.some(p => p.category_id === cat.id))
+    .slice(0, 3)
+    .map(category => ({
+      category,
+      products: products.filter(p => p.category_id === category.id).slice(0, 8)
+    }))
+    .filter(cp => cp.products.length >= 2);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -205,26 +209,29 @@ const Index = () => {
             </div>
           </section>
 
-          {/* Washing Machines Section */}
-          {washingMachines.length > 0 && (
-            <section className="py-5 sm:py-8 bg-secondary/30">
+          {/* Category Product Sections */}
+          {categoryProducts.map((cp, idx) => (
+            <section 
+              key={cp.category.id} 
+              className={`py-5 sm:py-8 ${idx % 2 === 0 ? 'bg-secondary/30' : 'bg-card'}`}
+            >
               <div className="container mx-auto px-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
                   <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
-                    Washing Machines
+                    {cp.category.name}
                   </h2>
                   <Link
-                    to="/products?category=Washing%20Machines"
+                    to={`/products?category=${encodeURIComponent(cp.category.name)}`}
                     className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
                   >
                     View All →
                   </Link>
                 </div>
 
-                <ProductCarousel products={washingMachines} />
+                <ProductCarousel products={cp.products} />
               </div>
             </section>
-          )}
+          ))}
 
           {/* Promo Banner */}
           <section className="py-6 sm:py-8">
