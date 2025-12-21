@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag, BadgePercent } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -907,7 +907,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
               </SelectContent>
             </Select>
             {categoryFilter !== "all" && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -931,6 +931,59 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                 >
                   <Tag className="h-4 w-4 mr-2" />
                   Set Discount
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={async () => {
+                    const categoryName = categories.find(c => c.id === categoryFilter)?.name;
+                    const categoryProducts = products.filter((p: any) => p.category_id === categoryFilter);
+                    if (categoryProducts.length === 0) {
+                      toast.error("No products in this category");
+                      return;
+                    }
+                    if (confirm(`Add SALE badge to all ${categoryProducts.length} products in "${categoryName}"?`)) {
+                      try {
+                        await supabase
+                          .from("products")
+                          .update({ is_on_sale: true })
+                          .eq("category_id", categoryFilter);
+                        queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+                        toast.success(`Added SALE badge to ${categoryProducts.length} products`);
+                      } catch (error: any) {
+                        toast.error("Error: " + error.message);
+                      }
+                    }
+                  }}
+                >
+                  <BadgePercent className="h-4 w-4 mr-2" />
+                  Add Sale Badge
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const categoryName = categories.find(c => c.id === categoryFilter)?.name;
+                    const categoryProducts = products.filter((p: any) => p.category_id === categoryFilter && p.is_on_sale);
+                    if (categoryProducts.length === 0) {
+                      toast.error("No products with SALE badge in this category");
+                      return;
+                    }
+                    if (confirm(`Remove SALE badge from ${categoryProducts.length} products in "${categoryName}"?`)) {
+                      try {
+                        await supabase
+                          .from("products")
+                          .update({ is_on_sale: false })
+                          .eq("category_id", categoryFilter);
+                        queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+                        toast.success(`Removed SALE badge from products`);
+                      } catch (error: any) {
+                        toast.error("Error: " + error.message);
+                      }
+                    }
+                  }}
+                >
+                  Remove Sale
                 </Button>
                 <Button
                   variant="destructive"
