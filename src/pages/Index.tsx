@@ -140,23 +140,23 @@ const Index = () => {
 
               {/* Horizontal Scroll Container with Buttons */}
               <div className="relative group">
-                {/* Left Scroll Button */}
+                {/* Left Scroll Button - visible on mobile/laptop, hidden on xl+ desktop */}
                 <Button
                   variant="outline"
                   size="icon"
                   aria-label="Scroll categories left"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex xl:hidden"
                   onClick={() => scrollCategories('left')}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
 
-                {/* Right Scroll Button */}
+                {/* Right Scroll Button - visible on mobile/laptop, hidden on xl+ desktop */}
                 <Button
                   variant="outline"
                   size="icon"
                   aria-label="Scroll categories right"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex xl:hidden"
                   onClick={() => scrollCategories('right')}
                 >
                   <ChevronRight className="h-5 w-5" />
@@ -164,7 +164,7 @@ const Index = () => {
 
                 <div 
                   ref={categoriesScrollRef}
-                  className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:px-12"
+                  className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:px-12 xl:px-0"
                   style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) transparent' }}
                 >
                   {categoriesLoading ? (
