@@ -34,14 +34,14 @@ const Footer = () => {
       { name: "Shipping Info", path: "/shipping" },
       { name: "Returns Policy", path: "/returns" },
       { name: "Warranty", path: "/warranty" },
-      { name: "Privacy Policy", path: "/privacy" },
     ],
     company: [
       { name: "About Us", path: "/about" },
       { name: "Blog", path: "/blog" },
       { name: "Store Locations", path: "/store-locations" },
       { name: "Careers", path: "/careers" },
-      { name: "Terms & Conditions", path: "/terms" },
+      { name: "Privacy Policy", path: "/privacy" },
+      { name: "Terms", path: "/terms" },
     ],
   };
 
@@ -52,61 +52,56 @@ const Footer = () => {
     { icon: MessageCircle, href: getSetting('whatsapp', '') ? `https://wa.me/${getSetting('whatsapp', '').replace(/[^0-9]/g, '')}` : '', label: "WhatsApp" },
   ].filter(s => s.href);
 
-
   return (
-    <footer className="bg-foreground text-card" id="contact">
-      <div className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
-          {/* Brand Section */}
-          <div className="sm:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-3 sm:mb-4">
-              <img 
-                src="/logo.png" 
-                alt={getSetting('company_name', 'World Spilt Centre')} 
-                className="h-8 sm:h-10 w-[35px] sm:w-[44px] object-contain"
-                width={44}
-                height={40}
-              />
-              <div>
-                <h3 className="font-heading font-bold text-base sm:text-lg">
-                  {getSetting('company_name', 'World Spilt Centre').split(' ').map((word, i) => 
-                    i === 1 ? <span key={i} className="text-primary">{word} </span> : word + ' '
-                  )}
-                </h3>
-                <p className="text-[10px] sm:text-xs text-card/60 uppercase tracking-wider">
-                  {getSetting('company_tagline', 'Electronics')}
-                </p>
-              </div>
-            </Link>
-            <p className="text-card/70 text-xs sm:text-sm mb-3 sm:mb-4 max-w-xs">
-              Your trusted destination for premium electronics and home appliances. 
-              Quality products, lowest prices, exceptional service.
-            </p>
-            <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
-              <div className="flex items-center gap-2 text-card/70">
-                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                <span>{getSetting('phone', '0300-4649141')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-card/70">
-                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                <span className="text-xs sm:text-sm break-all">{getSetting('email', 'support@worldspiltcentre.com')}</span>
-              </div>
-              <div className="flex items-start gap-2 text-card/70">
-                <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-xs sm:text-sm">{getSetting('address', 'Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore')}</span>
-              </div>
+    <footer className="bg-card border-t border-border" id="contact">
+      <div className="container mx-auto px-4 py-6">
+        {/* Top Section - Logo & Contact */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-border">
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt={getSetting('company_name', 'World Spilt Centre')} 
+              className="h-8 w-[35px] object-contain"
+              width={35}
+              height={32}
+            />
+            <div>
+              <h3 className="font-heading font-bold text-sm text-foreground">
+                {getSetting('company_name', 'World Spilt Centre').split(' ').map((word, i) => 
+                  i === 1 ? <span key={i} className="text-primary">{word} </span> : word + ' '
+                )}
+              </h3>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                {getSetting('company_tagline', 'Electronics')}
+              </p>
             </div>
+          </Link>
+          
+          {/* Contact Info - Horizontal on Desktop */}
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <a href={`tel:${getSetting('phone', '0300-4649141')}`} className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <Phone className="h-3.5 w-3.5 text-primary" />
+              <span>{getSetting('phone', '0300-4649141')}</span>
+            </a>
+            <a href={`mailto:${getSetting('email', 'support@worldspiltcentre.com')}`} className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <Mail className="h-3.5 w-3.5 text-primary" />
+              <span className="hidden sm:inline">{getSetting('email', 'support@worldspiltcentre.com')}</span>
+              <span className="sm:hidden">Email Us</span>
+            </a>
           </div>
+        </div>
 
+        {/* Links Grid */}
+        <div className="grid grid-cols-3 gap-4 py-5">
           {/* Shop Links */}
           <div>
-            <h4 className="font-semibold mb-3 sm:mb-4 text-primary text-sm sm:text-base">Shop</h4>
-            <ul className="space-y-1.5 sm:space-y-2">
-              {footerLinks.shop.map((link) => (
+            <h4 className="font-semibold text-foreground text-xs mb-2">Shop</h4>
+            <ul className="space-y-1">
+              {footerLinks.shop.slice(0, 4).map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-xs sm:text-sm text-card/70 hover:text-primary transition-smooth"
+                    className="text-[11px] text-muted-foreground hover:text-primary transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -117,13 +112,13 @@ const Footer = () => {
 
           {/* Support Links */}
           <div>
-            <h4 className="font-semibold mb-3 sm:mb-4 text-primary text-sm sm:text-base">Support</h4>
-            <ul className="space-y-1.5 sm:space-y-2">
-              {footerLinks.support.map((link) => (
+            <h4 className="font-semibold text-foreground text-xs mb-2">Support</h4>
+            <ul className="space-y-1">
+              {footerLinks.support.slice(0, 4).map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-xs sm:text-sm text-card/70 hover:text-primary transition-smooth"
+                    className="text-[11px] text-muted-foreground hover:text-primary transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -134,13 +129,13 @@ const Footer = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold mb-3 sm:mb-4 text-primary text-sm sm:text-base">Company</h4>
-            <ul className="space-y-1.5 sm:space-y-2">
-              {footerLinks.company.map((link) => (
+            <h4 className="font-semibold text-foreground text-xs mb-2">Company</h4>
+            <ul className="space-y-1">
+              {footerLinks.company.slice(0, 4).map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="text-xs sm:text-sm text-card/70 hover:text-primary transition-smooth"
+                    className="text-[11px] text-muted-foreground hover:text-primary transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -151,23 +146,34 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-card/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-          <p className="text-xs sm:text-sm text-card/60 text-center sm:text-left">
-            © {new Date().getFullYear()} {getSetting('company_name', 'World Spilt Centre')}. All rights reserved.
-          </p>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {socialLinks.map((social) => (
-              <a
-                key={social.label}
-                href={social.href}
-                aria-label={social.label}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-card/10 flex items-center justify-center hover:bg-primary transition-smooth"
-              >
-                <social.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </a>
-            ))}
+        <div className="pt-4 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3 w-3 text-primary flex-shrink-0" />
+            <p className="text-[10px] text-muted-foreground">
+              {getSetting('address', 'Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore')}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Social Links */}
+            <div className="flex items-center gap-1.5">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  <social.icon className="h-3.5 w-3.5" />
+                </a>
+              ))}
+            </div>
+            
+            <p className="text-[10px] text-muted-foreground">
+              © {new Date().getFullYear()} {getSetting('company_name', 'World Spilt Centre')}
+            </p>
           </div>
         </div>
       </div>
