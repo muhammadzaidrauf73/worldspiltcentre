@@ -126,7 +126,7 @@ const Hero = memo(() => {
                 : "opacity-0 translate-x-full"
             }`}
           >
-            <div className="relative h-full w-full">
+            <div className="relative h-full w-full bg-muted">
               <img
                 src={banner.image_url}
                 alt={banner.title}
