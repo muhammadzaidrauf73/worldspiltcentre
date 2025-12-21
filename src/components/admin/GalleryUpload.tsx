@@ -19,9 +19,10 @@ import { CSS } from "@dnd-kit/utilities";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, X, Loader2, Plus, GripVertical, Crop } from "lucide-react";
+import { Upload, X, Loader2, Plus, GripVertical, Crop, Link, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import ImageCropper from "./ImageCropper";
+import { Textarea } from "@/components/ui/textarea";
 
 interface GalleryUploadProps {
   value: string[];
@@ -117,6 +118,8 @@ const GalleryUpload = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [cropQueue, setCropQueue] = useState<File[]>([]);
   const [currentCropFile, setCurrentCropFile] = useState<File | null>(null);
+  const [showBulkUrl, setShowBulkUrl] = useState(false);
+  const [bulkUrls, setBulkUrls] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -270,6 +273,42 @@ const GalleryUpload = ({
     onChange([...value, url.trim()]);
   };
 
+  const handleBulkUrlAdd = () => {
+    if (!bulkUrls.trim()) return;
+    
+    // Split by newlines, commas, or spaces and filter valid URLs
+    const urls = bulkUrls
+      .split(/[\n,\s]+/)
+      .map(url => url.trim())
+      .filter(url => {
+        if (!url) return false;
+        // Basic URL validation
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          // Check if it starts with http or https
+          return url.startsWith('http://') || url.startsWith('https://');
+        }
+      });
+
+    if (urls.length === 0) {
+      toast.error("No valid URLs found");
+      return;
+    }
+
+    const remainingSlots = maxImages - value.length;
+    if (urls.length > remainingSlots) {
+      toast.error(`You can only add ${remainingSlots} more image(s). Found ${urls.length} URLs.`);
+      return;
+    }
+
+    onChange([...value, ...urls]);
+    setBulkUrls("");
+    setShowBulkUrl(false);
+    toast.success(`Added ${urls.length} image(s)`);
+  };
+
   return (
     <div className="space-y-4">
       <Input
@@ -357,11 +396,61 @@ const GalleryUpload = ({
         </label>
       )}
 
-      {/* URL Input */}
+      {/* Bulk URL Section */}
+      <div className="border rounded-lg p-3 bg-secondary/30">
+        <button
+          type="button"
+          onClick={() => setShowBulkUrl(!showBulkUrl)}
+          className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-primary transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Link className="h-4 w-4" />
+            <span>Add images by URL (paste from other websites)</span>
+          </div>
+          {showBulkUrl ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+
+        {showBulkUrl && (
+          <div className="mt-3 space-y-3">
+            <Textarea
+              placeholder={`Paste image URLs here (one per line or comma separated)
+
+Example:
+https://www.lahorecentre.com/image1.jpg
+https://www.lahorecentre.com/image2.jpg
+https://www.lahorecentre.com/image3.jpg`}
+              value={bulkUrls}
+              onChange={(e) => setBulkUrls(e.target.value)}
+              disabled={value.length >= maxImages}
+              className="min-h-[120px] text-sm font-mono"
+            />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Right-click images on other websites → "Copy image address" → Paste here
+              </p>
+              <Button
+                type="button"
+                onClick={handleBulkUrlAdd}
+                disabled={value.length >= maxImages || !bulkUrls.trim()}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add All URLs
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Single URL Input */}
       <div className="flex gap-2">
         <Input
           type="url"
-          placeholder="Or paste image URL and press Enter..."
+          placeholder="Or paste single image URL and press Enter..."
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -378,7 +467,7 @@ const GalleryUpload = ({
           size="sm"
           onClick={() => {
             const input = document.querySelector(
-              'input[placeholder*="paste image URL"]'
+              'input[placeholder*="paste single image URL"]'
             ) as HTMLInputElement;
             if (input?.value) {
               handleUrlAdd(input.value);
@@ -387,7 +476,7 @@ const GalleryUpload = ({
           }}
           disabled={value.length >= maxImages}
         >
-          Add URL
+          Add
         </Button>
       </div>
     </div>
