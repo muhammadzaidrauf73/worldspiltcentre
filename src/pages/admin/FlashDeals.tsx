@@ -52,6 +52,12 @@ interface Product {
   price: number;
   original_price: number | null;
   image_url: string | null;
+  category_id: string | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 const AdminFlashDeals = () => {
@@ -61,6 +67,7 @@ const AdminFlashDeals = () => {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<FlashDeal | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [bulkCategoryFilter, setBulkCategoryFilter] = useState<string>("all");
   const [bulkFormData, setBulkFormData] = useState({
     discount_percentage: "10",
     ends_at: "",
@@ -104,7 +111,7 @@ const AdminFlashDeals = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, original_price, image_url")
+        .select("id, name, price, original_price, image_url, category_id")
         .eq("is_active", true)
         .order("name", { ascending: true });
 
@@ -112,6 +119,24 @@ const AdminFlashDeals = () => {
       return data as Product[];
     },
   });
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories-for-deals"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      return data as Category[];
+    },
+  });
+
+  // Filter products by category
+  const filteredProducts = products?.filter(
+    (p) => bulkCategoryFilter === "all" || p.category_id === bulkCategoryFilter
+  ) || [];
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<FlashDeal, "id">) => {
@@ -193,6 +218,7 @@ const AdminFlashDeals = () => {
 
   const resetBulkForm = () => {
     setSelectedProducts([]);
+    setBulkCategoryFilter("all");
     setBulkFormData({
       discount_percentage: "10",
       ends_at: "",
@@ -207,6 +233,20 @@ const AdminFlashDeals = () => {
         ? prev.filter((id) => id !== productId)
         : [...prev, productId]
     );
+  };
+
+  const selectAllFiltered = () => {
+    const filteredIds = filteredProducts.map((p) => p.id);
+    setSelectedProducts((prev) => {
+      const newSelection = new Set(prev);
+      filteredIds.forEach((id) => newSelection.add(id));
+      return Array.from(newSelection);
+    });
+  };
+
+  const deselectAllFiltered = () => {
+    const filteredIds = new Set(filteredProducts.map((p) => p.id));
+    setSelectedProducts((prev) => prev.filter((id) => !filteredIds.has(id)));
   };
 
   const handleBulkSubmit = (e: React.FormEvent) => {
@@ -378,43 +418,74 @@ const AdminFlashDeals = () => {
                     <Label htmlFor="bulk_is_active">Active</Label>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Select Products ({selectedProducts.length} selected)</Label>
-                    <div className="border rounded-lg max-h-[300px] overflow-y-auto">
-                      {products?.map((product) => (
-                        <div
-                          key={product.id}
-                          className="flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-muted/50 cursor-pointer"
-                          onClick={() => toggleProductSelection(product.id)}
-                        >
-                          <Checkbox
-                            checked={selectedProducts.includes(product.id)}
-                            onCheckedChange={() => toggleProductSelection(product.id)}
-                          />
-                          {product.image_url ? (
-                            <img
-                              src={product.image_url}
-                              alt={product.name}
-                              className="w-10 h-10 object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-secondary rounded flex items-center justify-center">
-                              <Zap className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{product.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Rs.{(product.original_price || product.price).toLocaleString()}
-                              {bulkFormData.discount_percentage && (
-                                <span className="text-deal ml-2">
-                                  → Rs.{Math.round((product.original_price || product.price) * (1 - parseFloat(bulkFormData.discount_percentage || "0") / 100)).toLocaleString()}
-                                </span>
-                              )}
-                            </p>
-                          </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Select Products ({selectedProducts.length} selected)</Label>
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={selectAllFiltered}>
+                          Select All
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={deselectAllFiltered}>
+                          Deselect All
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <Select value={bulkCategoryFilter} onValueChange={setBulkCategoryFilter}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Filter by category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories?.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <div className="border rounded-lg max-h-[250px] overflow-y-auto">
+                      {filteredProducts.length === 0 ? (
+                        <div className="p-4 text-center text-muted-foreground text-sm">
+                          No products found in this category
                         </div>
-                      ))}
+                      ) : (
+                        filteredProducts.map((product) => (
+                          <div
+                            key={product.id}
+                            className="flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-muted/50 cursor-pointer"
+                            onClick={() => toggleProductSelection(product.id)}
+                          >
+                            <Checkbox
+                              checked={selectedProducts.includes(product.id)}
+                              onCheckedChange={() => toggleProductSelection(product.id)}
+                            />
+                            {product.image_url ? (
+                              <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className="w-10 h-10 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-secondary rounded flex items-center justify-center">
+                                <Zap className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{product.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Rs.{(product.original_price || product.price).toLocaleString()}
+                                {bulkFormData.discount_percentage && (
+                                  <span className="text-deal ml-2">
+                                    → Rs.{Math.round((product.original_price || product.price) * (1 - parseFloat(bulkFormData.discount_percentage || "0") / 100)).toLocaleString()}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
 
