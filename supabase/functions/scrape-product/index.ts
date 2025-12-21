@@ -443,7 +443,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, url, product, categoryOverride } = body;
+    const { action, url, product, categoryOverride, priceMarkup } = body;
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -616,11 +616,20 @@ serve(async (req) => {
         .eq('slug', productData.slug)
         .maybeSingle();
 
+      // Apply price markup if specified
+      const markupMultiplier = priceMarkup ? 1 + (priceMarkup / 100) : 1;
+      const finalPrice = Math.round(productData.price * markupMultiplier);
+      const finalOriginalPrice = productData.original_price 
+        ? Math.round(productData.original_price * markupMultiplier) 
+        : null;
+
+      console.log(`Price: ${productData.price} -> ${finalPrice} (markup: ${priceMarkup || 0}%)`);
+
       const productRecord = {
         name: productData.name,
         slug: productData.slug,
-        price: productData.price,
-        original_price: productData.original_price,
+        price: finalPrice,
+        original_price: finalOriginalPrice,
         description: productData.description,
         brand: productData.brand,
         category_id: categoryId,
@@ -629,8 +638,8 @@ serve(async (req) => {
         specifications: productData.specifications,
         is_active: true,
         is_new_arrival: true,
-        discount_percentage: productData.original_price 
-          ? Math.round((1 - productData.price / productData.original_price) * 100) 
+        discount_percentage: finalOriginalPrice 
+          ? Math.round((1 - finalPrice / finalOriginalPrice) * 100) 
           : null,
       };
 
