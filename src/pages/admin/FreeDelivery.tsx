@@ -349,13 +349,15 @@ const AdminFreeDelivery = () => {
                   ) : (
                     <div className="divide-y">
                       {filteredBulkProducts.map((product) => (
-                        <label
+                        <div
                           key={product.id}
                           className="flex items-center gap-4 p-3 hover:bg-muted/50 cursor-pointer"
+                          onClick={() => toggleProductSelection(product.id)}
                         >
                           <Checkbox
                             checked={isProductSelected(product.id)}
                             onCheckedChange={() => toggleProductSelection(product.id)}
+                            onClick={(e) => e.stopPropagation()}
                           />
                           <img
                             src={product.image_url || "/placeholder.svg"}
@@ -368,10 +370,10 @@ const AdminFreeDelivery = () => {
                               {product.brand} • Rs. {product.price.toLocaleString()}
                             </p>
                           </div>
-                          <Badge variant="outline" className="shrink-0">
+                          <span className="text-xs px-2 py-1 rounded border border-border shrink-0">
                             {getCategoryName(product.category_id)}
-                          </Badge>
-                        </label>
+                          </span>
+                        </div>
                       ))}
                     </div>
                   )}
