@@ -427,7 +427,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, url, product } = body;
+    const { action, url, product, categoryOverride } = body;
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -568,22 +568,25 @@ serve(async (req) => {
       }
       productData.images = uploadedImages;
 
+      // Use category override if provided
+      const categoryName = categoryOverride || productData.category;
+
       // Get or create category
       let categoryId = null;
       const { data: existingCategory } = await supabase
         .from('categories')
         .select('id')
-        .eq('name', productData.category)
+        .eq('name', categoryName)
         .maybeSingle();
 
       if (existingCategory) {
         categoryId = existingCategory.id;
-      } else {
+      } else if (categoryName) {
         const { data: newCategory } = await supabase
           .from('categories')
           .insert({
-            name: productData.category,
-            slug: productData.category.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            name: categoryName,
+            slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           })
           .select('id')
           .single();

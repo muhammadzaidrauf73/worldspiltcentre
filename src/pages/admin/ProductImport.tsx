@@ -21,6 +21,14 @@ import {
   AlertCircle,
   Upload
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
 
 interface ListedProduct {
   url: string;
@@ -28,6 +36,7 @@ interface ListedProduct {
   image: string;
   price: number;
   original_price?: number;
+  category?: string;
   selected?: boolean;
   status?: 'pending' | 'importing' | 'imported' | 'error';
   error?: string;
@@ -63,6 +72,17 @@ export default function ProductImport() {
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentAction, setCurrentAction] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  // Fetch existing categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('categories').select('*').order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const fetchProductList = useCallback(async (url: string) => {
     setIsLoading(true);
@@ -76,9 +96,10 @@ export default function ProductImport() {
       if (error) throw error;
 
       if (data.success && data.products && data.products.length > 0) {
-        // Add selection state to products
+        // Add selection state and override category if selected
         const productsWithSelection = data.products.map((p: ListedProduct) => ({
           ...p,
+          category: selectedCategory || p.category,
           selected: true,
           status: 'pending' as const,
         }));
@@ -171,8 +192,13 @@ export default function ProductImport() {
 
       try {
         // Use quick-import action which scrapes and imports in one step
+        // Pass the selected category if available
         const { data, error } = await supabase.functions.invoke('scrape-product', {
-          body: { action: 'quick-import', url: product.url },
+          body: { 
+            action: 'quick-import', 
+            url: product.url,
+            categoryOverride: product.category || selectedCategory || undefined,
+          },
         });
 
         if (error) throw error;
@@ -288,21 +314,22 @@ export default function ProductImport() {
           </CardContent>
         </Card>
 
-        {/* Custom URL */}
+        {/* Custom URL with Category Selection */}
         <Card>
           <CardHeader>
             <CardTitle>Custom URL</CardTitle>
             <CardDescription>
-              Paste any LahoreCentre search or category URL to fetch products
+              Paste any LahoreCentre search or category URL to fetch products. Select a category to assign to all imported products.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
                 placeholder="https://www.lahorecentre.com/?s=product+name&post_type=product"
                 value={searchUrl}
                 onChange={(e) => setSearchUrl(e.target.value)}
                 disabled={isLoading || isImporting}
+                className="flex-1"
               />
               <Button
                 onClick={() => fetchProductList(searchUrl)}
@@ -311,6 +338,27 @@ export default function ProductImport() {
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 Fetch
               </Button>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-1 block">Assign Category (optional)</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Auto-detect from page" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Auto-detect from page</SelectItem>
+                    {categories.map((cat: any) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedCategory && (
+                <Badge className="mt-5">{selectedCategory}</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -419,6 +467,11 @@ export default function ProductImport() {
                       
                       <div className="p-3 space-y-1">
                         <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
+                        {(product.category || selectedCategory) && (
+                          <Badge variant="outline" className="text-xs">
+                            {product.category || selectedCategory}
+                          </Badge>
+                        )}
                         <div className="flex items-center gap-2">
                           <p className="text-primary font-bold">
                             Rs. {product.price.toLocaleString()}
