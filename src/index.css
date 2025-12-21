@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scrolling for all elements */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Enhanced touch scrolling for mobile */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Smooth momentum scrolling for scrollable containers */
+[data-radix-scroll-area-viewport],
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* CSS Containment for performance - reduces layout calculations */
 section, footer, header, nav, main {
   contain: layout style;
