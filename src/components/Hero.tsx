@@ -140,8 +140,8 @@ const Hero = memo(() => {
               {/* Minimal overlay - only at bottom for button visibility */}
               <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-foreground/50 to-transparent" />
               
-              {/* Minimal content - just shop button */}
-              <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6">
+              {/* Shop button - Hidden on mobile */}
+              <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 hidden sm:block">
                 <Button 
                   className="font-semibold px-3 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-base text-white hover:opacity-90 transition-opacity shadow-lg h-auto min-h-[36px] sm:min-h-[40px]"
                   style={{ backgroundColor: banner.button_color || '#f97316' }}
