@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import ReviewForm from "@/components/ReviewForm";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 import { cn } from "@/lib/utils";
@@ -24,7 +25,9 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
-  Check
+  Check,
+  X,
+  ZoomIn
 } from "lucide-react";
 
 const ProductDetail = () => {
@@ -38,6 +41,38 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Touch handling for swipe gestures
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (imagesLength: number) => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setSelectedImage(prev => Math.min(imagesLength - 1, prev + 1));
+    } else if (isRightSwipe) {
+      setSelectedImage(prev => Math.max(0, prev - 1));
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
   
   const inWishlist = id ? isInWishlist(id) : false;
 
@@ -175,22 +210,55 @@ const ProductDetail = () => {
       />
       <Navbar />
       
-      {/* Mobile: Full-width image section */}
+      {/* Mobile: Full-width image section with swipe */}
       <div className="md:hidden">
-        <div className="relative w-full aspect-[4/3] bg-secondary/30">
+        <div 
+          className="relative w-full aspect-[4/3] bg-secondary/30"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={() => handleTouchEnd(images.length)}
+        >
           {discount > 0 && (
             <Badge className="absolute top-3 left-3 z-10 bg-deal text-deal-foreground text-xs">
               {discount}% OFF
             </Badge>
           )}
+          
+          {/* Tap to fullscreen button */}
+          <button
+            onClick={() => setIsFullscreen(true)}
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-card/80 flex items-center justify-center"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          
           <img
             src={images[selectedImage] || "/placeholder.svg"}
             alt={product.name}
+            onClick={() => setIsFullscreen(true)}
             onError={(e) => {
               e.currentTarget.src = "/placeholder.svg";
             }}
-            className="w-full h-full object-contain p-4"
+            className="w-full h-full object-contain p-4 cursor-pointer"
           />
+          
+          {/* Image counter dots */}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImage(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    selectedImage === idx 
+                      ? "bg-primary w-4" 
+                      : "bg-card/60"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+          
           {images.length > 1 && (
             <>
               <button
@@ -237,6 +305,58 @@ const ProductDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+        <DialogContent className="max-w-full h-full p-0 bg-black/95 border-none">
+          <div 
+            className="relative w-full h-full flex items-center justify-center"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={() => handleTouchEnd(images.length)}
+          >
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            
+            <img
+              src={images[selectedImage] || "/placeholder.svg"}
+              alt={product.name}
+              onError={(e) => {
+                e.currentTarget.src = "/placeholder.svg";
+              }}
+              className="max-w-full max-h-full object-contain p-4"
+            />
+            
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setSelectedImage(prev => Math.max(0, prev - 1))}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white"
+                  disabled={selectedImage === 0}
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => setSelectedImage(prev => Math.min(images.length - 1, prev + 1))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white"
+                  disabled={selectedImage === images.length - 1}
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            
+            {/* Counter */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+              {selectedImage + 1} / {images.length}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="container mx-auto px-4 py-6">
         {/* Breadcrumb - hidden on mobile */}
