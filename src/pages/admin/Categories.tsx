@@ -556,6 +556,15 @@ const AdminCategories = () => {
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+                                onClick={() => handleProductStockChange(product.id, "0")}
+                              >
+                                0
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
                                 className="h-8 px-2 text-xs"
                                 onClick={() => adjustStock(product.id, -10)}
                               >
