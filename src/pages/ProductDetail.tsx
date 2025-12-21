@@ -175,9 +175,72 @@ const ProductDetail = () => {
       />
       <Navbar />
       
+      {/* Mobile: Full-width image section */}
+      <div className="md:hidden">
+        <div className="relative w-full aspect-[4/3] bg-secondary/30">
+          {discount > 0 && (
+            <Badge className="absolute top-3 left-3 z-10 bg-deal text-deal-foreground text-xs">
+              {discount}% OFF
+            </Badge>
+          )}
+          <img
+            src={images[selectedImage] || "/placeholder.svg"}
+            alt={product.name}
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder.svg";
+            }}
+            className="w-full h-full object-contain p-4"
+          />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={() => setSelectedImage(prev => Math.max(0, prev - 1))}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 flex items-center justify-center"
+                disabled={selectedImage === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setSelectedImage(prev => Math.min(images.length - 1, prev + 1))}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 flex items-center justify-center"
+                disabled={selectedImage === images.length - 1}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+        
+        {/* Mobile Thumbnail Gallery */}
+        {images.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-background">
+            {images.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => setSelectedImage(idx)}
+                className={`shrink-0 w-16 h-16 rounded-md border-2 overflow-hidden bg-secondary/30 transition-all ${
+                  selectedImage === idx 
+                    ? "border-primary ring-1 ring-primary" 
+                    : "border-border"
+                }`}
+              >
+                <img
+                  src={img}
+                  alt={`${product.name} view ${idx + 1}`}
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                  className="w-full h-full object-contain p-1"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="container mx-auto px-4 py-6">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+        {/* Breadcrumb - hidden on mobile */}
+        <nav className="hidden md:flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-primary">Home</Link>
           <span>/</span>
           <Link to="/products" className="hover:text-primary">Products</Link>
@@ -194,11 +257,11 @@ const ProductDetail = () => {
         </nav>
 
         <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
-          {/* Image Gallery */}
-          <div className="space-y-3 md:space-y-4">
-            <div className="relative aspect-[4/3] md:aspect-square bg-secondary/30 rounded-lg overflow-hidden">
+          {/* Image Gallery - Desktop only */}
+          <div className="hidden md:block space-y-4">
+            <div className="relative aspect-square bg-secondary/30 rounded-lg overflow-hidden">
               {discount > 0 && (
-                <Badge className="absolute top-3 left-3 md:top-4 md:left-4 z-10 bg-deal text-deal-foreground text-xs">
+                <Badge className="absolute top-4 left-4 z-10 bg-deal text-deal-foreground text-xs">
                   {discount}% OFF
                 </Badge>
               )}
@@ -208,36 +271,36 @@ const ProductDetail = () => {
                 onError={(e) => {
                   e.currentTarget.src = "/placeholder.svg";
                 }}
-                className="w-full h-full object-contain p-4 md:p-8"
+                className="w-full h-full object-contain p-8"
               />
               {images.length > 1 && (
                 <>
                   <button
                     onClick={() => setSelectedImage(prev => Math.max(0, prev - 1))}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
                     disabled={selectedImage === 0}
                   >
-                    <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
+                    <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => setSelectedImage(prev => Math.min(images.length - 1, prev + 1))}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card"
                     disabled={selectedImage === images.length - 1}
                   >
-                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
+                    <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               )}
             </div>
             
-            {/* Thumbnail Gallery - Always show if there's at least 1 image */}
+            {/* Desktop Thumbnail Gallery */}
             {images.length >= 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`shrink-0 w-14 h-14 md:w-20 md:h-20 rounded-md border-2 overflow-hidden bg-secondary/30 transition-all ${
+                    className={`shrink-0 w-20 h-20 rounded-md border-2 overflow-hidden bg-secondary/30 transition-all ${
                       selectedImage === idx 
                         ? "border-primary ring-1 ring-primary" 
                         : "border-border hover:border-primary/50"
