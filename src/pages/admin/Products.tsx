@@ -330,6 +330,9 @@ const AdminProducts = () => {
       case "change-category":
         setBulkCategoryDialogOpen(true);
         break;
+      case "remove-category":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { category_id: null } });
+        break;
     }
   };
 
@@ -832,6 +835,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   <SelectItem value="new-arrival">Mark as New Arrival</SelectItem>
                   <SelectItem value="top-seller">Mark as Top Seller</SelectItem>
                   <SelectItem value="change-category">Change Category</SelectItem>
+                  <SelectItem value="remove-category">Remove Category</SelectItem>
                   <SelectItem value="delete">Delete Selected</SelectItem>
                 </SelectContent>
               </Select>
