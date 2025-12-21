@@ -20,9 +20,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -49,6 +50,9 @@ const AdminCategories = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CategoryForm>(emptyForm);
+  const [stockDialogOpen, setStockDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+  const [stockQuantity, setStockQuantity] = useState("");
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["admin-categories"],
@@ -138,6 +142,41 @@ const AdminCategories = () => {
       toast.error("Error deleting category: " + error.message);
     },
   });
+
+  const updateStockMutation = useMutation({
+    mutationFn: async ({ categoryId, quantity }: { categoryId: string; quantity: number }) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ stock_quantity: quantity })
+        .eq("category_id", categoryId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success(`Stock updated for all products in ${selectedCategory?.name}`);
+      setStockDialogOpen(false);
+      setSelectedCategory(null);
+      setStockQuantity("");
+    },
+    onError: (error) => {
+      toast.error("Error updating stock: " + error.message);
+    },
+  });
+
+  const handleUpdateStock = () => {
+    if (!selectedCategory || !stockQuantity) return;
+    updateStockMutation.mutate({
+      categoryId: selectedCategory.id,
+      quantity: parseInt(stockQuantity) || 0,
+    });
+  };
+
+  const openStockDialog = (category: any) => {
+    setSelectedCategory(category);
+    setStockQuantity("");
+    setStockDialogOpen(true);
+  };
 
   const handleEdit = (category: any) => {
     setEditingId(category.id);
@@ -310,6 +349,14 @@ const AdminCategories = () => {
                     <TableCell>{category.display_order}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => openStockDialog(category)}
+                          title="Update Stock"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(category)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -329,6 +376,42 @@ const AdminCategories = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Stock Update Dialog */}
+        <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Update Stock for {selectedCategory?.name}</DialogTitle>
+              <DialogDescription>
+                Set the stock quantity for all {selectedCategory?.product_count || 0} products in this category.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="stock-quantity">Stock Quantity</Label>
+                <Input
+                  id="stock-quantity"
+                  type="number"
+                  min="0"
+                  placeholder="Enter stock quantity"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setStockDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleUpdateStock}
+                  disabled={!stockQuantity || updateStockMutation.isPending}
+                >
+                  {updateStockMutation.isPending ? "Updating..." : "Update All"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
