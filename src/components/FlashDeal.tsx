@@ -119,80 +119,68 @@ const FlashDeal = () => {
         </div>
 
         {/* Deals Row */}
-        <div className="min-h-[140px] sm:min-h-[160px]">
+        <div className="min-h-[120px]">
           {isLoading ? (
-            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-hide">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-36 sm:h-40 min-w-[280px] sm:min-w-[320px] rounded-xl flex-shrink-0" />
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-28 min-w-[220px] rounded-xl flex-shrink-0" />
               ))}
             </div>
           ) : !deals || deals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 sm:py-12">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <Zap className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50" />
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                <Zap className="h-8 w-8 text-muted-foreground/50" />
               </div>
-              <p className="text-muted-foreground text-base sm:text-lg font-medium">
-                No active flash deals at the moment
-              </p>
-              <p className="text-muted-foreground/70 text-sm mt-1">
-                Check back soon for amazing offers!
+              <p className="text-muted-foreground text-sm font-medium">
+                No active flash deals
               </p>
             </div>
           ) : (
-            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
               {deals.map((deal, index) => (
                 <Link
                   key={deal.id}
                   to={deal.product_id ? `/product/${deal.product_id}` : `/products?deals=true`}
-                  className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden shadow-lg hover:shadow-xl hover:border-deal/30 transition-all duration-300 animate-fade-in min-w-[280px] sm:min-w-[320px] flex-shrink-0 snap-start"
+                  className="group relative bg-card rounded-xl border border-border/50 overflow-hidden shadow-md hover:shadow-lg hover:border-deal/30 transition-all duration-300 animate-fade-in min-w-[220px] max-w-[220px] flex-shrink-0 snap-start"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Deal badge */}
-                  <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full bg-deal text-deal-foreground text-xs font-bold shadow-lg">
+                  <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full bg-deal text-deal-foreground text-[10px] font-bold shadow">
                     {Math.round(((deal.original_price - deal.deal_price) / deal.original_price) * 100)}% OFF
                   </div>
                   
-                  <div className="flex gap-4 p-4 sm:p-5">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-gradient-to-br from-secondary/50 to-secondary overflow-hidden shrink-0 shadow-inner">
+                  <div className="flex gap-3 p-3">
+                    <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-secondary/50 to-secondary overflow-hidden shrink-0">
                       <img
                         src={deal.image_url || "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300"}
                         alt={deal.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                       <div>
-                        <h3 className="font-semibold text-foreground text-sm sm:text-base line-clamp-2 mb-2 group-hover:text-deal transition-colors">
+                        <h3 className="font-medium text-foreground text-xs line-clamp-2 mb-1 group-hover:text-deal transition-colors">
                           {deal.name}
                         </h3>
-                        <div className="flex items-baseline gap-2 mb-1">
-                          <span className="font-bold text-xl sm:text-2xl text-deal">
-                            Rs.{deal.deal_price.toLocaleString()}
-                          </span>
-                        </div>
-                        <span className="text-xs sm:text-sm text-muted-foreground line-through">
+                        <span className="font-bold text-base text-deal">
+                          Rs.{deal.deal_price.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground line-through ml-1">
                           Rs.{deal.original_price.toLocaleString()}
                         </span>
                       </div>
                       
-                      {/* Enhanced Progress Bar */}
-                      <div className="mt-3 space-y-1.5">
-                        <div className="h-2 sm:h-2.5 bg-secondary rounded-full overflow-hidden">
+                      {/* Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-deal to-primary rounded-full transition-all duration-500 relative"
+                            className="h-full bg-gradient-to-r from-deal to-primary rounded-full"
                             style={{ width: `${deal.sold_percentage}%` }}
-                          >
-                            <div className="absolute inset-0 bg-white/20 animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
-                          </div>
+                          />
                         </div>
-                        <div className="flex justify-between items-center">
-                          <p className="text-xs text-muted-foreground font-medium">
-                            🔥 {deal.sold_percentage}% sold
-                          </p>
-                          <p className="text-xs text-deal font-semibold">
-                            Hurry!
-                          </p>
-                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          🔥 {deal.sold_percentage}% sold
+                        </p>
                       </div>
                     </div>
                   </div>
