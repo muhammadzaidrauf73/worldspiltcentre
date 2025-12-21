@@ -711,4 +711,13 @@ section, footer, header, nav, main {
   .animate-float {
     animation: float 8s ease-in-out infinite;
   }
+
+  /* Hide scrollbar utility for mobile touch scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

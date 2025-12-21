@@ -1,5 +1,5 @@
 import { useRef, lazy, Suspense, memo } from "react";
-import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,16 +48,6 @@ const iconMap: Record<string, LucideIcon> = {
 const Index = () => {
   const queryClient = useQueryClient();
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
-
-  const scrollCategories = (direction: 'left' | 'right') => {
-    if (categoriesScrollRef.current) {
-      const scrollAmount = 300;
-      categoriesScrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   // Fetch categories from database with caching
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -138,58 +128,34 @@ const Index = () => {
                 </Link>
               </div>
 
-              {/* Horizontal Scroll Container with Buttons */}
-              <div className="relative group">
-                {/* Left Scroll Button - visible on mobile only */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Scroll categories left"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border flex md:hidden"
-                  onClick={() => scrollCategories('left')}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-
-                {/* Right Scroll Button - visible on mobile only */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Scroll categories right"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-card shadow-lg border-border flex md:hidden"
-                  onClick={() => scrollCategories('right')}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-
-                <div 
-                  ref={categoriesScrollRef}
-                  className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between"
-                  style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) transparent' }}
-                >
-                  {categoriesLoading ? (
-                    Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="shrink-0 md:shrink">
-                        <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
-                        <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
+              {/* Horizontal Scroll Container - Touch scroll on mobile */}
+              <div 
+                ref={categoriesScrollRef}
+                className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between scrollbar-hide"
+                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+              >
+                {categoriesLoading ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="shrink-0 md:shrink">
+                      <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
+                      <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
+                    </div>
+                  ))
+                ) : (
+                  categories.map((category) => {
+                    const actualProductCount = products.filter(p => p.category_id === category.id).length;
+                    return (
+                      <div key={category.id} className="shrink-0 md:shrink">
+                        <CategoryCard
+                          name={category.name}
+                          icon={iconMap[category.icon || "Tv"] || Tv}
+                          count={actualProductCount}
+                          image={category.image_url || ""}
+                        />
                       </div>
-                    ))
-                  ) : (
-                    categories.map((category) => {
-                      const actualProductCount = products.filter(p => p.category_id === category.id).length;
-                      return (
-                        <div key={category.id} className="shrink-0 md:shrink">
-                          <CategoryCard
-                            name={category.name}
-                            icon={iconMap[category.icon || "Tv"] || Tv}
-                            count={actualProductCount}
-                            image={category.image_url || ""}
-                          />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                    );
+                  })
+                )}
               </div>
               
               {/* Mobile View All Link */}
