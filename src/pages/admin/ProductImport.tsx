@@ -342,12 +342,12 @@ export default function ProductImport() {
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <label className="text-sm font-medium mb-1 block">Assign Category (optional)</label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val === "auto" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Auto-detect from page" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Auto-detect from page</SelectItem>
+                    <SelectItem value="auto">Auto-detect from page</SelectItem>
                     {categories.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.name}>
                         {cat.name}
@@ -356,7 +356,7 @@ export default function ProductImport() {
                   </SelectContent>
                 </Select>
               </div>
-              {selectedCategory && (
+              {selectedCategory && selectedCategory !== "auto" && (
                 <Badge className="mt-5">{selectedCategory}</Badge>
               )}
             </div>
