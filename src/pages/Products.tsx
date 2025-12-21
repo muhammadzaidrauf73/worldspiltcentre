@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,6 +17,7 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 import SEO from "@/components/SEO";
 
 const Products = () => {
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
@@ -29,6 +31,12 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [isPriceFiltered, setIsPriceFiltered] = useState(false);
   const showDealsOnly = dealsParam === "true";
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["products"] });
+    await queryClient.invalidateQueries({ queryKey: ["categories"] });
+    await queryClient.invalidateQueries({ queryKey: ["brands"] });
+  };
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -235,13 +243,14 @@ const Products = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <SEO 
-        title={`${categoryName} - Shop Electronics`}
-        description={`Browse our collection of ${categoryName.toLowerCase()}. Best prices on air conditioners, LED TVs, refrigerators, washing machines and home appliances in Lahore.`}
-        keywords={`${categoryName.toLowerCase()}, electronics lahore, buy ${categoryName.toLowerCase()} pakistan, world spilt centre`}
-      />
-      <Navbar />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-background">
+        <SEO 
+          title={`${categoryName} - Shop Electronics`}
+          description={`Browse our collection of ${categoryName.toLowerCase()}. Best prices on air conditioners, LED TVs, refrigerators, washing machines and home appliances in Lahore.`}
+          keywords={`${categoryName.toLowerCase()}, electronics lahore, buy ${categoryName.toLowerCase()} pakistan, world spilt centre`}
+        />
+        <Navbar />
       
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
@@ -495,8 +504,9 @@ const Products = () => {
         </div>
       </div>
       
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </PullToRefresh>
   );
 };
 
