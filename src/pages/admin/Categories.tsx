@@ -23,7 +23,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Search, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -219,6 +219,14 @@ const AdminCategories = () => {
 
   const handleProductStockChange = (productId: string, value: string) => {
     setProductStocks((prev) => ({ ...prev, [productId]: value }));
+  };
+
+  const adjustStock = (productId: string, adjustment: number) => {
+    setProductStocks((prev) => {
+      const currentValue = parseInt(prev[productId] || "0") || 0;
+      const newValue = Math.max(0, currentValue + adjustment);
+      return { ...prev, [productId]: newValue.toString() };
+    });
   };
 
   const setAllStocksToValue = (value: string) => {
@@ -540,13 +548,44 @@ const AdminCategories = () => {
                             </div>
                           </div>
                           
-                          {/* Stock Input */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Label className="text-xs text-muted-foreground">Stock:</Label>
+                          {/* Stock Controls */}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {/* Quick Adjust Buttons */}
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2 text-xs"
+                                onClick={() => adjustStock(product.id, -10)}
+                              >
+                                -10
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2 text-xs"
+                                onClick={() => adjustStock(product.id, 10)}
+                              >
+                                +10
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2 text-xs"
+                                onClick={() => adjustStock(product.id, 100)}
+                              >
+                                +100
+                              </Button>
+                            </div>
+                            
+                            {/* Stock Input */}
                             <Input
                               type="number"
                               min="0"
-                              className="w-20 h-9"
+                              className="w-20 h-8"
                               value={productStocks[product.id] || "0"}
                               onChange={(e) => handleProductStockChange(product.id, e.target.value)}
                             />
