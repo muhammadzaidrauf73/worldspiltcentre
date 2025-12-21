@@ -177,13 +177,15 @@ const Index = () => {
                       ))
                     ) : (
                       categories.map((category) => {
-                        const actualProductCount = products.filter(p => p.category_id === category.id).length;
+                        // Use calculated count if products loaded, otherwise use database stored count
+                        const calculatedCount = products.filter(p => p.category_id === category.id).length;
+                        const displayCount = productsLoading ? (category.product_count || 0) : calculatedCount;
                         return (
                           <div key={category.id} className="shrink-0 md:shrink">
                             <CategoryCard
                               name={category.name}
                               icon={iconMap[category.icon || "Tv"] || Tv}
-                              count={actualProductCount}
+                              count={displayCount}
                               image={category.image_url || ""}
                             />
                           </div>
