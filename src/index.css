@@ -512,6 +512,18 @@ section, footer, header, nav, main {
   .animate-ticker {
     animation: ticker 30s linear infinite;
   }
+
+  @media (min-width: 768px) {
+    .animate-ticker {
+      animation: ticker 20s linear infinite;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .animate-ticker {
+      animation: ticker 15s linear infinite;
+    }
+  }
   
   /* GPU-accelerated animations */
   .will-change-transform {
