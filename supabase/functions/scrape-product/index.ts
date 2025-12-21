@@ -245,7 +245,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action, url, productUrls } = await req.json();
+    const body = await req.json();
+    const { action, url, product } = body;
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -321,8 +322,13 @@ serve(async (req) => {
     }
 
     if (action === 'import-product') {
-      // Import product to database
-      const { product } = await req.json();
+      // Import product to database (product is already in the parsed body)
+      if (!product) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'No product data provided' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       
       // Get or create category
       let categoryId = null;
