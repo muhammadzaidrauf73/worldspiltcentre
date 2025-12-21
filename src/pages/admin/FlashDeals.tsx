@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -133,10 +133,15 @@ const AdminFlashDeals = () => {
     },
   });
 
-  // Filter products by category
-  const filteredProducts = products?.filter(
-    (p) => bulkCategoryFilter === "all" || p.category_id === bulkCategoryFilter
-  ) || [];
+  // Memoize filtered products and selected set for performance
+  const filteredProducts = useMemo(() => 
+    products?.filter(
+      (p) => bulkCategoryFilter === "all" || p.category_id === bulkCategoryFilter
+    ) || [],
+    [products, bulkCategoryFilter]
+  );
+
+  const selectedProductsSet = useMemo(() => new Set(selectedProducts), [selectedProducts]);
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<FlashDeal, "id">) => {
@@ -227,27 +232,31 @@ const AdminFlashDeals = () => {
     setIsBulkDialogOpen(false);
   };
 
-  const toggleProductSelection = (productId: string) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
-  };
+  const toggleProductSelection = useCallback((productId: string) => {
+    setSelectedProducts((prev) => {
+      const set = new Set(prev);
+      if (set.has(productId)) {
+        set.delete(productId);
+      } else {
+        set.add(productId);
+      }
+      return Array.from(set);
+    });
+  }, []);
 
-  const selectAllFiltered = () => {
+  const selectAllFiltered = useCallback(() => {
     const filteredIds = filteredProducts.map((p) => p.id);
     setSelectedProducts((prev) => {
       const newSelection = new Set(prev);
       filteredIds.forEach((id) => newSelection.add(id));
       return Array.from(newSelection);
     });
-  };
+  }, [filteredProducts]);
 
-  const deselectAllFiltered = () => {
+  const deselectAllFiltered = useCallback(() => {
     const filteredIds = new Set(filteredProducts.map((p) => p.id));
     setSelectedProducts((prev) => prev.filter((id) => !filteredIds.has(id)));
-  };
+  }, [filteredProducts]);
 
   const handleBulkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -458,7 +467,7 @@ const AdminFlashDeals = () => {
                             onClick={() => toggleProductSelection(product.id)}
                           >
                             <Checkbox
-                              checked={selectedProducts.includes(product.id)}
+                              checked={selectedProductsSet.has(product.id)}
                               onCheckedChange={() => toggleProductSelection(product.id)}
                             />
                             {product.image_url ? (
