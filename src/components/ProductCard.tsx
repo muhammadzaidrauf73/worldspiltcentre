@@ -66,9 +66,16 @@ const ProductCard = memo(({
         </div>
       )}
 
-      {/* Badge (for other labels) */}
+      {/* Badge (for other labels) - with animated glow for flash deals */}
       {badge && !isOnSale && (
-        <Badge className="absolute top-2 left-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-2 py-0.5">
+        <Badge 
+          className={cn(
+            "absolute top-2 left-2 z-10 text-[10px] sm:text-xs font-bold px-2 py-0.5",
+            badge.includes("Flash") 
+              ? "bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 text-white shadow-lg animate-[glow_1.5s_ease-in-out_infinite] border border-amber-400/50"
+              : "bg-deal text-deal-foreground"
+          )}
+        >
           {badge}
         </Badge>
       )}

@@ -154,6 +154,14 @@ export default {
           "0%": { transform: "rotateX(90deg)" },
           "100%": { transform: "rotateX(0deg)" },
         },
+        glow: {
+          "0%, 100%": { 
+            boxShadow: "0 0 5px rgba(251, 191, 36, 0.5), 0 0 10px rgba(249, 115, 22, 0.4), 0 0 15px rgba(239, 68, 68, 0.3)"
+          },
+          "50%": { 
+            boxShadow: "0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(249, 115, 22, 0.6), 0 0 30px rgba(239, 68, 68, 0.5)"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
