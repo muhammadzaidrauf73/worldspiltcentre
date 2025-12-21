@@ -142,10 +142,16 @@ function extractProductsFromListing(html: string): ListedProduct[] {
         image = image.replace(/-\d+x\d+\./, '.');
       }
 
-      // Extract current price
+      // Extract current price - LahoreCentre format: <bdi><span class="...currencySymbol">₨</span>49,900</bdi>
       const pricePatterns = [
-        /<ins[^>]*>[\s\S]*?<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)/i,
-        /<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?<bdi>[\s\S]*?₨[\s\S]*?([0-9,]+)/i,
+        // Sale price in <ins> tag (current discounted price)
+        /<ins[^>]*>[\s\S]*?<bdi>[\s\S]*?<\/span>([0-9,]+)/i,
+        // Standard WooCommerce price with currency symbol in span
+        /<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?<bdi>[\s\S]*?<\/span>([0-9,]+)/i,
+        // Price after currency symbol span
+        /woocommerce-Price-currencySymbol[^>]*>₨<\/span>([0-9,]+)/i,
+        // Direct currency patterns
+        /₨<\/span>([0-9,]+)/i,
         /₨\s*([0-9,]+(?:\.[0-9]+)?)/i,
         /Rs\.?\s*([0-9,]+)/i,
       ];
@@ -155,13 +161,23 @@ function extractProductsFromListing(html: string): ListedProduct[] {
         const priceMatch = productHtml.match(pricePattern);
         if (priceMatch) {
           price = parseInt(priceMatch[1].replace(/,/g, ''));
-          break;
+          if (price > 0) break; // Only break if we got a valid price
         }
       }
 
-      // Extract original price (for sale items)
-      const originalPriceMatch = productHtml.match(/<del[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)[\s\S]*?<\/del>/i);
-      const originalPrice = originalPriceMatch ? parseInt(originalPriceMatch[1].replace(/,/g, '')) : undefined;
+      // Extract original price (for sale items) - in <del> tag
+      const originalPricePatterns = [
+        /<del[^>]*>[\s\S]*?<\/span>([0-9,]+)[\s\S]*?<\/del>/i,
+        /<del[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)[\s\S]*?<\/del>/i,
+      ];
+      let originalPrice: number | undefined;
+      for (const origPricePattern of originalPricePatterns) {
+        const originalPriceMatch = productHtml.match(origPricePattern);
+        if (originalPriceMatch) {
+          originalPrice = parseInt(originalPriceMatch[1].replace(/,/g, ''));
+          if (originalPrice > 0) break;
+        }
+      }
 
       // Check for duplicates
       if (!products.some(p => p.url === url)) {
