@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +25,7 @@ const WishlistTab = () => {
   const { toggleWishlist, isToggling } = useWishlist();
   const queryClient = useQueryClient();
   const [clearing, setClearing] = useState(false);
+  const [movingToCart, setMovingToCart] = useState<string | null>(null);
 
   const { data: wishlistProducts = [], isLoading } = useQuery({
     queryKey: ["wishlist-products", user?.id],
@@ -54,46 +55,95 @@ const WishlistTab = () => {
     enabled: !!user,
   });
 
-  const handleAddToCart = async (productId: string, productName: string) => {
-    if (!user) return;
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ productId, productName }: { productId: string; productName: string }) => {
+      if (!user) throw new Error("Not authenticated");
 
-    const { error } = await supabase.from("cart_items").upsert(
-      {
-        user_id: user.id,
-        product_id: productId,
-        quantity: 1,
-      },
-      { onConflict: "user_id,product_id" }
-    );
+      // Check if item already exists in cart
+      const { data: existingItem } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .single();
 
-    if (error) {
+      if (existingItem) {
+        // Update quantity
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: existingItem.quantity + 1 })
+          .eq("id", existingItem.id);
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from("cart_items")
+          .insert({
+            user_id: user.id,
+            product_id: productId,
+            quantity: 1,
+          });
+        if (error) throw error;
+      }
+      
+      return { productName };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      toast.success(`${data.productName} added to cart`);
+    },
+    onError: () => {
       toast.error("Failed to add to cart");
-    } else {
-      toast.success(`${productName} added to cart`);
-    }
-  };
+    },
+  });
 
   const handleMoveToCart = async (productId: string, productName: string) => {
     if (!user) return;
+    
+    setMovingToCart(productId);
+    
+    try {
+      // Check if item already exists in cart
+      const { data: existingItem } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .single();
 
-    // Add to cart first
-    const { error: cartError } = await supabase.from("cart_items").upsert(
-      {
-        user_id: user.id,
-        product_id: productId,
-        quantity: 1,
-      },
-      { onConflict: "user_id,product_id" }
-    );
+      if (existingItem) {
+        // Update quantity
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: existingItem.quantity + 1 })
+          .eq("id", existingItem.id);
+        if (error) throw error;
+      } else {
+        // Insert new item
+        const { error } = await supabase
+          .from("cart_items")
+          .insert({
+            user_id: user.id,
+            product_id: productId,
+            quantity: 1,
+          });
+        if (error) throw error;
+      }
 
-    if (cartError) {
+      // Remove from wishlist
+      await toggleWishlist(productId);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      
+      toast.success(`${productName} moved to cart`);
+    } catch (error) {
       toast.error("Failed to move to cart");
-      return;
+    } finally {
+      setMovingToCart(null);
     }
-
-    // Then remove from wishlist
-    toggleWishlist(productId);
-    toast.success(`${productName} moved to cart`);
   };
 
   const handleClearAll = async () => {
@@ -237,36 +287,25 @@ const WishlistTab = () => {
                       )}
                   </div>
 
-                  <div className="flex flex-col gap-2 pt-2">
+                  <div className="flex gap-2 pt-2">
                     <Button
                       size="sm"
-                      className="w-full"
+                      className="flex-1"
                       onClick={() => handleMoveToCart(product.id, product.name)}
-                      disabled={isToggling}
+                      disabled={isToggling || movingToCart === product.id}
                     >
                       <ShoppingCart className="h-4 w-4 mr-1" />
-                      Move to Cart
+                      {movingToCart === product.id ? "Moving..." : "Move to Cart"}
                     </Button>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleAddToCart(product.id, product.name)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-1" />
-                        Add to Cart
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toggleWishlist(product.id)}
-                        disabled={isToggling}
-                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleWishlist(product.id)}
+                      disabled={isToggling}
+                      className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
