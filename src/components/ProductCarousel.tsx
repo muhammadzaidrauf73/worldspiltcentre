@@ -20,9 +20,10 @@ interface Product {
 interface ProductCarouselProps {
   products: Product[];
   badge?: string;
+  hideQuickActions?: boolean;
 }
 
-const ProductCarousel = ({ products, badge }: ProductCarouselProps) => {
+const ProductCarousel = ({ products, badge, hideQuickActions = true }: ProductCarouselProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -107,6 +108,7 @@ const ProductCarousel = ({ products, badge }: ProductCarouselProps) => {
               reviews={product.reviews_count || 0}
               badge={badge || (product.discount_percentage ? `${product.discount_percentage}% OFF` : undefined)}
               index={index}
+              hideQuickActions={hideQuickActions}
             />
           </Link>
         ))}

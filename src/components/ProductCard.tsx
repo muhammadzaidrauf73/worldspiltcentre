@@ -17,6 +17,7 @@ interface ProductCardProps {
   badge?: string;
   isOnSale?: boolean;
   index?: number;
+  hideQuickActions?: boolean;
 }
 
 const ProductCard = memo(({
@@ -31,6 +32,7 @@ const ProductCard = memo(({
   badge,
   isOnSale,
   index = 0,
+  hideQuickActions = false,
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   const inWishlist = isInWishlist(id);
@@ -77,29 +79,31 @@ const ProductCard = memo(({
       )}
 
       {/* Action Buttons - Hidden on mobile, shown on hover for desktop */}
-      <div className="absolute top-10 right-2 z-10 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-smooth translate-x-2 group-hover:translate-x-0 hidden sm:flex">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleWishlistClick}
-          disabled={isToggling}
-          aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
-          className={cn(
-            "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full",
-            inWishlist && "bg-primary text-primary-foreground"
-          )}
-        >
-          <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Quick view product"
-          className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </div>
+      {!hideQuickActions && (
+        <div className="absolute top-10 right-2 z-10 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-smooth translate-x-2 group-hover:translate-x-0 hidden sm:flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleWishlistClick}
+            disabled={isToggling}
+            aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
+            className={cn(
+              "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full",
+              inWishlist && "bg-primary text-primary-foreground"
+            )}
+          >
+            <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Quick view product"
+            className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Image - Larger on mobile for better visibility */}
       <div className="relative aspect-square sm:aspect-square bg-secondary/30 overflow-hidden">
@@ -173,30 +177,32 @@ const ProductCard = memo(({
           Add to Cart
         </Button>
 
-        {/* Mobile Quick Actions - Full width stacked */}
-        <div className="grid grid-cols-2 gap-2 sm:hidden mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleWishlistClick}
-            disabled={isToggling}
-            className={cn(
-              "h-9 text-xs font-medium rounded-lg touch-manipulation px-2",
-              inWishlist && "bg-primary/10 border-primary text-primary"
-            )}
-          >
-            <Heart className={cn("h-3.5 w-3.5 mr-1", inWishlist && "fill-primary")} />
-            <span className="truncate">{inWishlist ? "Saved" : "Wishlist"}</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 text-xs font-medium rounded-lg touch-manipulation px-2"
-          >
-            <Eye className="h-3.5 w-3.5 mr-1" />
-            <span className="truncate">Quick View</span>
-          </Button>
-        </div>
+        {/* Mobile Quick Actions - Hidden when hideQuickActions is true */}
+        {!hideQuickActions && (
+          <div className="grid grid-cols-2 gap-2 sm:hidden mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleWishlistClick}
+              disabled={isToggling}
+              className={cn(
+                "h-9 text-xs font-medium rounded-lg touch-manipulation px-2",
+                inWishlist && "bg-primary/10 border-primary text-primary"
+              )}
+            >
+              <Heart className={cn("h-3.5 w-3.5 mr-1", inWishlist && "fill-primary")} />
+              <span className="truncate">{inWishlist ? "Saved" : "Wishlist"}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 text-xs font-medium rounded-lg touch-manipulation px-2"
+            >
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              <span className="truncate">Quick View</span>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
