@@ -285,20 +285,19 @@ const Index = () => {
             {isSectionVisible("promo_banner") && (
               <section className="py-6 sm:py-8">
                 <div className="container mx-auto px-4">
-                  <div className="relative overflow-hidden rounded-lg sm:rounded-xl gradient-hero p-5 sm:p-8 md:p-10">
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
+                  <div className="relative overflow-hidden rounded-lg sm:rounded-xl bg-card border border-border p-5 sm:p-8 md:p-10">
                     <div className="relative z-10 max-w-lg">
-                      <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary-foreground/20 text-primary-foreground text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
+                      <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary/10 text-primary text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
                         Limited Time Offer
                       </span>
-                      <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-2 sm:mb-3">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-foreground mb-2 sm:mb-3">
                         Best Price Guaranteed!
                       </h2>
-                      <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
+                      <p className="text-muted-foreground mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
                         Found a lower price elsewhere? We'll match it! Shop with confidence at World Spilt Centre.
                       </p>
                       <Link to="/products">
-                        <button className="bg-primary-foreground text-primary font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-xs sm:text-sm">
+                        <button className="bg-primary text-primary-foreground font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary/90 transition-smooth text-xs sm:text-sm">
                           Shop Now
                         </button>
                       </Link>
