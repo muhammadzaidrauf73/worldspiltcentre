@@ -1,4 +1,4 @@
-import { useRef, lazy, Suspense, memo } from "react";
+import { useRef, lazy, Suspense, memo, useMemo } from "react";
 import { AirVent, Tv, WashingMachine, Refrigerator, Microwave, Flame, Droplets, ThermometerSun, LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,9 +46,31 @@ const iconMap: Record<string, LucideIcon> = {
   "ThermometerSun": ThermometerSun,
 };
 
+interface HomepageSection {
+  id: string;
+  section_key: string;
+  section_name: string;
+  display_order: number;
+  is_visible: boolean;
+}
+
 const Index = () => {
   const queryClient = useQueryClient();
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
+
+  // Fetch homepage section settings
+  const { data: sectionSettings = [] } = useQuery({
+    queryKey: ["homepage-sections"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("homepage_sections")
+        .select("*")
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data as HomepageSection[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Fetch categories from database with caching
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -61,7 +83,7 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch featured products from database with caching
@@ -76,7 +98,7 @@ const Index = () => {
       if (error) throw error;
       return data;
     },
-    staleTime: 3 * 60 * 1000, // Cache for 3 minutes
+    staleTime: 3 * 60 * 1000,
   });
 
   const featuredProducts = products.filter(p => p.is_featured).slice(0, 10);
@@ -92,29 +114,36 @@ const Index = () => {
     }))
     .filter(cp => cp.products.length >= 2);
 
-  const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["categories"] });
-    await queryClient.invalidateQueries({ queryKey: ["products"] });
+  // Helper function to check if a section is visible
+  const isSectionVisible = (sectionKey: string) => {
+    const section = sectionSettings.find(s => s.section_key === sectionKey);
+    return section ? section.is_visible : true; // Default to visible if not found
   };
 
-  return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <SEO />
-      <div className="min-h-screen bg-background relative overflow-hidden">
-        {/* Gradient Blobs for depth - lazy loaded */}
-        <Suspense fallback={null}>
-          <GradientBlob className="top-20 -left-32 opacity-30" color="primary" size="lg" />
-          <GradientBlob className="top-[60vh] -right-20 opacity-20" color="accent" size="md" />
-        </Suspense>
-        
-        <div className="relative z-10">
-          <Navbar />
-          <main>
-            <Hero />
-          <FeaturesBar />
+  // Get section order
+  const getSectionOrder = (sectionKey: string) => {
+    const section = sectionSettings.find(s => s.section_key === sectionKey);
+    return section ? section.display_order : 999;
+  };
 
-          {/* Top Categories */}
-          <section className="py-6 sm:py-8 bg-secondary/30" id="categories">
+  // Build ordered sections array
+  const orderedSections = useMemo(() => {
+    const sections: { key: string; order: number; component: React.ReactNode }[] = [];
+
+    if (isSectionVisible("hero")) {
+      sections.push({ key: "hero", order: getSectionOrder("hero"), component: <Hero key="hero" /> });
+    }
+
+    if (isSectionVisible("features")) {
+      sections.push({ key: "features", order: getSectionOrder("features"), component: <FeaturesBar key="features" /> });
+    }
+
+    if (isSectionVisible("categories")) {
+      sections.push({
+        key: "categories",
+        order: getSectionOrder("categories"),
+        component: (
+          <section key="categories" className="py-6 sm:py-8 bg-secondary/30" id="categories">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
@@ -133,7 +162,6 @@ const Index = () => {
                 </Link>
               </div>
 
-              {/* Horizontal Scroll Container - Touch scroll on mobile */}
               <div 
                 ref={categoriesScrollRef}
                 className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between scrollbar-hide"
@@ -163,7 +191,6 @@ const Index = () => {
                 )}
               </div>
               
-              {/* Mobile View All Link */}
               <div className="flex justify-center mt-2 sm:hidden">
                 <Link
                   to="/products"
@@ -174,112 +201,197 @@ const Index = () => {
               </div>
             </div>
           </section>
+        ),
+      });
+    }
 
-          <Suspense fallback={<SectionLoader />}>
+    if (isSectionVisible("flash_deals")) {
+      sections.push({
+        key: "flash_deals",
+        order: getSectionOrder("flash_deals"),
+        component: (
+          <Suspense key="flash_deals" fallback={<SectionLoader />}>
             <FlashDeal />
           </Suspense>
+        ),
+      });
+    }
 
-          {/* Hot Deals - Featured Products */}
-          <section className="py-5 sm:py-8 bg-card">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold">
-                      Hot Deals
-                    </span>
-                  </div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
-                    Featured Products
-                  </h2>
-                </div>
-                <Link
-                  to="/products"
-                  className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
-                >
-                  View All →
-                </Link>
-              </div>
+    if (isSectionVisible("new_arrivals")) {
+      sections.push({
+        key: "new_arrivals",
+        order: getSectionOrder("new_arrivals"),
+        component: (
+          <Suspense key="new_arrivals" fallback={<SectionLoader />}>
+            <NewArrivals />
+          </Suspense>
+        ),
+      });
+    }
 
-              {productsLoading ? (
-                <ProductGridSkeleton count={4} />
-              ) : (
-                <ProductCarousel products={displayFeatured} />
-              )}
-            </div>
-          </section>
+    if (isSectionVisible("top_sellers")) {
+      sections.push({
+        key: "top_sellers",
+        order: getSectionOrder("top_sellers"),
+        component: (
+          <Suspense key="top_sellers" fallback={<SectionLoader />}>
+            <TopSellers />
+          </Suspense>
+        ),
+      });
+    }
 
-          {/* Category Product Sections */}
-          {categoryProducts.map((cp, idx) => (
-            <section 
-              key={cp.category.id} 
-              className={`py-5 sm:py-8 ${idx % 2 === 0 ? 'bg-secondary/30' : 'bg-card'}`}
-            >
+    if (isSectionVisible("brands")) {
+      sections.push({
+        key: "brands",
+        order: getSectionOrder("brands"),
+        component: (
+          <Suspense key="brands" fallback={<SectionLoader />}>
+            <FeaturedBrands />
+          </Suspense>
+        ),
+      });
+    }
+
+    if (isSectionVisible("reviews")) {
+      sections.push({
+        key: "reviews",
+        order: getSectionOrder("reviews"),
+        component: (
+          <Suspense key="reviews" fallback={<SectionLoader />}>
+            <CustomerReviews />
+          </Suspense>
+        ),
+      });
+    }
+
+    if (isSectionVisible("newsletter")) {
+      sections.push({
+        key: "newsletter",
+        order: getSectionOrder("newsletter"),
+        component: (
+          <Suspense key="newsletter" fallback={<SectionLoader />}>
+            <Newsletter />
+          </Suspense>
+        ),
+      });
+    }
+
+    if (isSectionVisible("faq")) {
+      sections.push({
+        key: "faq",
+        order: getSectionOrder("faq"),
+        component: (
+          <Suspense key="faq" fallback={<SectionLoader />}>
+            <FAQ />
+          </Suspense>
+        ),
+      });
+    }
+
+    return sections.sort((a, b) => a.order - b.order);
+  }, [sectionSettings, categoriesLoading, categories, products]);
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["categories"] });
+    await queryClient.invalidateQueries({ queryKey: ["products"] });
+    await queryClient.invalidateQueries({ queryKey: ["homepage-sections"] });
+  };
+
+  return (
+    <PullToRefresh onRefresh={handleRefresh}>
+      <SEO />
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Gradient Blobs for depth - lazy loaded */}
+        <Suspense fallback={null}>
+          <GradientBlob className="top-20 -left-32 opacity-30" color="primary" size="lg" />
+          <GradientBlob className="top-[60vh] -right-20 opacity-20" color="accent" size="md" />
+        </Suspense>
+        
+        <div className="relative z-10">
+          <Navbar />
+          <main>
+            {/* Render ordered sections */}
+            {orderedSections.map(section => section.component)}
+
+            {/* Hot Deals - Featured Products (always shown after dynamic sections) */}
+            <section className="py-5 sm:py-8 bg-card">
               <div className="container mx-auto px-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
-                    {cp.category.name}
-                  </h2>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold">
+                        Hot Deals
+                      </span>
+                    </div>
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
+                      Featured Products
+                    </h2>
+                  </div>
                   <Link
-                    to={`/products?category=${encodeURIComponent(cp.category.name)}`}
+                    to="/products"
                     className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
                   >
                     View All →
                   </Link>
                 </div>
 
-                <ProductCarousel products={cp.products} />
+                {productsLoading ? (
+                  <ProductGridSkeleton count={4} />
+                ) : (
+                  <ProductCarousel products={displayFeatured} />
+                )}
               </div>
             </section>
-          ))}
 
-          {/* Promo Banner */}
-          <section className="py-6 sm:py-8">
-            <div className="container mx-auto px-4">
-              <div className="relative overflow-hidden rounded-lg sm:rounded-xl gradient-hero p-5 sm:p-8 md:p-10">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
-                <div className="relative z-10 max-w-lg">
-                  <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary-foreground/20 text-primary-foreground text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
-                    Limited Time Offer
-                  </span>
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-2 sm:mb-3">
-                    Best Price Guaranteed!
-                  </h2>
-                  <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
-                    Found a lower price elsewhere? We'll match it! Shop with confidence at World Spilt Centre.
-                  </p>
-                  <Link to="/products">
-                    <button className="bg-primary-foreground text-primary font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-xs sm:text-sm">
-                      Shop Now
-                    </button>
-                  </Link>
+            {/* Category Product Sections */}
+            {categoryProducts.map((cp, idx) => (
+              <section 
+                key={cp.category.id} 
+                className={`py-5 sm:py-8 ${idx % 2 === 0 ? 'bg-secondary/30' : 'bg-card'}`}
+              >
+                <div className="container mx-auto px-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
+                      {cp.category.name}
+                    </h2>
+                    <Link
+                      to={`/products?category=${encodeURIComponent(cp.category.name)}`}
+                      className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
+                    >
+                      View All →
+                    </Link>
+                  </div>
+
+                  <ProductCarousel products={cp.products} />
+                </div>
+              </section>
+            ))}
+
+            {/* Promo Banner */}
+            <section className="py-6 sm:py-8">
+              <div className="container mx-auto px-4">
+                <div className="relative overflow-hidden rounded-lg sm:rounded-xl gradient-hero p-5 sm:p-8 md:p-10">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
+                  <div className="relative z-10 max-w-lg">
+                    <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary-foreground/20 text-primary-foreground text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
+                      Limited Time Offer
+                    </span>
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-2 sm:mb-3">
+                      Best Price Guaranteed!
+                    </h2>
+                    <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
+                      Found a lower price elsewhere? We'll match it! Shop with confidence at World Spilt Centre.
+                    </p>
+                    <Link to="/products">
+                      <button className="bg-primary-foreground text-primary font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-xs sm:text-sm">
+                        Shop Now
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
-
-          <Suspense fallback={<SectionLoader />}>
-            <NewArrivals />
-          </Suspense>
-          
-          <Suspense fallback={<SectionLoader />}>
-            <FeaturedBrands />
-          </Suspense>
-          
-          <Suspense fallback={<SectionLoader />}>
-            <TopSellers />
-          </Suspense>
-          
-          <Suspense fallback={<SectionLoader />}>
-            <CustomerReviews />
-          </Suspense>
-          
-          <Suspense fallback={<SectionLoader />}>
-            <Newsletter />
-          </Suspense>
-          <Suspense fallback={<SectionLoader />}>
-            <FAQ />
-          </Suspense>
+            </section>
           </main>
           <Suspense fallback={<SectionLoader />}>
             <Footer />
