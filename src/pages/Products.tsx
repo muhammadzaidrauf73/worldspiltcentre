@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import SEO from "@/components/SEO";
 
@@ -20,9 +22,11 @@ const Products = () => {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || "");
-  const [selectedBrand, setSelectedBrand] = useState(brandParam || "");
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(brandParam ? [brandParam] : []);
   const [sortBy, setSortBy] = useState("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number] | null>(null);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -43,14 +47,14 @@ const Products = () => {
         .from("brands")
         .select("*")
         .eq("is_active", true)
-        .order("display_order");
+        .order("name");
       if (error) throw error;
       return data;
     },
   });
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategory, selectedBrand, sortBy, searchQuery, categories],
+    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, appliedPriceRange],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -64,8 +68,12 @@ const Products = () => {
         }
       }
       
-      if (selectedBrand) {
-        query = query.eq("brand", selectedBrand);
+      if (selectedBrands.length > 0) {
+        query = query.in("brand", selectedBrands);
+      }
+      
+      if (appliedPriceRange) {
+        query = query.gte("price", appliedPriceRange[0]).lte("price", appliedPriceRange[1]);
       }
       
       if (searchQuery && searchQuery.trim()) {
@@ -94,23 +102,117 @@ const Products = () => {
     enabled: categories.length > 0 || !selectedCategory,
   });
 
-  // Brands now fetched from database
+  // Get price range from products
+  const productPriceRange = useMemo(() => {
+    if (products.length === 0) return { min: 0, max: 1000000 };
+    const prices = products.map(p => Number(p.price));
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    };
+  }, [products]);
+
+  const toggleBrand = (brandName: string) => {
+    setSelectedBrands(prev => 
+      prev.includes(brandName) 
+        ? prev.filter(b => b !== brandName)
+        : [...prev, brandName]
+    );
+  };
+
+  const applyPriceFilter = () => {
+    setAppliedPriceRange(priceRange);
+  };
 
   const clearFilters = () => {
     setSelectedCategory("");
-    setSelectedBrand("");
+    setSelectedBrands([]);
     setSearchQuery("");
     setSortBy("newest");
+    setPriceRange([0, 1000000]);
+    setAppliedPriceRange(null);
     setFiltersOpen(false);
   };
 
-  const activeFiltersCount = [selectedCategory, selectedBrand, searchQuery].filter(Boolean).length;
+  const activeFiltersCount = [
+    selectedCategory, 
+    selectedBrands.length > 0 ? "brands" : "", 
+    searchQuery,
+    appliedPriceRange ? "price" : ""
+  ].filter(Boolean).length;
 
-  const hasFilters = selectedCategory || selectedBrand || searchQuery;
+  const hasFilters = selectedCategory || selectedBrands.length > 0 || searchQuery || appliedPriceRange;
 
   const categoryName = selectedCategory 
     ? categories.find(c => c.slug === selectedCategory)?.name || "Products"
     : "All Products";
+
+  const formatPrice = (value: number) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value).replace('PKR', '₨');
+  };
+
+  // Price Filter Component
+  const PriceFilter = () => (
+    <div className="mb-6">
+      <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Price</h3>
+      <div className="px-1">
+        <Slider
+          value={priceRange}
+          onValueChange={(value) => setPriceRange(value as [number, number])}
+          min={0}
+          max={1000000}
+          step={1000}
+          className="mb-4"
+        />
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+          <span>Price: {formatPrice(priceRange[0])} — {formatPrice(priceRange[1])}</span>
+        </div>
+        <Button 
+          onClick={applyPriceFilter}
+          variant="outline" 
+          size="sm" 
+          className="w-full border-foreground text-foreground hover:bg-foreground hover:text-background font-medium uppercase text-xs tracking-wider"
+        >
+          Filter
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Brand Filter Component with Checkboxes
+  const BrandFilter = ({ onSelect }: { onSelect?: () => void }) => (
+    <div className="mb-6">
+      <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Brand</h3>
+      <ScrollArea className="h-64">
+        <div className="space-y-2 pr-3">
+          {brands.map((brand: any) => (
+            <div 
+              key={brand.id} 
+              className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
+              onClick={() => {
+                toggleBrand(brand.name);
+                onSelect?.();
+              }}
+            >
+              <Checkbox 
+                checked={selectedBrands.includes(brand.name)}
+                onCheckedChange={() => toggleBrand(brand.name)}
+                className="h-4 w-4"
+              />
+              <span className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {brand.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,7 +239,7 @@ const Products = () => {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+              <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl">
                 <SheetHeader>
                   <SheetTitle className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -154,29 +256,32 @@ const Products = () => {
                     )}
                   </SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 space-y-4">
-                  {/* Search */}
-                  <div>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search products..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
-                      />
+                <ScrollArea className="h-full mt-4 pb-8">
+                  <div className="space-y-4 pr-4">
+                    {/* Search */}
+                    <div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search products..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Categories */}
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-2">Categories</h3>
-                    <ScrollArea className="h-32">
-                      <div className="space-y-1 pr-3">
+                    {/* Price Filter */}
+                    <PriceFilter />
+
+                    {/* Categories */}
+                    <div className="mb-6">
+                      <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Categories</h3>
+                      <div className="space-y-2">
                         <button
                           onClick={() => { setSelectedCategory(""); setFiltersOpen(false); }}
                           className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                            !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                            !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
                           }`}
                         >
                           All Categories
@@ -186,58 +291,28 @@ const Products = () => {
                             key={cat.id}
                             onClick={() => { setSelectedCategory(cat.slug); setFiltersOpen(false); }}
                             className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                              selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                              selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
                             }`}
                           >
                             {cat.name}
                           </button>
                         ))}
                       </div>
-                    </ScrollArea>
-                  </div>
-
-                  {/* Brands */}
-                  {brands.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-medium text-foreground mb-2">Brands</h3>
-                      <ScrollArea className="h-40">
-                        <div className="space-y-1 pr-3">
-                          <button
-                            onClick={() => { setSelectedBrand(""); setFiltersOpen(false); }}
-                            className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                              !selectedBrand ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                            }`}
-                          >
-                            All Brands
-                          </button>
-                          {brands.map((brand: any) => (
-                            <button
-                              key={brand.id}
-                              onClick={() => { setSelectedBrand(brand.name); setFiltersOpen(false); }}
-                              className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                                selectedBrand === brand.name ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                              }`}
-                            >
-                              {brand.name}
-                            </button>
-                          ))}
-                        </div>
-                      </ScrollArea>
                     </div>
-                  )}
-                </div>
+
+                    {/* Brands */}
+                    {brands.length > 0 && <BrandFilter />}
+                  </div>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           </div>
 
           {/* Desktop Sidebar Filters */}
           <aside className="hidden md:block w-64 shrink-0">
-            <div className="bg-card rounded-lg border border-border p-4 sticky top-24">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-foreground flex items-center gap-2">
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Filters
-                </h2>
+            <div className="bg-card rounded-lg border border-border p-5 sticky top-24">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-bold text-foreground text-lg">Filters</h2>
                 {hasFilters && (
                   <button
                     onClick={clearFilters}
@@ -249,7 +324,7 @@ const Products = () => {
               </div>
 
               {/* Search */}
-              <div className="mb-4">
+              <div className="mb-6">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -261,15 +336,18 @@ const Products = () => {
                 </div>
               </div>
 
+              {/* Price Filter */}
+              <PriceFilter />
+
               {/* Categories */}
-              <div className="mb-4">
-                <h3 className="text-sm font-medium text-foreground mb-2">Categories</h3>
+              <div className="mb-6">
+                <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Categories</h3>
                 <ScrollArea className="h-48">
                   <div className="space-y-1 pr-3">
                     <button
                       onClick={() => setSelectedCategory("")}
                       className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                        !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                        !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
                       }`}
                     >
                       All Categories
@@ -279,7 +357,7 @@ const Products = () => {
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.slug)}
                         className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                          selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
+                          selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
                         }`}
                       >
                         {cat.name}
@@ -290,34 +368,7 @@ const Products = () => {
               </div>
 
               {/* Brands */}
-              {brands.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium text-foreground mb-2">Brands</h3>
-                  <ScrollArea className="h-64">
-                    <div className="space-y-1 pr-3">
-                      <button
-                        onClick={() => setSelectedBrand("")}
-                        className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                          !selectedBrand ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                        }`}
-                      >
-                        All Brands
-                      </button>
-                      {brands.map((brand: any) => (
-                        <button
-                          key={brand.id}
-                          onClick={() => setSelectedBrand(brand.name)}
-                          className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                            selectedBrand === brand.name ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                          }`}
-                        >
-                          {brand.name}
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-              )}
+              {brands.length > 0 && <BrandFilter />}
             </div>
           </aside>
 
@@ -358,10 +409,18 @@ const Products = () => {
                     </button>
                   </span>
                 )}
-                {selectedBrand && (
+                {selectedBrands.map(brand => (
+                  <span key={brand} className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                    {brand}
+                    <button onClick={() => toggleBrand(brand)}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+                {appliedPriceRange && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                    {selectedBrand}
-                    <button onClick={() => setSelectedBrand("")}>
+                    {formatPrice(appliedPriceRange[0])} - {formatPrice(appliedPriceRange[1])}
+                    <button onClick={() => { setAppliedPriceRange(null); setPriceRange([0, 1000000]); }}>
                       <X className="h-3 w-3" />
                     </button>
                   </span>
