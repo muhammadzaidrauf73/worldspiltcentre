@@ -26,6 +26,16 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Pull-to-refresh shimmer animation */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
 /* CSS Containment for performance - reduces layout calculations */
 section, footer, header, nav, main {
   contain: layout style;
