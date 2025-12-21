@@ -240,15 +240,46 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
       return null;
     }
 
-    // Extract price - look for the main product price
-    const priceMatch = html.match(/<p[^>]*class="[^"]*price[^"]*"[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)/i)
-      || html.match(/₨([0-9,]+)/) 
-      || html.match(/Rs\.?\s*([0-9,]+)/);
-    const price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : 0;
+    // Extract price - LahoreCentre format: <bdi><span class="...currencySymbol">₨</span>49,900</bdi>
+    const pricePatterns = [
+      // Sale price in <ins> tag (current discounted price)
+      /<ins[^>]*>[\s\S]*?<bdi>[\s\S]*?<\/span>([0-9,]+)/i,
+      // Standard WooCommerce price with currency symbol in span
+      /<span[^>]*class="[^"]*woocommerce-Price-amount[^"]*"[^>]*>[\s\S]*?<bdi>[\s\S]*?<\/span>([0-9,]+)/i,
+      // Price after currency symbol span
+      /woocommerce-Price-currencySymbol[^>]*>₨<\/span>([0-9,]+)/i,
+      // Direct currency patterns
+      /₨<\/span>([0-9,]+)/i,
+      /<p[^>]*class="[^"]*price[^"]*"[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)/i,
+      /₨\s*([0-9,]+(?:\.[0-9]+)?)/i,
+      /Rs\.?\s*([0-9,]+)/i,
+    ];
+    
+    let price = 0;
+    for (const pricePattern of pricePatterns) {
+      const priceMatch = html.match(pricePattern);
+      if (priceMatch) {
+        price = parseInt(priceMatch[1].replace(/,/g, ''));
+        if (price > 0) {
+          console.log(`Extracted price: ${price} using pattern: ${pricePattern.source.substring(0, 50)}...`);
+          break;
+        }
+      }
+    }
 
-    // Extract original price if on sale
-    const originalPriceMatch = html.match(/<del[^>]*>.*?₨[\s\S]*?([0-9,]+).*?<\/del>/is);
-    const originalPrice = originalPriceMatch ? parseInt(originalPriceMatch[1].replace(/,/g, '')) : undefined;
+    // Extract original price if on sale - in <del> tag
+    const originalPricePatterns = [
+      /<del[^>]*>[\s\S]*?<\/span>([0-9,]+)[\s\S]*?<\/del>/i,
+      /<del[^>]*>[\s\S]*?₨[\s\S]*?([0-9,]+)[\s\S]*?<\/del>/i,
+    ];
+    let originalPrice: number | undefined;
+    for (const origPricePattern of originalPricePatterns) {
+      const originalPriceMatch = html.match(origPricePattern);
+      if (originalPriceMatch) {
+        originalPrice = parseInt(originalPriceMatch[1].replace(/,/g, ''));
+        if (originalPrice > 0) break;
+      }
+    }
 
     // Extract description - try multiple patterns
     let description = '';
