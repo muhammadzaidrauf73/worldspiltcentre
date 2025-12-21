@@ -73,6 +73,7 @@ export default function ProductImport() {
   const [progress, setProgress] = useState(0);
   const [currentAction, setCurrentAction] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [priceMarkup, setPriceMarkup] = useState<number>(0);
 
   // Fetch existing categories
   const { data: categories = [] } = useQuery({
@@ -198,6 +199,7 @@ export default function ProductImport() {
             action: 'quick-import', 
             url: product.url,
             categoryOverride: product.category || selectedCategory || undefined,
+            priceMarkup: priceMarkup || 0,
           },
         });
 
@@ -339,8 +341,8 @@ export default function ProductImport() {
                 Fetch
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <label className="text-sm font-medium mb-1 block">Assign Category (optional)</label>
                 <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val === "auto" ? "" : val)}>
                   <SelectTrigger>
@@ -356,9 +358,26 @@ export default function ProductImport() {
                   </SelectContent>
                 </Select>
               </div>
-              {selectedCategory && selectedCategory !== "auto" && (
-                <Badge className="mt-5">{selectedCategory}</Badge>
-              )}
+              <div>
+                <label className="text-sm font-medium mb-1 block">Price Markup (%)</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={priceMarkup}
+                    onChange={(e) => setPriceMarkup(Number(e.target.value))}
+                    placeholder="0"
+                    min={-50}
+                    max={100}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {priceMarkup > 0 ? `+${priceMarkup}%` : priceMarkup < 0 ? `${priceMarkup}%` : 'No markup'}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Increase or decrease prices by percentage
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
