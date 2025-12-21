@@ -64,9 +64,36 @@ const AdminCategories = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (data: CategoryForm) => {
+      const slug = data.slug || data.name.toLowerCase().replace(/\s+/g, "-");
+      const normalizedName = data.name.trim().toLowerCase();
+      
+      // Check for duplicate name or slug (excluding current category if editing)
+      let duplicateQuery = supabase
+        .from("categories")
+        .select("id, name, slug")
+        .or(`name.ilike.${normalizedName},slug.eq.${slug}`);
+      
+      if (editingId) {
+        duplicateQuery = duplicateQuery.neq("id", editingId);
+      }
+      
+      const { data: existingCategories, error: checkError } = await duplicateQuery;
+      
+      if (checkError) throw checkError;
+      
+      if (existingCategories && existingCategories.length > 0) {
+        const duplicate = existingCategories[0];
+        if (duplicate.name.toLowerCase() === normalizedName) {
+          throw new Error(`A category with the name "${duplicate.name}" already exists`);
+        }
+        if (duplicate.slug === slug) {
+          throw new Error(`A category with the slug "${slug}" already exists`);
+        }
+      }
+
       const categoryData = {
-        name: data.name,
-        slug: data.slug || data.name.toLowerCase().replace(/\s+/g, "-"),
+        name: data.name.trim(),
+        slug: slug,
         description: data.description,
         icon: data.icon,
         image_url: data.image_url,
@@ -93,7 +120,7 @@ const AdminCategories = () => {
       setForm(emptyForm);
     },
     onError: (error) => {
-      toast.error("Error saving category: " + error.message);
+      toast.error("Error: " + error.message);
     },
   });
 
