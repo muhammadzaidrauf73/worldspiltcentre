@@ -162,7 +162,7 @@ export default function ProductImport() {
     setListedProducts(prev => prev.map(p => ({ ...p, selected: false })));
   };
 
-  // Import selected products using batch import for speed
+  // Import selected products with real-time progress
   const importSelectedProducts = async () => {
     const selectedProducts = listedProducts.filter(p => p.selected && p.status !== 'imported');
     
@@ -177,69 +177,75 @@ export default function ProductImport() {
 
     setIsImporting(true);
     setProgress(0);
-    setCurrentAction(`Importing ${selectedProducts.length} products...`);
     
-    // Mark all as importing
-    setListedProducts(prev => prev.map(p => 
-      p.selected && p.status !== 'imported' ? { ...p, status: 'importing' as const } : p
-    ));
+    const BATCH_SIZE = 3; // Process 3 products at a time
+    let successCount = 0;
+    let errorCount = 0;
+    let processed = 0;
 
-    try {
-      // Use batch import - processes 3 products in parallel
-      const urls = selectedProducts.map(p => p.url);
+    // Process in batches for real-time progress
+    for (let i = 0; i < selectedProducts.length; i += BATCH_SIZE) {
+      const batch = selectedProducts.slice(i, i + BATCH_SIZE);
+      const batchUrls = batch.map(p => p.url);
       
-      const { data, error } = await supabase.functions.invoke('scrape-product', {
-        body: { 
-          action: 'batch-import', 
-          urls,
-          categoryOverride: selectedCategory || undefined,
-          priceMarkup: priceMarkup || 0,
-          concurrency: 3, // Process 3 at a time
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.success && data.results) {
-        // Update status for each product based on results
-        setListedProducts(prev => prev.map(p => {
-          const result = data.results.find((r: any) => r.url === p.url);
-          if (result) {
-            return {
-              ...p,
-              status: result.success ? 'imported' as const : 'error' as const,
-              error: result.error,
-            };
-          }
-          return p;
-        }));
-
-        setProgress(100);
-        
-        toast({
-          title: 'Import Complete',
-          description: `Imported ${data.summary.success} products${data.summary.errors > 0 ? `, ${data.summary.errors} failed` : ''}`,
-        });
-      } else {
-        throw new Error(data.error || 'Batch import failed');
-      }
-    } catch (error) {
-      console.error('Error batch importing:', error);
-      
-      // Mark all as error
+      // Update UI to show which products are being processed
       setListedProducts(prev => prev.map(p => 
-        p.status === 'importing' ? { ...p, status: 'error' as const, error: 'Import failed' } : p
+        batchUrls.includes(p.url) ? { ...p, status: 'importing' as const } : p
       ));
       
-      toast({
-        title: 'Import Failed',
-        description: 'There was an error importing products',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsImporting(false);
-      setCurrentAction('');
+      setCurrentAction(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(selectedProducts.length / BATCH_SIZE)}: ${batch.map(p => p.name.substring(0, 20)).join(', ')}...`);
+
+      try {
+        const { data, error } = await supabase.functions.invoke('scrape-product', {
+          body: { 
+            action: 'batch-import', 
+            urls: batchUrls,
+            categoryOverride: selectedCategory || undefined,
+            priceMarkup: priceMarkup || 0,
+            concurrency: BATCH_SIZE,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.success && data.results) {
+          // Update status for each product in this batch
+          setListedProducts(prev => prev.map(p => {
+            const result = data.results.find((r: any) => r.url === p.url);
+            if (result) {
+              if (result.success) successCount++;
+              else errorCount++;
+              return {
+                ...p,
+                status: result.success ? 'imported' as const : 'error' as const,
+                error: result.error,
+              };
+            }
+            return p;
+          }));
+        }
+      } catch (error) {
+        console.error('Error processing batch:', error);
+        // Mark batch as error
+        setListedProducts(prev => prev.map(p => 
+          batchUrls.includes(p.url) && p.status === 'importing' 
+            ? { ...p, status: 'error' as const, error: 'Network error' } 
+            : p
+        ));
+        errorCount += batch.length;
+      }
+
+      processed += batch.length;
+      setProgress((processed / selectedProducts.length) * 100);
     }
+
+    setIsImporting(false);
+    setCurrentAction('');
+    
+    toast({
+      title: 'Import Complete',
+      description: `Imported ${successCount} products${errorCount > 0 ? `, ${errorCount} failed` : ''}`,
+    });
   };
 
   const getStatusBadge = (status?: string) => {
