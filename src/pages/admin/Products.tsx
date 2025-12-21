@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Upload, Download, Search, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -99,6 +99,9 @@ const AdminProducts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [bulkCategoryDialogOpen, setBulkCategoryDialogOpen] = useState(false);
+  const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
+  const [priceUpdatePercent, setPriceUpdatePercent] = useState<number>(0);
+  const [priceUpdateCategory, setPriceUpdateCategory] = useState<string>("selected");
   const [bulkCsvData, setBulkCsvData] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -333,6 +336,9 @@ const AdminProducts = () => {
       case "remove-category":
         bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { category_id: null } });
         break;
+      case "update-prices":
+        setBulkPriceDialogOpen(true);
+        break;
     }
   };
 
@@ -343,6 +349,60 @@ const AdminProducts = () => {
       updates: { category_id: categoryId || null } 
     });
     setBulkCategoryDialogOpen(false);
+  };
+
+  const handleBulkPriceUpdate = async () => {
+    if (priceUpdatePercent === 0) {
+      toast.error("Please enter a percentage value");
+      return;
+    }
+
+    let productsToUpdate: any[] = [];
+    
+    if (priceUpdateCategory === "selected") {
+      if (selectedProducts.length === 0) {
+        toast.error("No products selected");
+        return;
+      }
+      productsToUpdate = products.filter((p: any) => selectedProducts.includes(p.id));
+    } else if (priceUpdateCategory === "all") {
+      productsToUpdate = products;
+    } else {
+      // Category ID
+      productsToUpdate = products.filter((p: any) => p.category_id === priceUpdateCategory);
+    }
+
+    if (productsToUpdate.length === 0) {
+      toast.error("No products found to update");
+      return;
+    }
+
+    const multiplier = 1 + (priceUpdatePercent / 100);
+    
+    try {
+      for (const product of productsToUpdate) {
+        const newPrice = Math.round(product.price * multiplier);
+        const newOriginalPrice = product.original_price 
+          ? Math.round(product.original_price * multiplier) 
+          : null;
+        
+        await supabase
+          .from("products")
+          .update({ 
+            price: newPrice, 
+            original_price: newOriginalPrice 
+          })
+          .eq("id", product.id);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success(`Updated prices for ${productsToUpdate.length} products by ${priceUpdatePercent > 0 ? '+' : ''}${priceUpdatePercent}%`);
+      setBulkPriceDialogOpen(false);
+      setPriceUpdatePercent(0);
+      setPriceUpdateCategory("selected");
+    } catch (error: any) {
+      toast.error("Error updating prices: " + error.message);
+    }
   };
 
   // Parse CSV line handling quoted values with commas
@@ -836,6 +896,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   <SelectItem value="top-seller">Mark as Top Seller</SelectItem>
                   <SelectItem value="change-category">Change Category</SelectItem>
                   <SelectItem value="remove-category">Remove Category</SelectItem>
+                  <SelectItem value="update-prices">Update Prices (%)</SelectItem>
                   <SelectItem value="delete">Delete Selected</SelectItem>
                 </SelectContent>
               </Select>
@@ -875,6 +936,84 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setBulkCategoryDialogOpen(false)}>
                   Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Price Update Dialog */}
+        <Dialog open={bulkPriceDialogOpen} onOpenChange={setBulkPriceDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Percent className="h-5 w-5" />
+                Bulk Price Update
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Increase or decrease prices by a percentage for selected products or an entire category.
+              </p>
+              
+              <div className="space-y-2">
+                <Label>Apply to</Label>
+                <Select value={priceUpdateCategory} onValueChange={setPriceUpdateCategory}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="selected">
+                      Selected Products ({selectedProducts.length})
+                    </SelectItem>
+                    <SelectItem value="all">All Products ({products.length})</SelectItem>
+                    {categories.map((cat) => {
+                      const count = products.filter((p: any) => p.category_id === cat.id).length;
+                      return (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name} ({count})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Price Change (%)</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    value={priceUpdatePercent}
+                    onChange={(e) => setPriceUpdatePercent(Number(e.target.value))}
+                    placeholder="0"
+                    min={-50}
+                    max={200}
+                    className="w-32"
+                  />
+                  <span className="text-sm font-medium">
+                    {priceUpdatePercent > 0 
+                      ? `+${priceUpdatePercent}% (increase)` 
+                      : priceUpdatePercent < 0 
+                        ? `${priceUpdatePercent}% (decrease)` 
+                        : 'No change'}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Use positive values to increase, negative to decrease prices
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => {
+                  setBulkPriceDialogOpen(false);
+                  setPriceUpdatePercent(0);
+                  setPriceUpdateCategory("selected");
+                }}>
+                  Cancel
+                </Button>
+                <Button onClick={handleBulkPriceUpdate} disabled={priceUpdatePercent === 0}>
+                  Update Prices
                 </Button>
               </div>
             </div>
