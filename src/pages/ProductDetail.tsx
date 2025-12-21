@@ -677,13 +677,25 @@ const ProductDetail = () => {
             <h2 className="text-lg md:text-xl font-heading font-bold text-foreground mb-3 md:mb-4">
               Specifications
             </h2>
-            <div className="bg-card rounded-lg border border-border overflow-hidden max-h-[300px] md:max-h-none overflow-y-auto">
-              <table className="w-full text-xs md:text-sm">
+            {/* Mobile: Stack layout */}
+            <div className="md:hidden bg-card rounded-lg border border-border overflow-hidden max-h-[350px] overflow-y-auto">
+              <div className="divide-y divide-border">
+                {Object.entries(specifications).map(([key, value], idx) => (
+                  <div key={key} className={`p-3 ${idx % 2 === 0 ? "bg-secondary/30" : ""}`}>
+                    <dt className="text-xs font-medium text-foreground mb-1">{key}</dt>
+                    <dd className="text-xs text-muted-foreground break-words">{value}</dd>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Desktop: Table layout */}
+            <div className="hidden md:block bg-card rounded-lg border border-border overflow-hidden">
+              <table className="w-full text-sm">
                 <tbody>
                   {Object.entries(specifications).map(([key, value], idx) => (
                     <tr key={key} className={idx % 2 === 0 ? "bg-secondary/30" : ""}>
-                      <td className="px-2 py-1.5 md:px-4 md:py-3 font-medium text-foreground w-2/5 md:w-1/3">{key}</td>
-                      <td className="px-2 py-1.5 md:px-4 md:py-3 text-muted-foreground">{value}</td>
+                      <td className="px-4 py-3 font-medium text-foreground w-1/3">{key}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{value}</td>
                     </tr>
                   ))}
                 </tbody>
