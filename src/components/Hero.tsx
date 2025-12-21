@@ -137,8 +137,8 @@ const Hero = memo(() => {
                 fetchPriority={index === 0 ? "high" : "auto"}
                 decoding={index === 0 ? "sync" : "async"}
               />
-              {/* Minimal overlay - only at bottom for button visibility */}
-              <div className="absolute bottom-0 left-0 right-0 h-16 sm:h-24 bg-gradient-to-t from-foreground/50 to-transparent" />
+              {/* Gradient overlay - Minimal on mobile, more visible on desktop for button */}
+              <div className="absolute bottom-0 left-0 right-0 h-8 sm:h-24 bg-gradient-to-t from-foreground/20 sm:from-foreground/50 to-transparent" />
               
               {/* Shop button - Hidden on mobile */}
               <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 hidden sm:block">
