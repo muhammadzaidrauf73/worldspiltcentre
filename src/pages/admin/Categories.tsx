@@ -53,6 +53,8 @@ const AdminCategories = () => {
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [stockQuantity, setStockQuantity] = useState("");
+  const [bulkStockDialogOpen, setBulkStockDialogOpen] = useState(false);
+  const [bulkStockQuantity, setBulkStockQuantity] = useState("");
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["admin-categories"],
@@ -178,6 +180,31 @@ const AdminCategories = () => {
     setStockDialogOpen(true);
   };
 
+  const bulkUpdateStockMutation = useMutation({
+    mutationFn: async (quantity: number) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ stock_quantity: quantity })
+        .gte("id", "00000000-0000-0000-0000-000000000000"); // Update all products
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Stock updated for all products");
+      setBulkStockDialogOpen(false);
+      setBulkStockQuantity("");
+    },
+    onError: (error) => {
+      toast.error("Error updating stock: " + error.message);
+    },
+  });
+
+  const handleBulkUpdateStock = () => {
+    if (!bulkStockQuantity) return;
+    bulkUpdateStockMutation.mutate(parseInt(bulkStockQuantity) || 0);
+  };
+
   const handleEdit = (category: any) => {
     setEditingId(category.id);
     setForm({
@@ -199,28 +226,33 @@ const AdminCategories = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Categories</h1>
             <p className="text-muted-foreground">Manage product categories</p>
           </div>
-          <Dialog open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open);
-            if (!open) {
-              setEditingId(null);
-              setForm(emptyForm);
-            } else if (!editingId) {
-              // Auto-set display_order to next available number for new categories
-              const maxOrder = categories.reduce((max: number, cat: any) => 
-                Math.max(max, cat.display_order || 0), 0);
-              setForm({ ...emptyForm, display_order: (maxOrder + 1).toString() });
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Category
-              </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setBulkStockDialogOpen(true)}>
+              <Package className="h-4 w-4 mr-2" />
+              Update All Stock
+            </Button>
+            <Dialog open={isOpen} onOpenChange={(open) => {
+              setIsOpen(open);
+              if (!open) {
+                setEditingId(null);
+                setForm(emptyForm);
+              } else if (!editingId) {
+                // Auto-set display_order to next available number for new categories
+                const maxOrder = categories.reduce((max: number, cat: any) => 
+                  Math.max(max, cat.display_order || 0), 0);
+                setForm({ ...emptyForm, display_order: (maxOrder + 1).toString() });
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Category
+                </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
               <DialogHeader>
@@ -297,7 +329,8 @@ const AdminCategories = () => {
                 </div>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         <div className="rounded-lg border border-border">
@@ -407,6 +440,42 @@ const AdminCategories = () => {
                   disabled={!stockQuantity || updateStockMutation.isPending}
                 >
                   {updateStockMutation.isPending ? "Updating..." : "Update All"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Stock Update Dialog for All Products */}
+        <Dialog open={bulkStockDialogOpen} onOpenChange={setBulkStockDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Update Stock for All Products</DialogTitle>
+              <DialogDescription>
+                Set the stock quantity for ALL products across all categories. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="bulk-stock-quantity">Stock Quantity</Label>
+                <Input
+                  id="bulk-stock-quantity"
+                  type="number"
+                  min="0"
+                  placeholder="Enter stock quantity"
+                  value={bulkStockQuantity}
+                  onChange={(e) => setBulkStockQuantity(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setBulkStockDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleBulkUpdateStock}
+                  disabled={!bulkStockQuantity || bulkUpdateStockMutation.isPending}
+                >
+                  {bulkUpdateStockMutation.isPending ? "Updating..." : "Update All Products"}
                 </Button>
               </div>
             </div>
