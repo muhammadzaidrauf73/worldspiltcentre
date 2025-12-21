@@ -107,7 +107,7 @@ const Hero = memo(() => {
   }
 
   return (
-    <section className="relative overflow-hidden w-full bg-secondary/30">
+    <section className="relative overflow-hidden w-full sm:bg-secondary/30">
       <div 
         className="relative w-full aspect-[16/9] sm:aspect-[21/9] lg:aspect-[3/1]"
         onTouchStart={onTouchStart}
