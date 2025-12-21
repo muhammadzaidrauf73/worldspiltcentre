@@ -42,22 +42,69 @@ const ProductDetail = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   
   // Touch handling for swipe gestures
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const initialPinchDistance = useRef<number | null>(null);
+  const lastScale = useRef(1);
+  const isPinching = useRef(false);
   const minSwipeDistance = 50;
 
+  const getDistance = (touches: React.TouchList) => {
+    return Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchEndX.current = null;
+    if (e.touches.length === 2) {
+      isPinching.current = true;
+      initialPinchDistance.current = getDistance(e.touches);
+      lastScale.current = scale;
+    } else if (e.touches.length === 1 && scale === 1) {
+      touchStartX.current = e.touches[0].clientX;
+      touchEndX.current = null;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
+    if (e.touches.length === 2 && initialPinchDistance.current) {
+      const currentDistance = getDistance(e.touches);
+      const newScale = Math.min(Math.max(lastScale.current * (currentDistance / initialPinchDistance.current), 1), 4);
+      setScale(newScale);
+    } else if (e.touches.length === 1) {
+      if (scale > 1) {
+        // Pan when zoomed
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - (touchStartX.current || touch.clientX);
+        const deltaY = touch.clientY - (touchEndX.current || touch.clientY);
+        setPosition(prev => ({
+          x: prev.x + deltaX * 0.5,
+          y: prev.y + deltaY * 0.5
+        }));
+      } else {
+        touchEndX.current = e.touches[0].clientX;
+      }
+    }
   };
 
   const handleTouchEnd = (imagesLength: number) => {
+    if (isPinching.current) {
+      isPinching.current = false;
+      initialPinchDistance.current = null;
+      return;
+    }
+    
+    if (scale > 1) {
+      touchStartX.current = null;
+      touchEndX.current = null;
+      return;
+    }
+    
     if (!touchStartX.current || !touchEndX.current) return;
     
     const distance = touchStartX.current - touchEndX.current;
@@ -72,6 +119,19 @@ const ProductDetail = () => {
 
     touchStartX.current = null;
     touchEndX.current = null;
+  };
+
+  const resetZoom = () => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
+
+  // Reset zoom when image changes or fullscreen closes
+  const handleFullscreenChange = (open: boolean) => {
+    setIsFullscreen(open);
+    if (!open) {
+      resetZoom();
+    }
   };
   
   const inWishlist = id ? isInWishlist(id) : false;
@@ -306,21 +366,31 @@ const ProductDetail = () => {
         )}
       </div>
 
-      {/* Fullscreen Image Viewer */}
-      <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
+      {/* Fullscreen Image Viewer with Pinch-to-Zoom */}
+      <Dialog open={isFullscreen} onOpenChange={handleFullscreenChange}>
         <DialogContent className="max-w-full h-full p-0 bg-black/95 border-none">
           <div 
-            className="relative w-full h-full flex items-center justify-center"
+            className="relative w-full h-full flex items-center justify-center overflow-hidden touch-none"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={() => handleTouchEnd(images.length)}
           >
             <button
-              onClick={() => setIsFullscreen(false)}
+              onClick={() => handleFullscreenChange(false)}
               className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white"
             >
               <X className="h-6 w-6" />
             </button>
+            
+            {/* Reset zoom button - show when zoomed */}
+            {scale > 1 && (
+              <button
+                onClick={resetZoom}
+                className="absolute top-4 left-4 z-20 px-3 py-2 rounded-full bg-card/20 flex items-center justify-center text-white text-sm"
+              >
+                Reset
+              </button>
+            )}
             
             <img
               src={images[selectedImage] || "/placeholder.svg"}
@@ -328,20 +398,26 @@ const ProductDetail = () => {
               onError={(e) => {
                 e.currentTarget.src = "/placeholder.svg";
               }}
-              className="max-w-full max-h-full object-contain p-4"
+              onDoubleClick={() => scale > 1 ? resetZoom() : setScale(2)}
+              style={{
+                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                transition: isPinching.current ? 'none' : 'transform 0.2s ease-out'
+              }}
+              className="max-w-full max-h-full object-contain p-4 select-none"
+              draggable={false}
             />
             
-            {images.length > 1 && (
+            {images.length > 1 && scale === 1 && (
               <>
                 <button
-                  onClick={() => setSelectedImage(prev => Math.max(0, prev - 1))}
+                  onClick={() => { resetZoom(); setSelectedImage(prev => Math.max(0, prev - 1)); }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white"
                   disabled={selectedImage === 0}
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
-                  onClick={() => setSelectedImage(prev => Math.min(images.length - 1, prev + 1))}
+                  onClick={() => { resetZoom(); setSelectedImage(prev => Math.min(images.length - 1, prev + 1)); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/20 flex items-center justify-center text-white"
                   disabled={selectedImage === images.length - 1}
                 >
@@ -350,9 +426,16 @@ const ProductDetail = () => {
               </>
             )}
             
-            {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
-              {selectedImage + 1} / {images.length}
+            {/* Counter and zoom indicator */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+              <div className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                {selectedImage + 1} / {images.length}
+              </div>
+              {scale > 1 && (
+                <div className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                  {Math.round(scale * 100)}%
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
