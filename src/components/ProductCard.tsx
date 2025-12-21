@@ -60,8 +60,8 @@ const ProductCard = memo(({
 
       {/* Discount Badge - Mobile visible */}
       {discount > 0 && (
-        <Badge className="absolute top-2 right-2 z-10 bg-destructive text-destructive-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5">
-          -{discount}%
+        <Badge className="absolute top-2 right-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5">
+          {discount}% OFF
         </Badge>
       )}
 
