@@ -118,12 +118,12 @@ const FlashDeal = () => {
           </div>
         </div>
 
-        {/* Deals Grid */}
+        {/* Deals Row */}
         <div className="min-h-[140px] sm:min-h-[160px]">
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-hide">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-36 sm:h-40 rounded-xl" />
+                <Skeleton key={i} className="h-36 sm:h-40 min-w-[280px] sm:min-w-[320px] rounded-xl flex-shrink-0" />
               ))}
             </div>
           ) : !deals || deals.length === 0 ? (
@@ -139,12 +139,12 @@ const FlashDeal = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
               {deals.map((deal, index) => (
                 <Link
                   key={deal.id}
                   to={deal.product_id ? `/product/${deal.product_id}` : `/products?deals=true`}
-                  className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden shadow-lg hover:shadow-xl hover:border-deal/30 transition-all duration-300 animate-fade-in"
+                  className="group relative bg-card rounded-2xl border border-border/50 overflow-hidden shadow-lg hover:shadow-xl hover:border-deal/30 transition-all duration-300 animate-fade-in min-w-[280px] sm:min-w-[320px] flex-shrink-0 snap-start"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   {/* Deal badge */}
