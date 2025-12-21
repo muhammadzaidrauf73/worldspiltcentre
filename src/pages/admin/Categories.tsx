@@ -143,6 +143,11 @@ const AdminCategories = () => {
             if (!open) {
               setEditingId(null);
               setForm(emptyForm);
+            } else if (!editingId) {
+              // Auto-set display_order to next available number for new categories
+              const maxOrder = categories.reduce((max: number, cat: any) => 
+                Math.max(max, cat.display_order || 0), 0);
+              setForm({ ...emptyForm, display_order: (maxOrder + 1).toString() });
             }
           }}>
             <DialogTrigger asChild>
