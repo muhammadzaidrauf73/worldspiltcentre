@@ -8,6 +8,7 @@ import Hero from "@/components/Hero";
 import FeaturesBar from "@/components/FeaturesBar";
 import CategoryCard from "@/components/CategoryCard";
 import ProductCard from "@/components/ProductCard";
+import ProductCarousel from "@/components/ProductCarousel";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -78,13 +79,13 @@ const Index = () => {
     staleTime: 3 * 60 * 1000, // Cache for 3 minutes
   });
 
-  const featuredProducts = products.filter(p => p.is_featured).slice(0, 8);
-  const displayFeatured = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 8);
+  const featuredProducts = products.filter(p => p.is_featured).slice(0, 10);
+  const displayFeatured = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 10);
   
   // Get washing machines
   const washingMachineCategory = categories.find(c => c.name === "Washing Machines");
   const washingMachines = washingMachineCategory 
-    ? products.filter(p => p.category_id === washingMachineCategory.id).slice(0, 4)
+    ? products.filter(p => p.category_id === washingMachineCategory.id).slice(0, 6)
     : [];
 
   const handleRefresh = async () => {
@@ -199,24 +200,7 @@ const Index = () => {
               {productsLoading ? (
                 <ProductGridSkeleton count={4} />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                  {displayFeatured.slice(0, 4).map((product, index) => (
-                    <Link key={product.id} to={`/product/${product.id}`}>
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        brand={product.brand}
-                        price={Number(product.price)}
-                        originalPrice={product.original_price ? Number(product.original_price) : undefined}
-                        image={product.image_url || ""}
-                        rating={Number(product.rating) || 0}
-                        reviews={product.reviews_count || 0}
-                        badge={product.discount_percentage ? `${product.discount_percentage}% OFF` : undefined}
-                        index={index}
-                      />
-                    </Link>
-                  ))}
-                </div>
+                <ProductCarousel products={displayFeatured} />
               )}
             </div>
           </section>
@@ -237,24 +221,7 @@ const Index = () => {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                  {washingMachines.map((product, index) => (
-                    <Link key={product.id} to={`/product/${product.id}`}>
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        brand={product.brand}
-                        price={Number(product.price)}
-                        originalPrice={product.original_price ? Number(product.original_price) : undefined}
-                        image={product.image_url || ""}
-                        rating={Number(product.rating) || 0}
-                        reviews={product.reviews_count || 0}
-                        badge={product.discount_percentage ? `${product.discount_percentage}% OFF` : undefined}
-                        index={index}
-                      />
-                    </Link>
-                  ))}
-                </div>
+                <ProductCarousel products={washingMachines} />
               </div>
             </section>
           )}
