@@ -164,12 +164,12 @@ const Index = () => {
 
                 <div 
                   ref={categoriesScrollRef}
-                  className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:px-12 xl:px-0"
+                  className="flex gap-4 sm:gap-6 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:justify-between"
                   style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) transparent' }}
                 >
                   {categoriesLoading ? (
                     Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="shrink-0">
+                      <div key={i} className="shrink-0 md:shrink">
                         <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
                         <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
                       </div>
@@ -178,7 +178,7 @@ const Index = () => {
                     categories.map((category) => {
                       const actualProductCount = products.filter(p => p.category_id === category.id).length;
                       return (
-                        <div key={category.id} className="shrink-0">
+                        <div key={category.id} className="shrink-0 md:shrink">
                           <CategoryCard
                             name={category.name}
                             icon={iconMap[category.icon || "Tv"] || Tv}
