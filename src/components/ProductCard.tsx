@@ -101,8 +101,8 @@ const ProductCard = memo(({
         </Button>
       </div>
 
-      {/* Image - Taller on mobile for better visibility */}
-      <div className="relative aspect-[4/3] sm:aspect-square bg-secondary/30 overflow-hidden">
+      {/* Image - Larger on mobile for better visibility */}
+      <div className="relative aspect-square sm:aspect-square bg-secondary/30 overflow-hidden">
         {/* Skeleton placeholder - show until loaded or error */}
         {!imageLoaded && !imageError && (
           <div className="absolute inset-0 bg-secondary/50 animate-pulse flex items-center justify-center">
@@ -123,7 +123,7 @@ const ProductCard = memo(({
             e.currentTarget.src = "/placeholder.svg";
           }}
           className={cn(
-            "w-full h-full object-contain p-3 sm:p-4 group-hover:scale-105 transition-smooth",
+            "w-full h-full object-contain p-2 group-hover:scale-110 transition-smooth",
             imageLoaded ? "opacity-100" : "opacity-0"
           )}
         />
