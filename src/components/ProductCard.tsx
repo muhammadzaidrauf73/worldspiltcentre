@@ -18,6 +18,7 @@ interface ProductCardProps {
   isOnSale?: boolean;
   index?: number;
   hideQuickActions?: boolean;
+  buttonText?: string;
 }
 
 const ProductCard = memo(({
@@ -33,6 +34,7 @@ const ProductCard = memo(({
   isOnSale,
   index = 0,
   hideQuickActions = false,
+  buttonText = "Add to Cart",
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   const inWishlist = isInWishlist(id);
@@ -171,10 +173,10 @@ const ProductCard = memo(({
           )}
         </div>
 
-        {/* Add to Cart - Touch-friendly */}
+        {/* Action Button - Touch-friendly */}
         <Button className="w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation">
           <ShoppingCart className="h-4 w-4 mr-2" />
-          Add to Cart
+          {buttonText}
         </Button>
 
         {/* Mobile Quick Actions - Hidden when hideQuickActions is true */}
