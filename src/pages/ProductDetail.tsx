@@ -230,24 +230,26 @@ const ProductDetail = () => {
               )}
             </div>
             
-            {/* Thumbnail Gallery */}
-            {images.length > 1 && (
+            {/* Thumbnail Gallery - Always show if there's at least 1 image */}
+            {images.length >= 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`shrink-0 w-20 h-20 rounded-lg border-2 overflow-hidden ${
-                      selectedImage === idx ? "border-primary" : "border-border"
+                    className={`shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-md border-2 overflow-hidden bg-secondary/30 transition-all ${
+                      selectedImage === idx 
+                        ? "border-primary ring-1 ring-primary" 
+                        : "border-border hover:border-primary/50"
                     }`}
                   >
                     <img
                       src={img}
-                      alt=""
+                      alt={`${product.name} view ${idx + 1}`}
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder.svg";
                       }}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain p-1"
                     />
                   </button>
                 ))}
