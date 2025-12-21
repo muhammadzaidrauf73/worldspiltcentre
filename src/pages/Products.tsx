@@ -449,6 +449,7 @@ const Products = () => {
                       image={product.image_url || ""}
                       rating={Number(product.rating) || 0}
                       reviews={product.reviews_count || 0}
+                      isOnSale={product.is_on_sale || false}
                       index={index}
                     />
                   </Link>

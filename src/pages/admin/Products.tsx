@@ -52,6 +52,7 @@ interface ProductForm {
   is_active: boolean;
   is_new_arrival: boolean;
   is_top_seller: boolean;
+  is_on_sale: boolean;
   colors: string[];
 }
 
@@ -70,6 +71,7 @@ const emptyForm: ProductForm = {
   is_active: true,
   is_new_arrival: false,
   is_top_seller: false,
+  is_on_sale: false,
   colors: [],
 };
 
@@ -152,6 +154,7 @@ const AdminProducts = () => {
         is_active: data.is_active,
         is_new_arrival: data.is_new_arrival,
         is_top_seller: data.is_top_seller,
+        is_on_sale: data.is_on_sale,
         colors: data.colors,
       };
 
@@ -276,6 +279,7 @@ const AdminProducts = () => {
       is_active: product.is_active,
       is_new_arrival: product.is_new_arrival || false,
       is_top_seller: product.is_top_seller || false,
+      is_on_sale: product.is_on_sale || false,
       colors: product.colors || [],
     });
     setIsOpen(true);
@@ -331,6 +335,12 @@ const AdminProducts = () => {
         break;
       case "top-seller":
         bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_top_seller: true } });
+        break;
+      case "add-sale":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_on_sale: true } });
+        break;
+      case "remove-sale":
+        bulkUpdateMutation.mutate({ ids: selectedProducts, updates: { is_on_sale: false } });
         break;
       case "change-category":
         setBulkCategoryDialogOpen(true);
@@ -841,6 +851,19 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                       />
                       <Label htmlFor="is_top_seller">Top Seller</Label>
                     </div>
+                    <div className="flex items-center gap-2 col-span-2">
+                      <Switch
+                        id="is_on_sale"
+                        checked={form.is_on_sale}
+                        onCheckedChange={(checked) => setForm({ ...form, is_on_sale: checked })}
+                      />
+                      <Label htmlFor="is_on_sale" className="flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center w-6 h-6 bg-destructive rounded-full">
+                          <span className="text-destructive-foreground text-[6px] font-bold">SALE</span>
+                        </span>
+                        Sale Badge
+                      </Label>
+                    </div>
                   </div>
 
                   <div className="flex justify-end gap-2">
@@ -943,6 +966,8 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   <SelectItem value="unfeature">Remove Featured</SelectItem>
                   <SelectItem value="new-arrival">Mark as New Arrival</SelectItem>
                   <SelectItem value="top-seller">Mark as Top Seller</SelectItem>
+                  <SelectItem value="add-sale">Add Sale Badge</SelectItem>
+                  <SelectItem value="remove-sale">Remove Sale Badge</SelectItem>
                   <SelectItem value="change-category">Change Category</SelectItem>
                   <SelectItem value="remove-category">Remove Category</SelectItem>
                   <SelectItem value="update-prices">Update Prices (%)</SelectItem>
