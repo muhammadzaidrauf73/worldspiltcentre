@@ -132,6 +132,16 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "pulse-subtle": {
+          "0%, 100%": { 
+            boxShadow: "0 0 0 0 hsl(var(--primary) / 0.4)",
+            transform: "scale(1)"
+          },
+          "50%": { 
+            boxShadow: "0 0 0 4px hsl(var(--primary) / 0)",
+            transform: "scale(1.01)"
+          },
+        },
         bounce: {
           "0%, 100%": { transform: "translateY(-5%)" },
           "50%": { transform: "translateY(0)" },
@@ -155,6 +165,7 @@ export default {
         "scroll-x": "scroll-x 20s linear infinite",
         shimmer: "shimmer 2s infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
         bounce: "bounce 1s infinite",
         "flip-top": "flip-top 0.3s ease-in forwards",
         "flip-bottom": "flip-bottom 0.3s ease-out 0.3s forwards",

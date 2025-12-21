@@ -173,11 +173,11 @@ const ProductCard = memo(({
           )}
         </div>
 
-        {/* Action Button - Touch-friendly with hover animation */}
+        {/* Action Button - Touch-friendly with hover animation and pulse */}
         <Button 
           className={cn(
             "w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-300",
-            buttonText === "Order Now" && "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25 group/btn"
+            buttonText === "Order Now" && "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25 group/btn animate-[pulse-subtle_2s_ease-in-out_infinite]"
           )}
         >
           {buttonText === "Order Now" ? (
