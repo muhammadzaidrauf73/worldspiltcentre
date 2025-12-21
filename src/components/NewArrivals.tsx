@@ -17,7 +17,7 @@ const NewArrivals = () => {
         .eq("is_active", true)
         .eq("is_new_arrival", true)
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(4);
 
       if (error) throw error;
       return data;
@@ -26,11 +26,11 @@ const NewArrivals = () => {
 
   if (isLoading) {
     return (
-      <section className="py-8 sm:py-10 bg-secondary/30">
+      <section className="py-5 sm:py-8 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-10 w-24" />
+          <div className="flex justify-between items-center mb-3 sm:mb-5">
+            <Skeleton className="h-6 w-36" />
+            <Skeleton className="h-8 w-20" />
           </div>
           <ProductGridSkeleton count={4} />
         </div>
@@ -41,9 +41,9 @@ const NewArrivals = () => {
   if (!products?.length) return null;
 
   return (
-    <section className="py-8 sm:py-10 bg-secondary/30">
+    <section className="py-5 sm:py-8 bg-secondary/30">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent/10 flex items-center justify-center">
               <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
