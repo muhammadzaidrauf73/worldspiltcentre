@@ -194,8 +194,8 @@ export default function ProductImport() {
     setStartTime(Date.now());
     setEstimatedTimeRemaining('Calculating...');
     
-    // Larger batch size for faster imports
-    const BATCH_SIZE = turboMode ? 8 : 5;
+    // Ultra-fast batch size for ~24 products/second
+    const BATCH_SIZE = turboMode ? 24 : 12;
     let successCount = 0;
     let errorCount = 0;
     let processed = 0;

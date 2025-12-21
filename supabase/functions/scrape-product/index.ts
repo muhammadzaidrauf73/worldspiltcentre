@@ -966,7 +966,8 @@ serve(async (req) => {
       // Clear category cache at start of batch
       categoryCache.clear();
 
-      const effectiveConcurrency = turboMode ? Math.min(concurrency * 2, 10) : concurrency;
+      // Ultra-fast: process up to 24 products concurrently for maximum speed
+      const effectiveConcurrency = turboMode ? Math.min(concurrency, 24) : Math.min(concurrency, 12);
       console.log(`Batch importing ${urls.length} products with concurrency ${effectiveConcurrency} (turbo: ${turboMode})`);
       
       const results: { url: string; success: boolean; name?: string; error?: string }[] = [];
