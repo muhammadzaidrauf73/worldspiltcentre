@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/utils";
+import { HighlightText } from "@/lib/highlight-text";
 import { memo, useState } from "react";
 
 interface ProductCardProps {
@@ -19,6 +20,7 @@ interface ProductCardProps {
   index?: number;
   hideQuickActions?: boolean;
   buttonText?: string;
+  searchHighlight?: string;
 }
 
 const ProductCard = memo(({
@@ -35,6 +37,7 @@ const ProductCard = memo(({
   index = 0,
   hideQuickActions = false,
   buttonText = "Add to Cart",
+  searchHighlight = "",
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   const inWishlist = isInWishlist(id);
@@ -145,10 +148,10 @@ const ProductCard = memo(({
       {/* Content */}
       <div className="p-3 sm:p-4 space-y-1.5 sm:space-y-2">
         <p className="text-xs sm:text-xs text-muted-foreground uppercase tracking-wide font-semibold">
-          {brand}
+          <HighlightText text={brand} highlight={searchHighlight} />
         </p>
         <h3 className="font-semibold text-foreground text-sm sm:text-base line-clamp-2 group-hover:text-primary transition-smooth min-h-[2.5rem] sm:min-h-[3rem] leading-snug">
-          {name}
+          <HighlightText text={name} highlight={searchHighlight} />
         </h3>
 
         {/* Rating */}

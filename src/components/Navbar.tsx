@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -15,13 +14,13 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useWishlist } from "@/hooks/useWishlist";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 
 import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const { wishlistItems } = useWishlist();
@@ -108,12 +107,6 @@ const Navbar = () => {
     enabled: !!user,
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -165,25 +158,9 @@ const Navbar = () => {
             </Link>
 
             {/* Search Bar - Desktop */}
-            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
-              <div className="relative w-full">
-                <Input
-                  type="search"
-                  placeholder="Search for products..."
-                  className="pl-4 pr-12 h-11 w-full rounded-lg border-2 border-muted focus:border-primary bg-card"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Button 
-                  type="submit"
-                  size="icon" 
-                  aria-label="Search products"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 bg-primary hover:bg-primary/90"
-                >
-                  <Search className="h-4 w-4 text-primary-foreground" />
-                </Button>
-              </div>
-            </form>
+            <div className="hidden md:flex flex-1 max-w-2xl">
+              <SearchAutocomplete placeholder="Search for products..." />
+            </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-1 md:gap-3">
@@ -278,25 +255,9 @@ const Navbar = () => {
           </div>
 
           {/* Search Bar - Mobile */}
-          <form onSubmit={handleSearch} className="mt-3 md:hidden">
-            <div className="relative w-full">
-              <Input
-                type="search"
-                placeholder="Search products..."
-                className="pl-4 pr-12 h-10 w-full rounded-lg border-2 border-muted"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button 
-                type="submit"
-                size="icon" 
-                aria-label="Search products"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-primary hover:bg-primary/90"
-              >
-                <Search className="h-4 w-4 text-primary-foreground" />
-              </Button>
-            </div>
-          </form>
+          <div className="mt-3 md:hidden">
+            <SearchAutocomplete placeholder="Search products..." isMobile />
+          </div>
         </div>
 
         {/* Categories Bar - Desktop with Mega Menu */}

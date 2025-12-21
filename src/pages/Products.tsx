@@ -502,6 +502,7 @@ const Products = () => {
                         isOnSale={product.is_on_sale || false}
                         badge={showDealsOnly ? "⚡ Flash Deal" : undefined}
                         index={index}
+                        searchHighlight={searchQuery}
                       />
                     </Link>
                   );
