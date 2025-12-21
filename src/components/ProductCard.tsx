@@ -43,6 +43,7 @@ const ProductCard = memo(({
   const inWishlist = isInWishlist(id);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   // Only show discount if original price is higher than current price
   const discount = originalPrice && originalPrice > price
@@ -52,6 +53,11 @@ const ProductCard = memo(({
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Trigger animation
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 600);
+    
     toggleWishlist(id);
   };
 
@@ -100,11 +106,17 @@ const ProductCard = memo(({
             disabled={isToggling}
             aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
             className={cn(
-              "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full",
+              "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full transition-all duration-200",
               inWishlist && "bg-primary text-primary-foreground"
             )}
           >
-            <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+            <Heart 
+              className={cn(
+                "h-4 w-4 transition-all duration-200",
+                inWishlist && "fill-current",
+                isAnimating && "animate-heart-burst"
+              )} 
+            />
           </Button>
           <Button
             variant="ghost"
@@ -232,11 +244,17 @@ const ProductCard = memo(({
               onClick={handleWishlistClick}
               disabled={isToggling}
               className={cn(
-                "h-9 text-xs font-medium rounded-lg touch-manipulation px-2",
+                "h-9 text-xs font-medium rounded-lg touch-manipulation px-2 transition-all duration-200",
                 inWishlist && "bg-primary/10 border-primary text-primary"
               )}
             >
-              <Heart className={cn("h-3.5 w-3.5 mr-1", inWishlist && "fill-primary")} />
+              <Heart 
+                className={cn(
+                  "h-3.5 w-3.5 mr-1 transition-all duration-200",
+                  inWishlist && "fill-primary",
+                  isAnimating && "animate-heart-burst"
+                )} 
+              />
               <span className="truncate">{inWishlist ? "Saved" : "Wishlist"}</span>
             </Button>
             <Button
