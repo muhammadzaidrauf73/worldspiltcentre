@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -6,11 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Package, ShoppingCart, Users, TrendingUp, DollarSign, CalendarIcon, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Package, ShoppingCart, Users, TrendingUp, DollarSign, CalendarIcon, 
+  ArrowUpRight, ArrowDownRight, Heart, Eye, Activity, Zap, Target,
+  Clock, Star, TrendingDown, ShoppingBag, Sparkles
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, BarChart, Bar } from "recharts";
-import { format, subDays, startOfDay, isWithinInterval } from "date-fns";
+import { AreaChart, Area, XAxis, YAxis, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { format, subDays, startOfDay, isWithinInterval, differenceInHours } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
@@ -19,6 +25,21 @@ const Dashboard = () => {
     from: subDays(new Date(), 6),
     to: new Date(),
   });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return { text: "Good Morning", emoji: "☀️" };
+    if (hour < 17) return { text: "Good Afternoon", emoji: "🌤️" };
+    if (hour < 21) return { text: "Good Evening", emoji: "🌅" };
+    return { text: "Good Night", emoji: "🌙" };
+  };
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats", dateRange],
@@ -54,6 +75,9 @@ const Dashboard = () => {
         });
       }) || [];
 
+      // Calculate average order value
+      const avgOrderValue = filteredOrders.length > 0 ? totalRevenue / filteredOrders.length : 0;
+
       return {
         products: productsRes.count || 0,
         categories: categoriesRes.count || 0,
@@ -61,6 +85,7 @@ const Dashboard = () => {
         pendingOrders,
         completedOrders,
         totalRevenue,
+        avgOrderValue,
         customers: filteredCustomers.length,
         allCustomers: customersRes.data?.length || 0,
         ordersData: filteredOrders,
@@ -69,13 +94,125 @@ const Dashboard = () => {
     },
   });
 
+  // Wishlist insights
+  const { data: wishlistStats } = useQuery({
+    queryKey: ["admin-wishlist-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("wishlist_items")
+        .select("product_id, created_at");
+      
+      if (error) throw error;
+      
+      const uniqueProducts = new Set(data?.map(item => item.product_id)).size;
+      const totalItems = data?.length || 0;
+      const recentItems = data?.filter(item => 
+        differenceInHours(new Date(), new Date(item.created_at)) <= 24
+      ).length || 0;
+
+      return { uniqueProducts, totalItems, recentItems };
+    },
+  });
+
+  // Category performance
+  const { data: categoryPerformance } = useQuery({
+    queryKey: ["admin-category-performance"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, product_count")
+        .order("product_count", { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Recent activity
+  const { data: recentActivity } = useQuery({
+    queryKey: ["admin-recent-activity"],
+    queryFn: async () => {
+      const [ordersRes, reviewsRes, messagesRes] = await Promise.all([
+        supabase.from("orders").select("id, customer_name, total, created_at, status").order("created_at", { ascending: false }).limit(5),
+        supabase.from("product_reviews").select("id, reviewer_name, rating, created_at").order("created_at", { ascending: false }).limit(5),
+        supabase.from("contact_messages").select("id, name, created_at").order("created_at", { ascending: false }).limit(3),
+      ]);
+
+      const activities: Array<{
+        id: string;
+        type: "order" | "review" | "message";
+        title: string;
+        subtitle: string;
+        time: Date;
+        icon: "cart" | "star" | "message";
+        color: string;
+      }> = [];
+
+      ordersRes.data?.forEach(order => {
+        activities.push({
+          id: `order-${order.id}`,
+          type: "order",
+          title: `New order from ${order.customer_name || "Guest"}`,
+          subtitle: `Rs.${Number(order.total).toLocaleString()}`,
+          time: new Date(order.created_at),
+          icon: "cart",
+          color: "text-emerald-500",
+        });
+      });
+
+      reviewsRes.data?.forEach(review => {
+        activities.push({
+          id: `review-${review.id}`,
+          type: "review",
+          title: `${review.reviewer_name || "Customer"} left a review`,
+          subtitle: `${review.rating} stars`,
+          time: new Date(review.created_at),
+          icon: "star",
+          color: "text-yellow-500",
+        });
+      });
+
+      messagesRes.data?.forEach(msg => {
+        activities.push({
+          id: `msg-${msg.id}`,
+          type: "message",
+          title: `Message from ${msg.name}`,
+          subtitle: "New inquiry",
+          time: new Date(msg.created_at),
+          icon: "message",
+          color: "text-blue-500",
+        });
+      });
+
+      return activities.sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 8);
+    },
+  });
+
   const { data: topProducts } = useQuery({
     queryKey: ["admin-top-products"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, reviews_count")
+        .select("id, name, price, reviews_count, image_url")
         .order("reviews_count", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Low stock products
+  const { data: lowStockProducts } = useQuery({
+    queryKey: ["admin-low-stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, stock_quantity, image_url")
+        .lt("stock_quantity", 10)
+        .gt("stock_quantity", 0)
+        .order("stock_quantity", { ascending: true })
         .limit(5);
 
       if (error) throw error;
@@ -120,6 +257,14 @@ const Dashboard = () => {
     cancelled: stats?.ordersData?.filter(o => o.status === "cancelled").length || 0,
   };
 
+  const pieData = [
+    { name: "Pending", value: orderStatusCounts.pending, color: "#eab308" },
+    { name: "Processing", value: orderStatusCounts.processing, color: "#3b82f6" },
+    { name: "Shipped", value: orderStatusCounts.shipped, color: "#8b5cf6" },
+    { name: "Delivered", value: orderStatusCounts.delivered, color: "#10b981" },
+    { name: "Cancelled", value: orderStatusCounts.cancelled, color: "#ef4444" },
+  ].filter(item => item.value > 0);
+
   const chartConfig = {
     revenue: { label: "Revenue", color: "hsl(142, 76%, 36%)" },
     orders: { label: "Orders", color: "hsl(221, 83%, 53%)" },
@@ -133,17 +278,32 @@ const Dashboard = () => {
     { label: "90 Days", days: 90 },
   ];
 
+  const formatTimeAgo = (date: Date) => {
+    const hours = differenceInHours(new Date(), date);
+    if (hours < 1) return "Just now";
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const greeting = getGreeting();
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header with Date Filter */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground">Store analytics overview</p>
+        {/* Header with Greeting */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{greeting.emoji}</span>
+              <h1 className="text-3xl font-bold text-foreground">{greeting.text}</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Here's what's happening with your store today
+            </p>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {presetRanges.map((preset) => (
               <Button
                 key={preset.days}
@@ -187,9 +347,10 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Quick Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
               <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -204,15 +365,19 @@ const Dashboard = () => {
                   <div className="text-2xl font-bold text-emerald-600">
                     Rs.{stats?.totalRevenue.toLocaleString() || 0}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.completedOrders || 0} completed orders
-                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+                    <span className="text-xs text-emerald-600 font-medium">
+                      {stats?.completedOrders || 0} completed
+                    </span>
+                  </div>
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Orders</CardTitle>
               <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
@@ -225,15 +390,19 @@ const Dashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold text-blue-600">{stats?.orders || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.pendingOrders || 0} pending
-                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Clock className="h-3 w-3 text-yellow-500" />
+                    <span className="text-xs text-muted-foreground">
+                      {stats?.pendingOrders || 0} pending
+                    </span>
+                  </div>
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 border-violet-500/20">
+          <Card className="bg-gradient-to-br from-violet-500/10 to-violet-500/5 border-violet-500/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Customers</CardTitle>
               <div className="h-8 w-8 rounded-full bg-violet-500/20 flex items-center justify-center">
@@ -246,19 +415,23 @@ const Dashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold text-violet-600">+{stats?.customers || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.allCustomers || 0} total customers
-                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <TrendingUp className="h-3 w-3 text-violet-500" />
+                    <span className="text-xs text-muted-foreground">
+                      {stats?.allCustomers || 0} total
+                    </span>
+                  </div>
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+          <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-orange-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Products</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Order</CardTitle>
               <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <Package className="h-4 w-4 text-orange-600" />
+                <Target className="h-4 w-4 text-orange-600" />
               </div>
             </CardHeader>
             <CardContent>
@@ -266,11 +439,113 @@ const Dashboard = () => {
                 <Skeleton className="h-8 w-20" />
               ) : (
                 <>
-                  <div className="text-2xl font-bold text-orange-600">{stats?.products || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.categories || 0} categories
-                  </p>
+                  <div className="text-2xl font-bold text-orange-600">
+                    Rs.{Math.round(stats?.avgOrderValue || 0).toLocaleString()}
+                  </div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Package className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs text-muted-foreground">
+                      {stats?.products || 0} products
+                    </span>
+                  </div>
                 </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Insight Cards Row */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-pink-500" />
+                  Wishlist Activity
+                </CardTitle>
+                <Badge variant="secondary" className="bg-pink-500/10 text-pink-600 border-0">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Insights
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-pink-600">{wishlistStats?.totalItems || 0}</p>
+                  <p className="text-xs text-muted-foreground">Total Items</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-pink-600">{wishlistStats?.uniqueProducts || 0}</p>
+                  <p className="text-xs text-muted-foreground">Products</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-pink-600">{wishlistStats?.recentItems || 0}</p>
+                  <p className="text-xs text-muted-foreground">Last 24h</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-cyan-500" />
+                  Conversion Rate
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-end justify-between">
+                  <span className="text-3xl font-bold text-cyan-600">
+                    {stats?.allCustomers && stats?.orders 
+                      ? Math.round((stats.orders / stats.allCustomers) * 100) 
+                      : 0}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">Orders / Customers</span>
+                </div>
+                <Progress 
+                  value={stats?.allCustomers && stats?.orders 
+                    ? (stats.orders / stats.allCustomers) * 100 
+                    : 0} 
+                  className="h-2 bg-cyan-500/20"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingDown className="h-4 w-4 text-amber-500" />
+                  Low Stock Alert
+                </CardTitle>
+                {lowStockProducts && lowStockProducts.length > 0 && (
+                  <Badge variant="destructive" className="animate-pulse">
+                    {lowStockProducts.length} items
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {lowStockProducts && lowStockProducts.length > 0 ? (
+                <div className="space-y-2">
+                  {lowStockProducts.slice(0, 3).map(product => (
+                    <div key={product.id} className="flex items-center justify-between text-sm">
+                      <span className="truncate flex-1 mr-2">{product.name}</span>
+                      <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                        {product.stock_quantity} left
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  All products are well stocked!
+                </p>
               )}
             </CardContent>
           </Card>
@@ -369,8 +644,9 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Order Status & Top Products */}
-        <div className="grid gap-4 md:grid-cols-2">
+        {/* Three Column Grid */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Order Status with Pie Chart */}
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-semibold">Order Status</CardTitle>
@@ -378,75 +654,166 @@ const Dashboard = () => {
             <CardContent>
               {isLoading ? (
                 <Skeleton className="h-[200px] w-full" />
-              ) : (
-                <div className="space-y-4">
-                  {[
-                    { label: "Pending", count: orderStatusCounts.pending, color: "bg-yellow-500", textColor: "text-yellow-600" },
-                    { label: "Processing", count: orderStatusCounts.processing, color: "bg-blue-500", textColor: "text-blue-600" },
-                    { label: "Shipped", count: orderStatusCounts.shipped, color: "bg-purple-500", textColor: "text-purple-600" },
-                    { label: "Delivered", count: orderStatusCounts.delivered, color: "bg-emerald-500", textColor: "text-emerald-600" },
-                    { label: "Cancelled", count: orderStatusCounts.cancelled, color: "bg-red-500", textColor: "text-red-600" },
-                  ].map((status) => {
-                    const total = stats?.orders || 1;
-                    const percentage = Math.round((status.count / total) * 100) || 0;
-                    return (
-                      <div key={status.label} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium">{status.label}</span>
-                          <span className={cn("font-bold", status.textColor)}>{status.count}</span>
+              ) : pieData.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-[120px] h-[120px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={35}
+                          outerRadius={55}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {pieData.map((status) => (
+                      <div key={status.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: status.color }} />
+                          <span className="text-muted-foreground">{status.name}</span>
                         </div>
-                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                          <div 
-                            className={cn("h-full rounded-full transition-all", status.color)}
-                            style={{ width: `${percentage}%` }}
-                          />
-                        </div>
+                        <span className="font-medium">{status.value}</span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[150px] flex items-center justify-center text-muted-foreground">
+                  No orders yet
                 </div>
               )}
             </CardContent>
           </Card>
 
+          {/* Live Activity Feed */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold">Top Products</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Live Activity
+                </CardTitle>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-[200px] w-full" />
-              ) : topProducts && topProducts.length > 0 ? (
-                <div className="space-y-3">
-                  {topProducts.map((product, index) => (
-                    <div key={product.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                        index === 0 ? "bg-yellow-500/20 text-yellow-600" :
-                        index === 1 ? "bg-gray-300/30 text-gray-600" :
-                        index === 2 ? "bg-orange-500/20 text-orange-600" :
-                        "bg-secondary text-muted-foreground"
-                      )}>
-                        {index + 1}
+              {recentActivity && recentActivity.length > 0 ? (
+                <div className="space-y-3 max-h-[200px] overflow-y-auto">
+                  {recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+                      <div className={cn("mt-0.5", activity.color)}>
+                        {activity.icon === "cart" && <ShoppingBag className="h-4 w-4" />}
+                        {activity.icon === "star" && <Star className="h-4 w-4" />}
+                        {activity.icon === "message" && <Eye className="h-4 w-4" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">{product.reviews_count || 0} reviews</p>
+                        <p className="text-sm font-medium truncate">{activity.title}</p>
+                        <p className="text-xs text-muted-foreground">{activity.subtitle}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-emerald-600">Rs.{product.price.toLocaleString()}</p>
-                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatTimeAgo(activity.time)}
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                  No products yet
+                <div className="h-[150px] flex items-center justify-center text-muted-foreground">
+                  No recent activity
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Category Performance */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Top Categories</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {categoryPerformance && categoryPerformance.length > 0 ? (
+                <div className="space-y-3">
+                  {categoryPerformance.map((category, index) => {
+                    const maxCount = categoryPerformance[0]?.product_count || 1;
+                    const percentage = ((category.product_count || 0) / maxCount) * 100;
+                    return (
+                      <div key={category.id} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium truncate">{category.name}</span>
+                          <span className="text-muted-foreground">{category.product_count || 0}</span>
+                        </div>
+                        <Progress 
+                          value={percentage} 
+                          className={cn(
+                            "h-1.5",
+                            index === 0 && "[&>div]:bg-emerald-500",
+                            index === 1 && "[&>div]:bg-blue-500",
+                            index === 2 && "[&>div]:bg-violet-500",
+                            index === 3 && "[&>div]:bg-orange-500",
+                            index === 4 && "[&>div]:bg-pink-500"
+                          )}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="h-[150px] flex items-center justify-center text-muted-foreground">
+                  No categories yet
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
+
+        {/* Top Products */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold">Top Products by Reviews</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : topProducts && topProducts.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                {topProducts.map((product, index) => (
+                  <div key={product.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-md transition-all">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0",
+                      index === 0 ? "bg-yellow-500/20 text-yellow-600" :
+                      index === 1 ? "bg-gray-300/30 text-gray-600" :
+                      index === 2 ? "bg-orange-500/20 text-orange-600" :
+                      "bg-secondary text-muted-foreground"
+                    )}>
+                      #{index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{product.name}</p>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                        <span className="text-xs text-muted-foreground">{product.reviews_count || 0} reviews</span>
+                      </div>
+                    </div>
+                    <p className="text-sm font-bold text-emerald-600">Rs.{product.price.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-[100px] flex items-center justify-center text-muted-foreground">
+                No products yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
