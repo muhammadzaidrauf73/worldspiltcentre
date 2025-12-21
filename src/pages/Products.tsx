@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, Truck } from "lucide-react";
 import SEO from "@/components/SEO";
 
 const Products = () => {
@@ -31,6 +31,7 @@ const Products = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [isPriceFiltered, setIsPriceFiltered] = useState(false);
+  const [freeDeliveryOnly, setFreeDeliveryOnly] = useState(false);
   const showDealsOnly = dealsParam === "true";
   
   // Update search query when URL param changes
@@ -87,7 +88,7 @@ const Products = () => {
   });
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, priceRange, isPriceFiltered, showDealsOnly, flashDeals],
+    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, priceRange, isPriceFiltered, freeDeliveryOnly, showDealsOnly, flashDeals],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -115,6 +116,10 @@ const Products = () => {
       
       if (isPriceFiltered && (priceRange[0] > 0 || priceRange[1] < 1000000)) {
         query = query.gte("price", priceRange[0]).lte("price", priceRange[1]);
+      }
+
+      if (freeDeliveryOnly) {
+        query = query.eq("is_free_delivery", true);
       }
       
       if (searchQuery && searchQuery.trim()) {
@@ -173,6 +178,7 @@ const Products = () => {
     setSortBy("newest");
     setPriceRange([0, 1000000]);
     setIsPriceFiltered(false);
+    setFreeDeliveryOnly(false);
     setFiltersOpen(false);
   };
 
@@ -180,10 +186,11 @@ const Products = () => {
     selectedCategory, 
     selectedBrands.length > 0 ? "brands" : "", 
     searchQuery,
-    isPriceFiltered ? "price" : ""
+    isPriceFiltered ? "price" : "",
+    freeDeliveryOnly ? "delivery" : ""
   ].filter(Boolean).length;
 
-  const hasFilters = selectedCategory || selectedBrands.length > 0 || searchQuery || isPriceFiltered;
+  const hasFilters = selectedCategory || selectedBrands.length > 0 || searchQuery || isPriceFiltered || freeDeliveryOnly;
 
   const categoryName = showDealsOnly 
     ? "Flash Deals" 
@@ -216,6 +223,29 @@ const Products = () => {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Price: {formatPrice(priceRange[0])} — {formatPrice(priceRange[1])}</span>
         </div>
+      </div>
+    </div>
+  );
+
+  // Free Delivery Filter Component
+  const FreeDeliveryFilter = ({ onSelect }: { onSelect?: () => void }) => (
+    <div className="mb-6">
+      <div 
+        className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors p-2 rounded-lg border border-border hover:border-primary/50"
+        onClick={() => {
+          setFreeDeliveryOnly(!freeDeliveryOnly);
+          onSelect?.();
+        }}
+      >
+        <Checkbox 
+          checked={freeDeliveryOnly}
+          onCheckedChange={() => setFreeDeliveryOnly(!freeDeliveryOnly)}
+          className="h-4 w-4"
+        />
+        <Truck className="h-4 w-4 text-green-600" />
+        <span className="text-sm font-medium text-foreground">
+          Free Delivery Only
+        </span>
       </div>
     </div>
   );
@@ -337,6 +367,9 @@ const Products = () => {
                       </div>
                     </div>
 
+                    {/* Free Delivery Filter */}
+                    <FreeDeliveryFilter onSelect={() => setFiltersOpen(false)} />
+
                     {/* Brands */}
                     {brands.length > 0 && <BrandFilter />}
                   </div>
@@ -403,6 +436,9 @@ const Products = () => {
                   </div>
                 </ScrollArea>
               </div>
+
+              {/* Free Delivery Filter */}
+              <FreeDeliveryFilter />
 
               {/* Brands */}
               {brands.length > 0 && <BrandFilter />}
