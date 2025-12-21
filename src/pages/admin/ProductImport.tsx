@@ -21,6 +21,14 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+interface ListedProduct {
+  url: string;
+  name: string;
+  image: string;
+  price: number;
+  selected?: boolean;
+}
+
 interface ScrapedProduct {
   name: string;
   slug: string;
@@ -40,12 +48,16 @@ interface ScrapedProduct {
 
 const PREDEFINED_URLS = [
   {
-    label: 'Air Fryers - Page 1',
-    url: 'https://www.lahorecentre.com/page/1/?term&s=air+fryer&post_type=product&taxonomy=product_cat',
+    label: 'Air Fryers',
+    url: 'https://www.lahorecentre.com/?term=air-fryer&s=air+fryer&post_type=product&taxonomy=product_cat',
   },
   {
-    label: 'Air Fryers - Page 2', 
-    url: 'https://www.lahorecentre.com/page/2/?term&s=air+fryer&post_type=product&taxonomy=product_cat',
+    label: 'Washing Machines',
+    url: 'https://www.lahorecentre.com/?term=washing+machine&s=washing+machine&post_type=product&taxonomy=product_cat',
+  },
+  {
+    label: 'LED TVs',
+    url: 'https://www.lahorecentre.com/?term=led+tv&s=led+tv&post_type=product&taxonomy=product_cat',
   },
 ];
 
@@ -55,8 +67,8 @@ export default function ProductImport() {
   const [searchParams] = useSearchParams();
   
   const [searchUrl, setSearchUrl] = useState('');
-  const [productUrls, setProductUrls] = useState<string[]>([]);
-  const [products, setProducts] = useState<ScrapedProduct[]>([]);
+  const [listedProducts, setListedProducts] = useState<ListedProduct[]>([]);
+  const [scrapedProducts, setScrapedProducts] = useState<ScrapedProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isScraping, setIsScraping] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -65,7 +77,7 @@ export default function ProductImport() {
 
   const fetchProductList = useCallback(async (url: string) => {
     setIsLoading(true);
-    setCurrentAction('Fetching product list...');
+    setCurrentAction('Fetching products...');
     
     try {
       const { data, error } = await supabase.functions.invoke('scrape-product', {
@@ -74,13 +86,19 @@ export default function ProductImport() {
 
       if (error) throw error;
 
-      if (data.success && data.productUrls) {
-        // Merge with existing URLs, avoiding duplicates
-        setProductUrls(prev => {
+      if (data.success && data.products && data.products.length > 0) {
+        // Add selection state to products
+        const productsWithSelection = data.products.map((p: ListedProduct) => ({
+          ...p,
+          selected: true,
+        }));
+        
+        // Merge with existing products, avoiding duplicates by URL
+        setListedProducts(prev => {
           const combined = [...prev];
-          for (const newUrl of data.productUrls) {
-            if (!combined.includes(newUrl)) {
-              combined.push(newUrl);
+          for (const newProduct of productsWithSelection) {
+            if (!combined.some(p => p.url === newProduct.url)) {
+              combined.push(newProduct);
             }
           }
           return combined;
@@ -88,7 +106,7 @@ export default function ProductImport() {
         
         toast({
           title: 'Products Found',
-          description: `Found ${data.productUrls.length} products`,
+          description: `Found ${data.products.length} products with images`,
         });
       } else {
         toast({
@@ -118,11 +136,27 @@ export default function ProductImport() {
     }
   }, [searchParams, fetchProductList]);
 
-  const scrapeAllProducts = async () => {
-    if (productUrls.length === 0) {
+  const toggleListedProduct = (url: string) => {
+    setListedProducts(prev => prev.map(p => 
+      p.url === url ? { ...p, selected: !p.selected } : p
+    ));
+  };
+
+  const selectAllListed = () => {
+    setListedProducts(prev => prev.map(p => ({ ...p, selected: true })));
+  };
+
+  const deselectAllListed = () => {
+    setListedProducts(prev => prev.map(p => ({ ...p, selected: false })));
+  };
+
+  const scrapeSelectedProducts = async () => {
+    const selectedProducts = listedProducts.filter(p => p.selected);
+    
+    if (selectedProducts.length === 0) {
       toast({
-        title: 'No Products',
-        description: 'Please fetch product list first',
+        title: 'No Products Selected',
+        description: 'Please select products to scrape',
         variant: 'destructive',
       });
       return;
@@ -131,50 +165,50 @@ export default function ProductImport() {
     setIsScraping(true);
     setProgress(0);
     
-    const scrapedProducts: ScrapedProduct[] = [];
+    const results: ScrapedProduct[] = [];
     
-    for (let i = 0; i < productUrls.length; i++) {
-      const url = productUrls[i];
-      setCurrentAction(`Scraping product ${i + 1} of ${productUrls.length}...`);
-      setProgress(((i + 1) / productUrls.length) * 100);
+    for (let i = 0; i < selectedProducts.length; i++) {
+      const product = selectedProducts[i];
+      setCurrentAction(`Scraping: ${product.name} (${i + 1}/${selectedProducts.length})`);
+      setProgress(((i + 1) / selectedProducts.length) * 100);
 
       try {
         const { data, error } = await supabase.functions.invoke('scrape-product', {
-          body: { action: 'scrape-product', url },
+          body: { action: 'scrape-product', url: product.url },
         });
 
         if (error) throw error;
 
         if (data.success && data.product) {
-          scrapedProducts.push({
+          results.push({
             ...data.product,
             status: 'scraped',
             selected: true,
           });
         } else {
-          scrapedProducts.push({
-            name: url.split('/').slice(-2)[0].replace(/-/g, ' '),
-            slug: url.split('/').slice(-2)[0],
-            price: 0,
+          results.push({
+            name: product.name,
+            slug: product.url.split('/').slice(-2)[0],
+            price: product.price,
             brand: 'Unknown',
-            category: 'Air Fryer',
-            images: [],
-            source_url: url,
+            category: 'Unknown',
+            images: product.image ? [product.image] : [],
+            source_url: product.url,
             status: 'error',
-            error: data.error || 'Failed to scrape',
+            error: data.error || 'Failed to scrape details',
             selected: false,
           });
         }
       } catch (error) {
-        console.error(`Error scraping ${url}:`, error);
-        scrapedProducts.push({
-          name: url.split('/').slice(-2)[0].replace(/-/g, ' '),
-          slug: url.split('/').slice(-2)[0],
-          price: 0,
+        console.error(`Error scraping ${product.url}:`, error);
+        results.push({
+          name: product.name,
+          slug: product.url.split('/').slice(-2)[0],
+          price: product.price,
           brand: 'Unknown',
-          category: 'Air Fryer',
-          images: [],
-          source_url: url,
+          category: 'Unknown',
+          images: product.image ? [product.image] : [],
+          source_url: product.url,
           status: 'error',
           error: 'Network error',
           selected: false,
@@ -182,7 +216,7 @@ export default function ProductImport() {
       }
 
       // Update UI after each product
-      setProducts([...scrapedProducts]);
+      setScrapedProducts([...results]);
       
       // Small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -193,17 +227,17 @@ export default function ProductImport() {
     
     toast({
       title: 'Scraping Complete',
-      description: `Scraped ${scrapedProducts.filter(p => p.status === 'scraped').length} products successfully`,
+      description: `Scraped ${results.filter(p => p.status === 'scraped').length} products successfully`,
     });
   };
 
   const importSelectedProducts = async () => {
-    const selectedProducts = products.filter(p => p.selected && p.status === 'scraped');
+    const selectedProducts = scrapedProducts.filter(p => p.selected && p.status === 'scraped');
     
     if (selectedProducts.length === 0) {
       toast({
         title: 'No Products Selected',
-        description: 'Please select products to import',
+        description: 'Please select scraped products to import',
         variant: 'destructive',
       });
       return;
@@ -214,7 +248,7 @@ export default function ProductImport() {
 
     for (let i = 0; i < selectedProducts.length; i++) {
       const product = selectedProducts[i];
-      setCurrentAction(`Importing ${product.name}...`);
+      setCurrentAction(`Importing: ${product.name} (${i + 1}/${selectedProducts.length})`);
       setProgress(((i + 1) / selectedProducts.length) * 100);
 
       try {
@@ -224,15 +258,14 @@ export default function ProductImport() {
 
         if (error) throw error;
 
-        // Update product status
-        setProducts(prev => prev.map(p => 
+        setScrapedProducts(prev => prev.map(p => 
           p.slug === product.slug 
             ? { ...p, status: 'imported' as const }
             : p
         ));
       } catch (error) {
         console.error(`Error importing ${product.name}:`, error);
-        setProducts(prev => prev.map(p => 
+        setScrapedProducts(prev => prev.map(p => 
           p.slug === product.slug 
             ? { ...p, status: 'error' as const, error: 'Import failed' }
             : p
@@ -251,18 +284,18 @@ export default function ProductImport() {
     });
   };
 
-  const toggleProductSelection = (slug: string) => {
-    setProducts(prev => prev.map(p => 
+  const toggleScrapedProduct = (slug: string) => {
+    setScrapedProducts(prev => prev.map(p => 
       p.slug === slug ? { ...p, selected: !p.selected } : p
     ));
   };
 
-  const selectAll = () => {
-    setProducts(prev => prev.map(p => ({ ...p, selected: p.status === 'scraped' })));
+  const selectAllScraped = () => {
+    setScrapedProducts(prev => prev.map(p => ({ ...p, selected: p.status === 'scraped' })));
   };
 
-  const deselectAll = () => {
-    setProducts(prev => prev.map(p => ({ ...p, selected: false })));
+  const deselectAllScraped = () => {
+    setScrapedProducts(prev => prev.map(p => ({ ...p, selected: false })));
   };
 
   const getStatusBadge = (status?: string) => {
@@ -282,6 +315,11 @@ export default function ProductImport() {
     }
   };
 
+  const clearAll = () => {
+    setListedProducts([]);
+    setScrapedProducts([]);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -292,9 +330,16 @@ export default function ProductImport() {
               Scrape and import products from external websites
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate('/admin/products')}>
-            Back to Products
-          </Button>
+          <div className="flex gap-2">
+            {(listedProducts.length > 0 || scrapedProducts.length > 0) && (
+              <Button variant="outline" onClick={clearAll}>
+                Clear All
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate('/admin/products')}>
+              Back to Products
+            </Button>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -302,10 +347,10 @@ export default function ProductImport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Search className="h-5 w-5" />
-              Quick Import - Air Fryers
+              Quick Import
             </CardTitle>
             <CardDescription>
-              Click to fetch air fryer products from lahorecentre.com
+              Click to fetch products from lahorecentre.com categories
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -329,13 +374,13 @@ export default function ProductImport() {
           <CardHeader>
             <CardTitle>Custom URL</CardTitle>
             <CardDescription>
-              Enter a custom product listing URL to scrape
+              Enter a search or category URL to fetch products
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
               <Input
-                placeholder="https://www.lahorecentre.com/..."
+                placeholder="https://www.lahorecentre.com/?s=product+name&post_type=product"
                 value={searchUrl}
                 onChange={(e) => setSearchUrl(e.target.value)}
                 disabled={isLoading || isScraping}
@@ -351,63 +396,113 @@ export default function ProductImport() {
           </CardContent>
         </Card>
 
-        {/* Product URLs Found */}
-        {productUrls.length > 0 && (
+        {/* Listed Products (from search) */}
+        {listedProducts.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Found {productUrls.length} Products
+                  Found {listedProducts.length} Products ({listedProducts.filter(p => p.selected).length} selected)
                 </span>
-                <Button
-                  onClick={scrapeAllProducts}
-                  disabled={isScraping || isImporting}
-                >
-                  {isScraping ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Scraping...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Scrape All & Download Images
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={selectAllListed}>
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={deselectAllListed}>
+                    Deselect All
+                  </Button>
+                  <Button
+                    onClick={scrapeSelectedProducts}
+                    disabled={isScraping || isImporting || listedProducts.filter(p => p.selected).length === 0}
+                  >
+                    {isScraping ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Scraping...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Scrape Selected & Download Images
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
-            {(isScraping || isImporting) && (
-              <CardContent>
+            {isScraping && (
+              <CardContent className="pt-0">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span>{currentAction}</span>
+                    <span className="truncate flex-1 mr-4">{currentAction}</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
                   <Progress value={progress} />
                 </div>
               </CardContent>
             )}
+            <CardContent className={isScraping ? '' : 'pt-0'}>
+              <ScrollArea className="h-[400px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {listedProducts.map((product) => (
+                    <div
+                      key={product.url}
+                      className={`flex flex-col rounded-lg border overflow-hidden cursor-pointer transition-all ${
+                        product.selected ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'
+                      }`}
+                      onClick={() => toggleListedProduct(product.url)}
+                    >
+                      <div className="aspect-square bg-muted relative">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 left-2">
+                          <Checkbox
+                            checked={product.selected}
+                            onClick={(e) => e.stopPropagation()}
+                            onCheckedChange={() => toggleListedProduct(product.url)}
+                          />
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-medium text-sm line-clamp-2">{product.name}</h3>
+                        <p className="text-primary font-semibold mt-1">
+                          Rs. {product.price.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
           </Card>
         )}
 
-        {/* Scraped Products */}
-        {products.length > 0 && (
+        {/* Scraped Products (with full details) */}
+        {scrapedProducts.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Scraped Products ({products.filter(p => p.selected).length} selected)</span>
+                <span>Scraped Products ({scrapedProducts.filter(p => p.selected).length} selected for import)</span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={selectAll}>
+                  <Button variant="outline" size="sm" onClick={selectAllScraped}>
                     Select All
                   </Button>
-                  <Button variant="outline" size="sm" onClick={deselectAll}>
+                  <Button variant="outline" size="sm" onClick={deselectAllScraped}>
                     Deselect All
                   </Button>
                   <Button
                     onClick={importSelectedProducts}
-                    disabled={isImporting || products.filter(p => p.selected && p.status === 'scraped').length === 0}
+                    disabled={isImporting || scrapedProducts.filter(p => p.selected && p.status === 'scraped').length === 0}
                   >
                     {isImporting ? (
                       <>
@@ -417,26 +512,38 @@ export default function ProductImport() {
                     ) : (
                       <>
                         <Check className="h-4 w-4 mr-2" />
-                        Import Selected
+                        Import to Database
                       </>
                     )}
                   </Button>
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            {isImporting && (
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="truncate flex-1 mr-4">{currentAction}</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <Progress value={progress} />
+                </div>
+              </CardContent>
+            )}
+            <CardContent className={isImporting ? '' : 'pt-0'}>
               <ScrollArea className="h-[500px]">
                 <div className="space-y-3">
-                  {products.map((product) => (
+                  {scrapedProducts.map((product) => (
                     <div
                       key={product.slug}
                       className={`flex items-center gap-4 p-4 rounded-lg border ${
-                        product.status === 'error' ? 'border-destructive/50 bg-destructive/5' : 'bg-card'
+                        product.status === 'error' ? 'border-destructive/50 bg-destructive/5' : 
+                        product.status === 'imported' ? 'border-green-500/50 bg-green-50 dark:bg-green-950/20' : 'bg-card'
                       }`}
                     >
                       <Checkbox
                         checked={product.selected}
-                        onCheckedChange={() => toggleProductSelection(product.slug)}
+                        onCheckedChange={() => toggleScrapedProduct(product.slug)}
                         disabled={product.status === 'error' || product.status === 'imported'}
                       />
                       
@@ -462,6 +569,12 @@ export default function ProductImport() {
                           <span>Rs. {product.price.toLocaleString()}</span>
                           <span>•</span>
                           <span>{product.images.length} images</span>
+                          {product.description && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate max-w-[200px]">{product.description.substring(0, 50)}...</span>
+                            </>
+                          )}
                         </div>
                         {product.error && (
                           <p className="text-sm text-destructive flex items-center gap-1 mt-1">
