@@ -67,6 +67,12 @@ const AdminFlashDeals = () => {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<FlashDeal | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+
+  // Bulk selection: avoid UI freeze when selecting thousands of rows
+  const [bulkSelectAllActive, setBulkSelectAllActive] = useState(false);
+  const [bulkSelectAllFilter, setBulkSelectAllFilter] = useState<string>("all");
+  const [bulkSelectAllExcluded, setBulkSelectAllExcluded] = useState<string[]>([]);
+
   const [bulkCategoryFilter, setBulkCategoryFilter] = useState<string>("all");
   const [bulkFormData, setBulkFormData] = useState({
     discount_percentage: "10",
@@ -88,23 +94,15 @@ const AdminFlashDeals = () => {
   const { data: deals, isLoading, error } = useQuery({
     queryKey: ["flash-deals"],
     queryFn: async () => {
-      console.log("Fetching flash deals...");
       const { data, error } = await supabase
         .from("flash_deals")
         .select("*")
         .order("display_order", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching flash deals:", error);
-        throw error;
-      }
-      console.log("Flash deals fetched:", data);
+      if (error) throw error;
       return data as FlashDeal[];
     },
   });
-
-  // Log for debugging
-  console.log("Flash deals state:", { deals, isLoading, error });
 
   const { data: products } = useQuery({
     queryKey: ["products-for-deals"],
@@ -133,15 +131,53 @@ const AdminFlashDeals = () => {
     },
   });
 
-  // Memoize filtered products and selected set for performance
-  const filteredProducts = useMemo(() => 
-    products?.filter(
-      (p) => bulkCategoryFilter === "all" || p.category_id === bulkCategoryFilter
-    ) || [],
+  // Memoize filtered products and selection helpers for performance
+  const filteredProducts = useMemo(
+    () =>
+      products?.filter(
+        (p) => bulkCategoryFilter === "all" || p.category_id === bulkCategoryFilter
+      ) || [],
     [products, bulkCategoryFilter]
   );
 
-  const selectedProductsSet = useMemo(() => new Set(selectedProducts), [selectedProducts]);
+  const filteredProductIdsSet = useMemo(
+    () => new Set(filteredProducts.map((p) => p.id)),
+    [filteredProducts]
+  );
+
+  const selectedProductsSet = useMemo(
+    () => new Set(selectedProducts),
+    [selectedProducts]
+  );
+
+  const bulkExcludedSet = useMemo(
+    () => new Set(bulkSelectAllExcluded),
+    [bulkSelectAllExcluded]
+  );
+
+  const isSelectAllForCurrentFilter = useMemo(
+    () => bulkSelectAllActive && bulkSelectAllFilter === bulkCategoryFilter,
+    [bulkSelectAllActive, bulkSelectAllFilter, bulkCategoryFilter]
+  );
+
+  const bulkSelectedLabel = useMemo(() => {
+    if (isSelectAllForCurrentFilter) {
+      const count = Math.max(0, filteredProducts.length - bulkExcludedSet.size);
+      return `All filtered (${count})`;
+    }
+    return `${selectedProducts.length} selected`;
+  }, [
+    isSelectAllForCurrentFilter,
+    filteredProducts.length,
+    bulkExcludedSet.size,
+    selectedProducts.length,
+  ]);
+
+  const productsById = useMemo(() => {
+    const map = new Map<string, Product>();
+    (products || []).forEach((p) => map.set(p.id, p));
+    return map;
+  }, [products]);
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<FlashDeal, "id">) => {
@@ -162,10 +198,11 @@ const AdminFlashDeals = () => {
     mutationFn: async (deals: Omit<FlashDeal, "id">[]) => {
       const { error } = await supabase.from("flash_deals").insert(deals);
       if (error) throw error;
+      return deals.length;
     },
-    onSuccess: () => {
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ["flash-deals"] });
-      toast({ title: `${selectedProducts.length} flash deals created successfully` });
+      toast({ title: `${count} flash deals created successfully` });
       resetBulkForm();
     },
     onError: (error) => {
@@ -232,61 +269,89 @@ const AdminFlashDeals = () => {
     setIsBulkDialogOpen(false);
   };
 
-  const toggleProductSelection = useCallback((productId: string) => {
-    setSelectedProducts((prev) => {
-      const set = new Set(prev);
-      if (set.has(productId)) {
-        set.delete(productId);
-      } else {
-        set.add(productId);
+  const toggleProductSelection = useCallback(
+    (productId: string) => {
+      // If "select all" is active for the current filter, toggling means add/remove from exclusions
+      if (isSelectAllForCurrentFilter && filteredProductIdsSet.has(productId)) {
+        setBulkSelectAllExcluded((prev) => {
+          const set = new Set(prev);
+          if (set.has(productId)) set.delete(productId);
+          else set.add(productId);
+          return Array.from(set);
+        });
+        return;
       }
-      return Array.from(set);
-    });
-  }, []);
+
+      // Otherwise maintain explicit selection list
+      setSelectedProducts((prev) => {
+        const set = new Set(prev);
+        if (set.has(productId)) set.delete(productId);
+        else set.add(productId);
+        return Array.from(set);
+      });
+    },
+    [isSelectAllForCurrentFilter, filteredProductIdsSet]
+  );
 
   const selectAllFiltered = useCallback(() => {
-    const filteredIds = filteredProducts.map((p) => p.id);
-    setSelectedProducts((prev) => {
-      const newSelection = new Set(prev);
-      filteredIds.forEach((id) => newSelection.add(id));
-      return Array.from(newSelection);
-    });
-  }, [filteredProducts]);
+    setBulkSelectAllActive(true);
+    setBulkSelectAllFilter(bulkCategoryFilter);
+    setBulkSelectAllExcluded([]);
+  }, [bulkCategoryFilter]);
 
   const deselectAllFiltered = useCallback(() => {
-    const filteredIds = new Set(filteredProducts.map((p) => p.id));
-    setSelectedProducts((prev) => prev.filter((id) => !filteredIds.has(id)));
-  }, [filteredProducts]);
+    const idsInView = new Set(filteredProducts.map((p) => p.id));
+
+    // Turn off "select all" for current filter and clear exclusions
+    if (isSelectAllForCurrentFilter) {
+      setBulkSelectAllActive(false);
+      setBulkSelectAllExcluded([]);
+    }
+
+    // Also remove explicit selections from current view
+    setSelectedProducts((prev) => prev.filter((id) => !idsInView.has(id)));
+  }, [filteredProducts, isSelectAllForCurrentFilter]);
 
   const handleBulkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (selectedProducts.length === 0) {
+
+    // Resolve selected ids (explicit selections + optional "select all" in current filter)
+    const selectedIds = new Set<string>(selectedProducts);
+
+    if (isSelectAllForCurrentFilter) {
+      for (const p of filteredProducts) {
+        if (!bulkExcludedSet.has(p.id)) selectedIds.add(p.id);
+      }
+    }
+
+    if (selectedIds.size === 0) {
       toast({ title: "Please select at least one product", variant: "destructive" });
       return;
     }
 
     const discountPercent = parseFloat(bulkFormData.discount_percentage) / 100;
-    
-    const deals = selectedProducts.map((productId, index) => {
-      const product = products?.find((p) => p.id === productId);
-      if (!product) return null;
-      
-      const originalPrice = product.original_price || product.price;
-      const dealPrice = Math.round(originalPrice * (1 - discountPercent));
-      
-      return {
-        name: product.name,
-        original_price: originalPrice,
-        deal_price: dealPrice,
-        image_url: product.image_url || null,
-        sold_percentage: 0,
-        is_active: bulkFormData.is_active,
-        ends_at: bulkFormData.ends_at,
-        display_order: index,
-        product_id: productId,
-      };
-    }).filter(Boolean) as Omit<FlashDeal, "id">[];
+
+    const deals = Array.from(selectedIds)
+      .map((productId, index) => {
+        const product = productsById.get(productId);
+        if (!product) return null;
+
+        const originalPrice = product.original_price || product.price;
+        const dealPrice = Math.round(originalPrice * (1 - discountPercent));
+
+        return {
+          name: product.name,
+          original_price: originalPrice,
+          deal_price: dealPrice,
+          image_url: product.image_url || null,
+          sold_percentage: 0,
+          is_active: bulkFormData.is_active,
+          ends_at: bulkFormData.ends_at,
+          display_order: index,
+          product_id: productId,
+        };
+      })
+      .filter(Boolean) as Omit<FlashDeal, "id">[];
 
     bulkCreateMutation.mutate(deals);
   };
@@ -429,7 +494,7 @@ const AdminFlashDeals = () => {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label>Select Products ({selectedProducts.length} selected)</Label>
+                      <Label>Select Products ({bulkSelectedLabel})</Label>
                       <div className="flex items-center gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={selectAllFiltered}>
                           Select All
@@ -467,7 +532,7 @@ const AdminFlashDeals = () => {
                             onClick={() => toggleProductSelection(product.id)}
                           >
                             <Checkbox
-                              checked={selectedProductsSet.has(product.id)}
+                              checked={isSelectAllForCurrentFilter ? !bulkExcludedSet.has(product.id) : selectedProductsSet.has(product.id)}
                               onCheckedChange={() => toggleProductSelection(product.id)}
                             />
                             {product.image_url ? (
