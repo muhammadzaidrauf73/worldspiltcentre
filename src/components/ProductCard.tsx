@@ -205,7 +205,7 @@ const ProductCard = memo(({
           </Button>
         ) : (
           <a
-            href="https://wa.me/923001234567?text=Hi, I'm interested in getting the latest price for this product"
+            href={`https://wa.me/923004649141?text=${encodeURIComponent(`Hi, I'm interested in getting the latest price for: ${name}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
