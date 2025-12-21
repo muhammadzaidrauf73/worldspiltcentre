@@ -1,4 +1,4 @@
-import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
+import { Heart, ShoppingCart, Star, Eye, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -175,7 +175,11 @@ const ProductCard = memo(({
 
         {/* Action Button - Touch-friendly */}
         <Button className="w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation">
-          <ShoppingCart className="h-4 w-4 mr-2" />
+          {buttonText === "Order Now" ? (
+            <ShoppingBag className="h-4 w-4 mr-2" />
+          ) : (
+            <ShoppingCart className="h-4 w-4 mr-2" />
+          )}
           {buttonText}
         </Button>
 
