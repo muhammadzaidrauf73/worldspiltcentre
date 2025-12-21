@@ -38,29 +38,42 @@ async function fetchPage(url: string): Promise<string> {
 
 function extractProductUrls(html: string): string[] {
   const urls: string[] = [];
-  
-  // Match product links from WooCommerce product listings
-  const productLinkPattern = /href="(https:\/\/www\.lahorecentre\.com\/[a-z0-9-]+\/)"[^>]*class="[^"]*woocommerce-LoopProduct-link/gi;
+
+  // Generic anchor href extraction (order-independent: class can come before/after href)
+  const hrefPattern = /<a[^>]+href="(https?:\/\/(?:www\.)?lahorecentre\.com\/[^"?#]+\/?)"/gi;
   let match;
-  while ((match = productLinkPattern.exec(html)) !== null) {
-    if (!urls.includes(match[1])) {
-      urls.push(match[1]);
+  while ((match = hrefPattern.exec(html)) !== null) {
+    const raw = match[1];
+    if (!raw) continue;
+
+    // Normalize: ensure trailing slash for consistency
+    const normalized = raw.endsWith('/') ? raw : `${raw}/`;
+
+    // Skip obvious non-product URLs
+    const lower = normalized.toLowerCase();
+    if (
+      lower.includes('/wp-content/') ||
+      lower.includes('/wp-json/') ||
+      lower.includes('/product-category/') ||
+      lower.includes('/product-brand/') ||
+      lower.includes('/my-account') ||
+      lower.includes('/cart') ||
+      lower.includes('/checkout') ||
+      lower.includes('/installment') ||
+      lower.includes('/blog') ||
+      lower.includes('/write-for-us') ||
+      lower.includes('/page/') ||
+      lower.includes('add-to-cart')
+    ) {
+      continue;
     }
-  }
-  
-  // Alternative pattern for product gallery links
-  const altPattern = /class="[^"]*woocommerce-product-gallery__image[^"]*"[^>]*>\s*<a[^>]*href="([^"]+)"/gi;
-  while ((match = altPattern.exec(html)) !== null) {
-    if (!urls.includes(match[1]) && match[1].includes('/product/')) {
-      urls.push(match[1]);
-    }
-  }
-  
-  // Direct product link extraction from listing pages
-  const directPattern = /<a[^>]*href="(https:\/\/www\.lahorecentre\.com\/[a-z0-9-]+\/)"[^>]*>\s*<img[^>]*class="[^"]*attachment-woocommerce/gi;
-  while ((match = directPattern.exec(html)) !== null) {
-    if (!urls.includes(match[1])) {
-      urls.push(match[1]);
+
+    // Exclude homepage / empty slugs
+    const path = lower.replace(/^https?:\/\/(?:www\.)?lahorecentre\.com\//, '');
+    if (!path || path === '/' || path.length < 2) continue;
+
+    if (!urls.includes(normalized)) {
+      urls.push(normalized);
     }
   }
 
@@ -258,10 +271,11 @@ serve(async (req) => {
 
       const productUrlsFromPage = extractProductUrls(html).filter((u) => {
         // Filter out non-product URLs / noise
+        const lower = u.toLowerCase();
         return (
-          u.startsWith('https://www.lahorecentre.com/') &&
-          !u.includes('?') &&
-          !u.includes('#') &&
+          (lower.startsWith('https://www.lahorecentre.com/') || lower.startsWith('https://lahorecentre.com/')) &&
+          !lower.includes('?') &&
+          !lower.includes('#') &&
           !u.includes('/page/') &&
           !u.includes('/product-category/') &&
           !u.includes('/product-brand/') &&
