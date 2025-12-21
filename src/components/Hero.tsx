@@ -171,23 +171,23 @@ const Hero = memo(() => {
               <ChevronRight className="h-5 w-5 text-foreground" />
             </button>
 
-            {/* Dots - WCAG compliant touch targets (min 24x24px) */}
-            <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+            {/* Dots - Smaller on mobile, larger on desktop */}
+            <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-3 z-20">
               {banners.map((_, index) => (
                 <button
                   key={index}
                   onClick={(e) => { e.preventDefault(); goToSlide(index); }}
                   aria-label={`Go to slide ${index + 1}`}
-                  className={`rounded-full transition-all duration-300 w-6 h-6 flex items-center justify-center ${
+                  className={`rounded-full transition-all duration-300 w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center ${
                     index === currentSlide
-                      ? "bg-primary"
-                      : "bg-card/60 hover:bg-card"
+                      ? "bg-primary/80"
+                      : "bg-card/40 hover:bg-card/60"
                   }`}
                 >
-                  <span className={`rounded-full ${
+                  <span className={`rounded-full transition-all duration-300 ${
                     index === currentSlide
-                      ? "bg-primary w-6 sm:w-8 h-2"
-                      : "bg-card/80 w-2 h-2"
+                      ? "bg-primary w-4 sm:w-6 md:w-8 h-1.5 sm:h-2"
+                      : "bg-card/60 w-1.5 h-1.5 sm:w-2 sm:h-2"
                   }`} />
                 </button>
               ))}
