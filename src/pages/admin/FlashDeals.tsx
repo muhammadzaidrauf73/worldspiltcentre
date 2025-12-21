@@ -70,18 +70,26 @@ const AdminFlashDeals = () => {
     product_id: "",
   });
 
-  const { data: deals, isLoading } = useQuery({
+  const { data: deals, isLoading, error } = useQuery({
     queryKey: ["flash-deals"],
     queryFn: async () => {
+      console.log("Fetching flash deals...");
       const { data, error } = await supabase
         .from("flash_deals")
         .select("*")
         .order("display_order", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching flash deals:", error);
+        throw error;
+      }
+      console.log("Flash deals fetched:", data);
       return data as FlashDeal[];
     },
   });
+
+  // Log for debugging
+  console.log("Flash deals state:", { deals, isLoading, error });
 
   const { data: products } = useQuery({
     queryKey: ["products-for-deals"],
