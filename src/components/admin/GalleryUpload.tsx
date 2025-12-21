@@ -126,6 +126,7 @@ const GalleryUpload = ({
   const [isFetching, setIsFetching] = useState(false);
   const [fetchedImages, setFetchedImages] = useState<string[]>([]);
   const [selectedFetchedImages, setSelectedFetchedImages] = useState<Set<string>>(new Set());
+  const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
@@ -151,8 +152,7 @@ const GalleryUpload = ({
     }
   };
 
-  const handleFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = (files: File[]) => {
     if (files.length === 0) return;
 
     const remainingSlots = maxImages - value.length;
@@ -179,10 +179,40 @@ const GalleryUpload = ({
     // Add to crop queue
     setCropQueue(validFiles);
     setCurrentCropFile(validFiles[0]);
+  };
+
+  const handleFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    processFiles(files);
 
     if (inputRef.current) {
       inputRef.current.value = "";
     }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    if (isUploading || value.length >= maxImages) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    processFiles(files);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isUploading && value.length < maxImages) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
   };
 
   const handleCropComplete = async (croppedBlob: Blob) => {
@@ -437,37 +467,53 @@ const GalleryUpload = ({
         </div>
       )}
 
-      {/* Upload Area */}
+      {/* Upload Area with Drag & Drop */}
       {value.length < maxImages && (
-        <label
-          htmlFor="gallery-upload"
-          className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-secondary/50 transition-colors ${
-            isUploading ? "pointer-events-none opacity-50" : ""
-          }`}
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={`relative ${isDragOver ? 'ring-2 ring-primary ring-offset-2' : ''}`}
         >
-          {isUploading ? (
-            <div className="flex flex-col items-center">
-              <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
-              <p className="mt-2 text-sm text-muted-foreground">
-                Uploading...
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2">
-                <Upload className="h-5 w-5 text-muted-foreground" />
-                <Crop className="h-4 w-4 text-muted-foreground" />
-                <Plus className="h-4 w-4 text-muted-foreground" />
+          <label
+            htmlFor="gallery-upload"
+            className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all ${
+              isDragOver 
+                ? "border-primary bg-primary/10" 
+                : "border-border hover:border-primary hover:bg-secondary/50"
+            } ${isUploading ? "pointer-events-none opacity-50" : ""}`}
+          >
+            {isUploading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Uploading...
+                </p>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Click to add images ({value.length}/{maxImages})
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Images will be cropped before upload
-              </p>
-            </div>
-          )}
-        </label>
+            ) : isDragOver ? (
+              <div className="flex flex-col items-center">
+                <Upload className="h-8 w-8 text-primary animate-bounce" />
+                <p className="mt-2 text-sm font-medium text-primary">
+                  Drop images here
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <Crop className="h-4 w-4 text-muted-foreground" />
+                  <Plus className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Drag & drop images or click to browse ({value.length}/{maxImages})
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Images will be cropped before upload
+                </p>
+              </div>
+            )}
+          </label>
+        </div>
       )}
 
       {/* Fetch from Product URL Section */}
