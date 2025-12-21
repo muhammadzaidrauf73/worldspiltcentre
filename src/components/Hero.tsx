@@ -127,12 +127,22 @@ const Hero = memo(() => {
             }`}
           >
             <div className="relative h-full w-full bg-muted">
+              {/* Mobile: show full image (contain) + blurred cover backdrop to avoid gaps */}
+              <img
+                src={banner.image_url}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover object-center blur-md scale-110 sm:hidden"
+                loading={index === 0 ? "eager" : "lazy"}
+                decoding="async"
+              />
+
               <img
                 src={banner.image_url}
                 alt={banner.title}
                 width={1200}
                 height={400}
-                className="w-full h-full object-cover object-center"
+                className="relative z-10 w-full h-full object-contain sm:object-cover object-center"
                 loading={index === 0 ? "eager" : "lazy"}
                 fetchPriority={index === 0 ? "high" : "auto"}
                 decoding={index === 0 ? "sync" : "async"}
