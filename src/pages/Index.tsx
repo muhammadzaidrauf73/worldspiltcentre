@@ -226,37 +226,39 @@ const Index = () => {
             )}
 
             {/* Hot Deals - Featured Products */}
-            <section className="py-5 sm:py-8 bg-card">
-              <div className="container mx-auto px-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold">
-                        Hot Deals
-                      </span>
+            {isSectionVisible("featured_products") && (
+              <section className="py-5 sm:py-8 bg-card">
+                <div className="container mx-auto px-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-primary text-primary-foreground px-2 sm:px-3 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold">
+                          Hot Deals
+                        </span>
+                      </div>
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
+                        Featured Products
+                      </h2>
                     </div>
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold text-foreground">
-                      Featured Products
-                    </h2>
+                    <Link
+                      to="/products"
+                      className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
+                    >
+                      View All →
+                    </Link>
                   </div>
-                  <Link
-                    to="/products"
-                    className="text-primary font-semibold hover:underline transition-smooth text-xs sm:text-sm"
-                  >
-                    View All →
-                  </Link>
-                </div>
 
-                {productsLoading ? (
-                  <ProductGridSkeleton count={4} />
-                ) : (
-                  <ProductCarousel products={displayFeatured} />
-                )}
-              </div>
-            </section>
+                  {productsLoading ? (
+                    <ProductGridSkeleton count={4} />
+                  ) : (
+                    <ProductCarousel products={displayFeatured} />
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Category Product Sections */}
-            {categoryProducts.map((cp, idx) => (
+            {isSectionVisible("category_products") && categoryProducts.map((cp, idx) => (
               <section 
                 key={cp.category.id} 
                 className={`py-5 sm:py-8 ${idx % 2 === 0 ? 'bg-secondary/30' : 'bg-card'}`}
@@ -280,29 +282,31 @@ const Index = () => {
             ))}
 
             {/* Promo Banner */}
-            <section className="py-6 sm:py-8">
-              <div className="container mx-auto px-4">
-                <div className="relative overflow-hidden rounded-lg sm:rounded-xl gradient-hero p-5 sm:p-8 md:p-10">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
-                  <div className="relative z-10 max-w-lg">
-                    <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary-foreground/20 text-primary-foreground text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
-                      Limited Time Offer
-                    </span>
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-2 sm:mb-3">
-                      Best Price Guaranteed!
-                    </h2>
-                    <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
-                      Found a lower price elsewhere? We'll match it! Shop with confidence at World Spilt Centre.
-                    </p>
-                    <Link to="/products">
-                      <button className="bg-primary-foreground text-primary font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-xs sm:text-sm">
-                        Shop Now
-                      </button>
-                    </Link>
+            {isSectionVisible("promo_banner") && (
+              <section className="py-6 sm:py-8">
+                <div className="container mx-auto px-4">
+                  <div className="relative overflow-hidden rounded-lg sm:rounded-xl gradient-hero p-5 sm:p-8 md:p-10">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_60%)]" />
+                    <div className="relative z-10 max-w-lg">
+                      <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 rounded bg-primary-foreground/20 text-primary-foreground text-xs sm:text-sm font-semibold mb-2 sm:mb-3">
+                        Limited Time Offer
+                      </span>
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-primary-foreground mb-2 sm:mb-3">
+                        Best Price Guaranteed!
+                      </h2>
+                      <p className="text-primary-foreground/80 mb-4 sm:mb-5 text-xs sm:text-sm md:text-base">
+                        Found a lower price elsewhere? We'll match it! Shop with confidence at World Spilt Centre.
+                      </p>
+                      <Link to="/products">
+                        <button className="bg-primary-foreground text-primary font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg hover:bg-primary-foreground/90 transition-smooth text-xs sm:text-sm">
+                          Shop Now
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* 7. Featured Brands - Above Footer */}
             {isSectionVisible("brands") && (
