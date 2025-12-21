@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -102,6 +102,8 @@ const AdminProducts = () => {
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [priceUpdatePercent, setPriceUpdatePercent] = useState<number>(0);
   const [priceUpdateCategory, setPriceUpdateCategory] = useState<string>("selected");
+  const [priceUpdateMode, setPriceUpdateMode] = useState<"adjust" | "discount">("adjust");
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [bulkCsvData, setBulkCsvData] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -352,8 +354,13 @@ const AdminProducts = () => {
   };
 
   const handleBulkPriceUpdate = async () => {
-    if (priceUpdatePercent === 0) {
+    // Validation based on mode
+    if (priceUpdateMode === "adjust" && priceUpdatePercent === 0) {
       toast.error("Please enter a percentage value");
+      return;
+    }
+    if (priceUpdateMode === "discount" && discountPercent === 0) {
+      toast.error("Please enter a discount percentage");
       return;
     }
 
@@ -377,29 +384,45 @@ const AdminProducts = () => {
       return;
     }
 
-    const multiplier = 1 + (priceUpdatePercent / 100);
-    
     try {
       for (const product of productsToUpdate) {
-        const newPrice = Math.round(product.price * multiplier);
-        const newOriginalPrice = product.original_price 
-          ? Math.round(product.original_price * multiplier) 
-          : null;
+        let updates: Record<string, any> = {};
+        
+        if (priceUpdateMode === "adjust") {
+          // Adjust prices by percentage (increase/decrease)
+          const multiplier = 1 + (priceUpdatePercent / 100);
+          updates.price = Math.round(product.price * multiplier);
+          if (product.original_price) {
+            updates.original_price = Math.round(product.original_price * multiplier);
+          }
+        } else {
+          // Set discount mode: set original_price and calculate discounted price
+          const basePrice = product.original_price || product.price;
+          const discountedPrice = Math.round(basePrice * (1 - discountPercent / 100));
+          updates.original_price = basePrice;
+          updates.price = discountedPrice;
+          updates.discount_percentage = discountPercent;
+        }
         
         await supabase
           .from("products")
-          .update({ 
-            price: newPrice, 
-            original_price: newOriginalPrice 
-          })
+          .update(updates)
           .eq("id", product.id);
       }
       
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      toast.success(`Updated prices for ${productsToUpdate.length} products by ${priceUpdatePercent > 0 ? '+' : ''}${priceUpdatePercent}%`);
+      
+      if (priceUpdateMode === "adjust") {
+        toast.success(`Updated prices for ${productsToUpdate.length} products by ${priceUpdatePercent > 0 ? '+' : ''}${priceUpdatePercent}%`);
+      } else {
+        toast.success(`Applied ${discountPercent}% discount to ${productsToUpdate.length} products`);
+      }
+      
       setBulkPriceDialogOpen(false);
       setPriceUpdatePercent(0);
+      setDiscountPercent(0);
       setPriceUpdateCategory("selected");
+      setPriceUpdateMode("adjust");
     } catch (error: any) {
       toast.error("Error updating prices: " + error.message);
     }
@@ -861,20 +884,46 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
               </SelectContent>
             </Select>
             {categoryFilter !== "all" && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  const categoryName = categories.find(c => c.id === categoryFilter)?.name;
-                  if (confirm(`Delete ALL products in "${categoryName}"? This cannot be undone.`)) {
-                    deleteByCategoryMutation.mutate(categoryFilter);
-                  }
-                }}
-                disabled={deleteByCategoryMutation.isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete All in Category
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setPriceUpdateCategory(categoryFilter);
+                    setPriceUpdateMode("adjust");
+                    setBulkPriceDialogOpen(true);
+                  }}
+                >
+                  <Percent className="h-4 w-4 mr-2" />
+                  Update Prices
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setPriceUpdateCategory(categoryFilter);
+                    setPriceUpdateMode("discount");
+                    setBulkPriceDialogOpen(true);
+                  }}
+                >
+                  <Tag className="h-4 w-4 mr-2" />
+                  Set Discount
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    const categoryName = categories.find(c => c.id === categoryFilter)?.name;
+                    if (confirm(`Delete ALL products in "${categoryName}"? This cannot be undone.`)) {
+                      deleteByCategoryMutation.mutate(categoryFilter);
+                    }
+                  }}
+                  disabled={deleteByCategoryMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete All
+                </Button>
+              </div>
             )}
           </div>
 
@@ -943,17 +992,53 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
         </Dialog>
 
         {/* Bulk Price Update Dialog */}
-        <Dialog open={bulkPriceDialogOpen} onOpenChange={setBulkPriceDialogOpen}>
-          <DialogContent>
+        <Dialog open={bulkPriceDialogOpen} onOpenChange={(open) => {
+          setBulkPriceDialogOpen(open);
+          if (!open) {
+            setPriceUpdatePercent(0);
+            setDiscountPercent(0);
+            setPriceUpdateCategory("selected");
+            setPriceUpdateMode("adjust");
+          }
+        }}>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Percent className="h-5 w-5" />
-                Bulk Price Update
+                {priceUpdateMode === "adjust" ? (
+                  <Percent className="h-5 w-5" />
+                ) : (
+                  <Tag className="h-5 w-5" />
+                )}
+                {priceUpdateMode === "adjust" ? "Bulk Price Update" : "Set Category Discount"}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Mode Toggle */}
+              <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                <Button
+                  variant={priceUpdateMode === "adjust" ? "default" : "ghost"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setPriceUpdateMode("adjust")}
+                >
+                  <Percent className="h-4 w-4 mr-2" />
+                  Adjust Prices
+                </Button>
+                <Button
+                  variant={priceUpdateMode === "discount" ? "default" : "ghost"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setPriceUpdateMode("discount")}
+                >
+                  <Tag className="h-4 w-4 mr-2" />
+                  Set Discount
+                </Button>
+              </div>
+
               <p className="text-sm text-muted-foreground">
-                Increase or decrease prices by a percentage for selected products or an entire category.
+                {priceUpdateMode === "adjust" 
+                  ? "Increase or decrease prices by a percentage for selected products or an entire category."
+                  : "Set a discount percentage on products. This will set the original price and calculate the sale price."}
               </p>
               
               <div className="space-y-2">
@@ -979,41 +1064,63 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Price Change (%)</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="number"
-                    value={priceUpdatePercent}
-                    onChange={(e) => setPriceUpdatePercent(Number(e.target.value))}
-                    placeholder="0"
-                    min={-50}
-                    max={200}
-                    className="w-32"
-                  />
-                  <span className="text-sm font-medium">
-                    {priceUpdatePercent > 0 
-                      ? `+${priceUpdatePercent}% (increase)` 
-                      : priceUpdatePercent < 0 
-                        ? `${priceUpdatePercent}% (decrease)` 
-                        : 'No change'}
-                  </span>
+              {priceUpdateMode === "adjust" ? (
+                <div className="space-y-2">
+                  <Label>Price Change (%)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      value={priceUpdatePercent}
+                      onChange={(e) => setPriceUpdatePercent(Number(e.target.value))}
+                      placeholder="0"
+                      min={-90}
+                      max={500}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium">
+                      {priceUpdatePercent > 0 
+                        ? `+${priceUpdatePercent}% (increase)` 
+                        : priceUpdatePercent < 0 
+                          ? `${priceUpdatePercent}% (decrease)` 
+                          : 'No change'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Use positive values to increase, negative to decrease prices
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Use positive values to increase, negative to decrease prices
-                </p>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Discount Percentage</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      value={discountPercent}
+                      onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                      placeholder="0"
+                      min={0}
+                      max={90}
+                      className="w-32"
+                    />
+                    <span className="text-sm font-medium text-green-600">
+                      {discountPercent > 0 ? `${discountPercent}% OFF` : 'No discount'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Original price will be preserved, sale price will be calculated
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => {
-                  setBulkPriceDialogOpen(false);
-                  setPriceUpdatePercent(0);
-                  setPriceUpdateCategory("selected");
-                }}>
+                <Button variant="outline" onClick={() => setBulkPriceDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleBulkPriceUpdate} disabled={priceUpdatePercent === 0}>
-                  Update Prices
+                <Button 
+                  onClick={handleBulkPriceUpdate} 
+                  disabled={priceUpdateMode === "adjust" ? priceUpdatePercent === 0 : discountPercent === 0}
+                >
+                  {priceUpdateMode === "adjust" ? "Update Prices" : "Apply Discount"}
                 </Button>
               </div>
             </div>
