@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Upload, Download, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -97,6 +97,7 @@ const AdminProducts = () => {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [bulkCsvData, setBulkCsvData] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,10 +122,12 @@ const AdminProducts = () => {
     },
   });
 
-  const filteredProducts = products.filter((product: any) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.brand.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((product: any) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || product.category_id === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const saveMutation = useMutation({
     mutationFn: async (data: ProductForm) => {
@@ -213,6 +216,24 @@ const AdminProducts = () => {
     },
     onError: (error) => {
       toast.error("Error updating products: " + error.message);
+    },
+  });
+
+  const deleteByCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("category_id", categoryId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success("All products in category deleted");
+      setCategoryFilter("all");
+    },
+    onError: (error) => {
+      toast.error("Error deleting products: " + error.message);
     },
   });
 
@@ -737,16 +758,48 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
           </div>
         </div>
 
-        {/* Search and Bulk Actions */}
+        {/* Search, Filter, and Bulk Actions */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex gap-2 flex-wrap flex-1">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {categoryFilter !== "all" && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  const categoryName = categories.find(c => c.id === categoryFilter)?.name;
+                  if (confirm(`Delete ALL products in "${categoryName}"? This cannot be undone.`)) {
+                    deleteByCategoryMutation.mutate(categoryFilter);
+                  }
+                }}
+                disabled={deleteByCategoryMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete All in Category
+              </Button>
+            )}
           </div>
 
           {selectedProducts.length > 0 && (
