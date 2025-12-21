@@ -510,7 +510,7 @@ section, footer, header, nav, main {
   }
 
   .animate-ticker {
-    animation: ticker 30s linear infinite;
+    animation: ticker 18s linear infinite;
   }
 
   @media (min-width: 768px) {
