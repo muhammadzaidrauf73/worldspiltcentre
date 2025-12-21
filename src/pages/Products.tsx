@@ -26,7 +26,7 @@ const Products = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
-  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number] | null>(null);
+  const [isPriceFiltered, setIsPriceFiltered] = useState(false);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -54,7 +54,7 @@ const Products = () => {
   });
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, appliedPriceRange],
+    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, priceRange, isPriceFiltered],
     queryFn: async () => {
       let query = supabase
         .from("products")
@@ -72,8 +72,8 @@ const Products = () => {
         query = query.in("brand", selectedBrands);
       }
       
-      if (appliedPriceRange) {
-        query = query.gte("price", appliedPriceRange[0]).lte("price", appliedPriceRange[1]);
+      if (isPriceFiltered && (priceRange[0] > 0 || priceRange[1] < 1000000)) {
+        query = query.gte("price", priceRange[0]).lte("price", priceRange[1]);
       }
       
       if (searchQuery && searchQuery.trim()) {
@@ -120,8 +120,9 @@ const Products = () => {
     );
   };
 
-  const applyPriceFilter = () => {
-    setAppliedPriceRange(priceRange);
+  const handlePriceChange = (value: number[]) => {
+    setPriceRange(value as [number, number]);
+    setIsPriceFiltered(true);
   };
 
   const clearFilters = () => {
@@ -130,7 +131,7 @@ const Products = () => {
     setSearchQuery("");
     setSortBy("newest");
     setPriceRange([0, 1000000]);
-    setAppliedPriceRange(null);
+    setIsPriceFiltered(false);
     setFiltersOpen(false);
   };
 
@@ -138,10 +139,10 @@ const Products = () => {
     selectedCategory, 
     selectedBrands.length > 0 ? "brands" : "", 
     searchQuery,
-    appliedPriceRange ? "price" : ""
+    isPriceFiltered ? "price" : ""
   ].filter(Boolean).length;
 
-  const hasFilters = selectedCategory || selectedBrands.length > 0 || searchQuery || appliedPriceRange;
+  const hasFilters = selectedCategory || selectedBrands.length > 0 || searchQuery || isPriceFiltered;
 
   const categoryName = selectedCategory 
     ? categories.find(c => c.slug === selectedCategory)?.name || "Products"
@@ -163,23 +164,15 @@ const Products = () => {
       <div className="px-1">
         <Slider
           value={priceRange}
-          onValueChange={(value) => setPriceRange(value as [number, number])}
+          onValueChange={handlePriceChange}
           min={0}
           max={1000000}
-          step={1000}
+          step={5000}
           className="mb-4"
         />
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Price: {formatPrice(priceRange[0])} — {formatPrice(priceRange[1])}</span>
         </div>
-        <Button 
-          onClick={applyPriceFilter}
-          variant="outline" 
-          size="sm" 
-          className="w-full border-foreground text-foreground hover:bg-foreground hover:text-background font-medium uppercase text-xs tracking-wider"
-        >
-          Filter
-        </Button>
       </div>
     </div>
   );
@@ -417,10 +410,10 @@ const Products = () => {
                     </button>
                   </span>
                 ))}
-                {appliedPriceRange && (
+                {isPriceFiltered && (priceRange[0] > 0 || priceRange[1] < 1000000) && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                    {formatPrice(appliedPriceRange[0])} - {formatPrice(appliedPriceRange[1])}
-                    <button onClick={() => { setAppliedPriceRange(null); setPriceRange([0, 1000000]); }}>
+                    {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                    <button onClick={() => { setPriceRange([0, 1000000]); setIsPriceFiltered(false); }}>
                       <X className="h-3 w-3" />
                     </button>
                   </span>
