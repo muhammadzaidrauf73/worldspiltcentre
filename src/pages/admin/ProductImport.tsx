@@ -568,11 +568,11 @@ export default function ProductImport() {
             
             <CardContent className={isImporting ? 'pt-0' : 'pt-0'}>
               <ScrollArea className="h-[500px]">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                   {listedProducts.map((product) => (
                     <div
                       key={product.url}
-                      className={`flex flex-col rounded-lg border overflow-hidden transition-all ${
+                      className={`flex flex-col rounded-lg border overflow-hidden contain-paint ${
                         product.status === 'imported' 
                           ? 'bg-green-50 dark:bg-green-950/20 border-green-200' 
                           : product.selected 
@@ -580,6 +580,7 @@ export default function ProductImport() {
                             : 'hover:border-primary/50 cursor-pointer'
                       } ${product.status === 'importing' ? 'opacity-70' : ''}`}
                       onClick={() => product.status !== 'imported' && toggleProduct(product.url)}
+                      style={{ contain: 'layout paint style' }}
                     >
                       <div className="aspect-square bg-muted relative">
                         {product.image ? (

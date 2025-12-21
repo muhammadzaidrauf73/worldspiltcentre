@@ -22,8 +22,27 @@ html {
 .overflow-y-auto,
 .overflow-x-auto,
 .overflow-scroll {
-  scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* GPU-accelerated scrolling */
+.will-change-scroll {
+  will-change: scroll-position;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize mobile scroll performance - reduce paint areas */
+@media (max-width: 768px) {
+  [data-radix-scroll-area-viewport] {
+    scroll-behavior: auto !important;
+  }
+  
+  /* Hide scrollbar on mobile for performance */
+  [data-radix-scroll-area-scrollbar] {
+    display: none !important;
+  }
 }
 
 /* Pull-to-refresh shimmer animation */
