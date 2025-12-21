@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, ArrowRight } from "lucide-react";
-import ProductCard from "./ProductCard";
+import ProductCarousel from "./ProductCarousel";
 import { ProductGridSkeleton } from "./ProductCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ const TopSellers = () => {
         .eq("is_active", true)
         .eq("is_top_seller", true)
         .order("reviews_count", { ascending: false })
-        .limit(4);
+        .limit(8);
 
       if (error) throw error;
       return data;
@@ -65,24 +65,7 @@ const TopSellers = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-          {products.map((product, index) => (
-            <Link key={product.id} to={`/product/${product.id}`}>
-              <ProductCard
-                id={product.id}
-                name={product.name}
-                brand={product.brand}
-                price={product.price}
-                originalPrice={product.original_price || undefined}
-                image={product.image_url || "/placeholder.svg"}
-                rating={product.rating || 0}
-                reviews={product.reviews_count || 0}
-                badge="Best Seller"
-                index={index}
-              />
-            </Link>
-          ))}
-        </div>
+        <ProductCarousel products={products} badge="Best Seller" />
       </div>
     </section>
   );
