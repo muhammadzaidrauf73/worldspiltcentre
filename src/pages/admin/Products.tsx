@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -88,6 +89,7 @@ const PRESET_COLORS = [
 ];
 
 const AdminProducts = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -337,6 +339,14 @@ const AdminProducts = () => {
 
   const handleBulkUpload = () => {
     try {
+      const firstLine = (bulkCsvData || "").trim().split(/\r?\n/).find((l) => l.trim()) || "";
+      if (/^https?:\/\//i.test(firstLine) && !firstLine.includes(",")) {
+        toast("This box is for CSV. Opening URL importer...");
+        setIsBulkUploadOpen(false);
+        navigate(`/admin/product-import?url=${encodeURIComponent(firstLine)}`);
+        return;
+      }
+
       const lines = bulkCsvData.trim().split(/\r?\n/).filter(line => line.trim());
       if (lines.length < 2) {
         toast.error("Invalid CSV data. Please include header row and at least one product.");
@@ -464,7 +474,8 @@ const AdminProducts = () => {
                   <div>
                     <Label>CSV Data</Label>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Paste CSV data with headers: name, brand, price, original_price, description, image_url, stock_quantity, category
+                      Paste CSV data with headers: name, brand, price, original_price, description, image_url, stock_quantity, category.
+                      <span className="block">Tip: If you have a website URL, paste it and click Upload to open the URL importer.</span>
                     </p>
                     <Textarea
                       value={bulkCsvData}
