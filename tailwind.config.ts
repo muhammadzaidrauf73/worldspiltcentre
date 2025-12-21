@@ -162,6 +162,13 @@ export default {
             boxShadow: "0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(249, 115, 22, 0.6), 0 0 30px rgba(239, 68, 68, 0.5)"
           },
         },
+        "heart-burst": {
+          "0%": { transform: "scale(1)" },
+          "25%": { transform: "scale(1.3)" },
+          "50%": { transform: "scale(0.9)" },
+          "75%": { transform: "scale(1.15)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -177,6 +184,7 @@ export default {
         bounce: "bounce 1s infinite",
         "flip-top": "flip-top 0.3s ease-in forwards",
         "flip-bottom": "flip-bottom 0.3s ease-out 0.3s forwards",
+        "heart-burst": "heart-burst 0.5s ease-out",
       },
       perspective: {
         '500': '500px',
