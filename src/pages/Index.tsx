@@ -7,16 +7,13 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import FeaturesBar from "@/components/FeaturesBar";
 import CategoryCard from "@/components/CategoryCard";
-import ProductCard from "@/components/ProductCard";
 import ProductCarousel from "@/components/ProductCarousel";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import SEO from "@/components/SEO";
 
 // Lazy load below-the-fold components for better TTI
-const ScrollReveal = lazy(() => import("@/components/effects/ScrollReveal"));
 const GradientBlob = lazy(() => import("@/components/effects/GradientBlob"));
 const FlashDeal = lazy(() => import("@/components/FlashDeal"));
 const NewArrivals = lazy(() => import("@/components/NewArrivals"));
@@ -117,180 +114,8 @@ const Index = () => {
   // Helper function to check if a section is visible
   const isSectionVisible = (sectionKey: string) => {
     const section = sectionSettings.find(s => s.section_key === sectionKey);
-    return section ? section.is_visible : true; // Default to visible if not found
+    return section ? section.is_visible : true;
   };
-
-  // Get section order
-  const getSectionOrder = (sectionKey: string) => {
-    const section = sectionSettings.find(s => s.section_key === sectionKey);
-    return section ? section.display_order : 999;
-  };
-
-  // Build ordered sections array
-  const orderedSections = useMemo(() => {
-    const sections: { key: string; order: number; component: React.ReactNode }[] = [];
-
-    if (isSectionVisible("hero")) {
-      sections.push({ key: "hero", order: getSectionOrder("hero"), component: <Hero key="hero" /> });
-    }
-
-    if (isSectionVisible("features")) {
-      sections.push({ key: "features", order: getSectionOrder("features"), component: <FeaturesBar key="features" /> });
-    }
-
-    if (isSectionVisible("categories")) {
-      sections.push({
-        key: "categories",
-        order: getSectionOrder("categories"),
-        component: (
-          <section key="categories" className="py-6 sm:py-8 bg-secondary/30" id="categories">
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <div>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold gradient-text">
-                    Top Categories
-                  </h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Browse our wide range of electronics
-                  </p>
-                </div>
-                <Link
-                  to="/products"
-                  className="text-primary text-xs sm:text-sm font-semibold hover:underline transition-smooth hidden sm:block"
-                >
-                  View All →
-                </Link>
-              </div>
-
-              <div 
-                ref={categoriesScrollRef}
-                className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between scrollbar-hide"
-                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
-              >
-                {categoriesLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="shrink-0 md:shrink">
-                      <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
-                      <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
-                    </div>
-                  ))
-                ) : (
-                  categories.map((category) => {
-                    const actualProductCount = products.filter(p => p.category_id === category.id).length;
-                    return (
-                      <div key={category.id} className="shrink-0 md:shrink">
-                        <CategoryCard
-                          name={category.name}
-                          icon={iconMap[category.icon || "Tv"] || Tv}
-                          count={actualProductCount}
-                          image={category.image_url || ""}
-                        />
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              
-              <div className="flex justify-center mt-2 sm:hidden">
-                <Link
-                  to="/products"
-                  className="text-primary text-xs font-semibold hover:underline"
-                >
-                  View All Categories →
-                </Link>
-              </div>
-            </div>
-          </section>
-        ),
-      });
-    }
-
-    if (isSectionVisible("flash_deals")) {
-      sections.push({
-        key: "flash_deals",
-        order: getSectionOrder("flash_deals"),
-        component: (
-          <Suspense key="flash_deals" fallback={<SectionLoader />}>
-            <FlashDeal />
-          </Suspense>
-        ),
-      });
-    }
-
-    if (isSectionVisible("new_arrivals")) {
-      sections.push({
-        key: "new_arrivals",
-        order: getSectionOrder("new_arrivals"),
-        component: (
-          <Suspense key="new_arrivals" fallback={<SectionLoader />}>
-            <NewArrivals />
-          </Suspense>
-        ),
-      });
-    }
-
-    if (isSectionVisible("top_sellers")) {
-      sections.push({
-        key: "top_sellers",
-        order: getSectionOrder("top_sellers"),
-        component: (
-          <Suspense key="top_sellers" fallback={<SectionLoader />}>
-            <TopSellers />
-          </Suspense>
-        ),
-      });
-    }
-
-    if (isSectionVisible("brands")) {
-      sections.push({
-        key: "brands",
-        order: getSectionOrder("brands"),
-        component: (
-          <Suspense key="brands" fallback={<SectionLoader />}>
-            <FeaturedBrands />
-          </Suspense>
-        ),
-      });
-    }
-
-    if (isSectionVisible("reviews")) {
-      sections.push({
-        key: "reviews",
-        order: getSectionOrder("reviews"),
-        component: (
-          <Suspense key="reviews" fallback={<SectionLoader />}>
-            <CustomerReviews />
-          </Suspense>
-        ),
-      });
-    }
-
-    if (isSectionVisible("newsletter")) {
-      sections.push({
-        key: "newsletter",
-        order: getSectionOrder("newsletter"),
-        component: (
-          <Suspense key="newsletter" fallback={<SectionLoader />}>
-            <Newsletter />
-          </Suspense>
-        ),
-      });
-    }
-
-    if (isSectionVisible("faq")) {
-      sections.push({
-        key: "faq",
-        order: getSectionOrder("faq"),
-        component: (
-          <Suspense key="faq" fallback={<SectionLoader />}>
-            <FAQ />
-          </Suspense>
-        ),
-      });
-    }
-
-    return sections.sort((a, b) => a.order - b.order);
-  }, [sectionSettings, categoriesLoading, categories, products]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["categories"] });
@@ -311,10 +136,96 @@ const Index = () => {
         <div className="relative z-10">
           <Navbar />
           <main>
-            {/* Render ordered sections */}
-            {orderedSections.map(section => section.component)}
+            {/* 1. Hero Section */}
+            {isSectionVisible("hero") && <Hero />}
 
-            {/* Hot Deals - Featured Products (always shown after dynamic sections) */}
+            {/* 2. Features Bar - Above Categories */}
+            {isSectionVisible("features") && <FeaturesBar />}
+
+            {/* 3. Top Categories */}
+            {isSectionVisible("categories") && (
+              <section className="py-6 sm:py-8 bg-secondary/30" id="categories">
+                <div className="container mx-auto px-4">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <div>
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold gradient-text">
+                        Top Categories
+                      </h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Browse our wide range of electronics
+                      </p>
+                    </div>
+                    <Link
+                      to="/products"
+                      className="text-primary text-xs sm:text-sm font-semibold hover:underline transition-smooth hidden sm:block"
+                    >
+                      View All →
+                    </Link>
+                  </div>
+
+                  <div 
+                    ref={categoriesScrollRef}
+                    className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between scrollbar-hide"
+                    style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+                  >
+                    {categoriesLoading ? (
+                      Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="shrink-0 md:shrink">
+                          <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
+                          <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
+                        </div>
+                      ))
+                    ) : (
+                      categories.map((category) => {
+                        const actualProductCount = products.filter(p => p.category_id === category.id).length;
+                        return (
+                          <div key={category.id} className="shrink-0 md:shrink">
+                            <CategoryCard
+                              name={category.name}
+                              icon={iconMap[category.icon || "Tv"] || Tv}
+                              count={actualProductCount}
+                              image={category.image_url || ""}
+                            />
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-center mt-2 sm:hidden">
+                    <Link
+                      to="/products"
+                      className="text-primary text-xs font-semibold hover:underline"
+                    >
+                      View All Categories →
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* 4. Flash Deals */}
+            {isSectionVisible("flash_deals") && (
+              <Suspense fallback={<SectionLoader />}>
+                <FlashDeal />
+              </Suspense>
+            )}
+
+            {/* 5. New Arrivals - Beside Flash Deals */}
+            {isSectionVisible("new_arrivals") && (
+              <Suspense fallback={<SectionLoader />}>
+                <NewArrivals />
+              </Suspense>
+            )}
+
+            {/* 6. Top Sellers */}
+            {isSectionVisible("top_sellers") && (
+              <Suspense fallback={<SectionLoader />}>
+                <TopSellers />
+              </Suspense>
+            )}
+
+            {/* Hot Deals - Featured Products */}
             <section className="py-5 sm:py-8 bg-card">
               <div className="container mx-auto px-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 sm:mb-5 gap-2 sm:gap-4">
@@ -392,7 +303,37 @@ const Index = () => {
                 </div>
               </div>
             </section>
+
+            {/* 7. Featured Brands - Above Footer */}
+            {isSectionVisible("brands") && (
+              <Suspense fallback={<SectionLoader />}>
+                <FeaturedBrands />
+              </Suspense>
+            )}
+
+            {/* 8. Customer Reviews - Above Footer */}
+            {isSectionVisible("reviews") && (
+              <Suspense fallback={<SectionLoader />}>
+                <CustomerReviews />
+              </Suspense>
+            )}
+
+            {/* 9. Newsletter - Above Footer */}
+            {isSectionVisible("newsletter") && (
+              <Suspense fallback={<SectionLoader />}>
+                <Newsletter />
+              </Suspense>
+            )}
+
+            {/* 10. FAQ - Just Above Footer */}
+            {isSectionVisible("faq") && (
+              <Suspense fallback={<SectionLoader />}>
+                <FAQ />
+              </Suspense>
+            )}
           </main>
+          
+          {/* Footer */}
           <Suspense fallback={<SectionLoader />}>
             <Footer />
           </Suspense>
