@@ -29,7 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Loader2, Zap, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Zap, Link2, ListPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 interface FlashDeal {
@@ -57,7 +58,14 @@ const AdminFlashDeals = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<FlashDeal | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [bulkFormData, setBulkFormData] = useState({
+    discount_percentage: "10",
+    ends_at: "",
+    is_active: true,
+  });
   const [formData, setFormData] = useState({
     name: "",
     original_price: "",
@@ -120,6 +128,21 @@ const AdminFlashDeals = () => {
     },
   });
 
+  const bulkCreateMutation = useMutation({
+    mutationFn: async (deals: Omit<FlashDeal, "id">[]) => {
+      const { error } = await supabase.from("flash_deals").insert(deals);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["flash-deals"] });
+      toast({ title: `${selectedProducts.length} flash deals created successfully` });
+      resetBulkForm();
+    },
+    onError: (error) => {
+      toast({ title: "Error creating flash deals", description: error.message, variant: "destructive" });
+    },
+  });
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: Partial<FlashDeal> & { id: string }) => {
       const { error } = await supabase
@@ -166,6 +189,57 @@ const AdminFlashDeals = () => {
     });
     setEditingDeal(null);
     setIsDialogOpen(false);
+  };
+
+  const resetBulkForm = () => {
+    setSelectedProducts([]);
+    setBulkFormData({
+      discount_percentage: "10",
+      ends_at: "",
+      is_active: true,
+    });
+    setIsBulkDialogOpen(false);
+  };
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleBulkSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (selectedProducts.length === 0) {
+      toast({ title: "Please select at least one product", variant: "destructive" });
+      return;
+    }
+
+    const discountPercent = parseFloat(bulkFormData.discount_percentage) / 100;
+    
+    const deals = selectedProducts.map((productId, index) => {
+      const product = products?.find((p) => p.id === productId);
+      if (!product) return null;
+      
+      const originalPrice = product.original_price || product.price;
+      const dealPrice = Math.round(originalPrice * (1 - discountPercent));
+      
+      return {
+        name: product.name,
+        original_price: originalPrice,
+        deal_price: dealPrice,
+        image_url: product.image_url || null,
+        sold_percentage: 0,
+        is_active: bulkFormData.is_active,
+        ends_at: bulkFormData.ends_at,
+        display_order: index,
+        product_id: productId,
+      };
+    }).filter(Boolean) as Omit<FlashDeal, "id">[];
+
+    bulkCreateMutation.mutate(deals);
   };
 
   const handleEdit = (deal: FlashDeal) => {
@@ -253,16 +327,124 @@ const AdminFlashDeals = () => {
               <p className="text-muted-foreground">Manage limited time offers</p>
             </div>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Flash Deal
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Dialog open={isBulkDialogOpen} onOpenChange={(open) => {
+              setIsBulkDialogOpen(open);
+              if (!open) resetBulkForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <ListPlus className="h-4 w-4" />
+                  Bulk Add Deals
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Bulk Add Flash Deals</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleBulkSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bulk_discount">Discount Percentage *</Label>
+                      <Input
+                        id="bulk_discount"
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={bulkFormData.discount_percentage}
+                        onChange={(e) => setBulkFormData({ ...bulkFormData, discount_percentage: e.target.value })}
+                        placeholder="10"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="bulk_ends_at">Ends At *</Label>
+                      <Input
+                        id="bulk_ends_at"
+                        type="datetime-local"
+                        value={bulkFormData.ends_at}
+                        onChange={(e) => setBulkFormData({ ...bulkFormData, ends_at: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="bulk_is_active"
+                      checked={bulkFormData.is_active}
+                      onCheckedChange={(checked) => setBulkFormData({ ...bulkFormData, is_active: checked })}
+                    />
+                    <Label htmlFor="bulk_is_active">Active</Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Select Products ({selectedProducts.length} selected)</Label>
+                    <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+                      {products?.map((product) => (
+                        <div
+                          key={product.id}
+                          className="flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-muted/50 cursor-pointer"
+                          onClick={() => toggleProductSelection(product.id)}
+                        >
+                          <Checkbox
+                            checked={selectedProducts.includes(product.id)}
+                            onCheckedChange={() => toggleProductSelection(product.id)}
+                          />
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-secondary rounded flex items-center justify-center">
+                              <Zap className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{product.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Rs.{(product.original_price || product.price).toLocaleString()}
+                              {bulkFormData.discount_percentage && (
+                                <span className="text-deal ml-2">
+                                  → Rs.{Math.round((product.original_price || product.price) * (1 - parseFloat(bulkFormData.discount_percentage || "0") / 100)).toLocaleString()}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={resetBulkForm}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={bulkCreateMutation.isPending || selectedProducts.length === 0}
+                    >
+                      {bulkCreateMutation.isPending && (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      )}
+                      Create {selectedProducts.length} Deal{selectedProducts.length !== 1 ? "s" : ""}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Flash Deal
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingDeal ? "Edit Flash Deal" : "Add New Flash Deal"}</DialogTitle>
@@ -401,6 +583,7 @@ const AdminFlashDeals = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="bg-card rounded-lg border border-border">
