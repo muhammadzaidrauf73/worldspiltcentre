@@ -29,6 +29,69 @@ interface ListedProduct {
   specifications?: Record<string, string>;
 }
 
+// Known brands for auto-detection from product names
+const KNOWN_BRANDS = [
+  // Major appliance brands
+  'Haier', 'Samsung', 'LG', 'Dawlance', 'Orient', 'Pel', 'Kenwood', 'Gree', 'TCL', 'Hisense',
+  'Panasonic', 'Sony', 'Philips', 'Toshiba', 'Sharp', 'Hitachi', 'Electrolux', 'Whirlpool',
+  // Pakistani/Regional brands
+  'EcoStar', 'Ecostar', 'Super Asia', 'SuperAsia', 'Super General', 'Waves', 'Homage', 'National',
+  'NasGas', 'Nasgas', 'Changhong Ruba', 'Changhong', 'Ruba', 'Enviro', 'Boss', 'Ikon', 'Geepas',
+  // Kitchen appliances
+  'Anex', 'Westpoint', 'West Point', 'Black & Decker', 'Black and Decker', 'Black Decker', 'Braun',
+  'Moulinex', 'Tefal', 'Russell Hobbs', 'Oster', 'Hamilton Beach', 'Sunbeam', 'Cuisinart',
+  'Nutribullet', 'Ninja', 'KitchenAid', 'Breville', 'Morphy Richards',
+  // Air treatment
+  'Gaba National', 'GabaNational', 'Inspire', 'IG', 'SG', 'GFC', 'PAK', 'Pak Fan', 'Royal',
+  // Electronics
+  'Audionic', 'JBL', 'Bose', 'Harman Kardon', 'Anker', 'Xiaomi', 'Huawei', 'Realme', 'Oppo',
+  'Vivo', 'Infinix', 'Tecno', 'Itel', 'Nokia', 'Apple', 'Motorola', 'OnePlus', 'Redmi',
+  // Water & Gas appliances
+  'Canon', 'Nasgas', 'NasGas', 'InstaGas', 'Insta Gas', 'Super Gas', 'Super Flame',
+  'i-Zone', 'iZone', 'i Zone', 'i-Max', 'iMax', 'i Max', 'Fotile', 'Robinhood',
+  // TVs and displays
+  'Multynet', 'Nobel', 'Akira', 'Panatron', 'Dany', 'Itel', 'Claas', 'Sasti',
+  // Others
+  'Okasha', 'Anko', 'Kelvinator', 'Midea', 'Carrier', 'Daikin', 'General', 'Nescafe', 'Nestle',
+  'Delonghi', 'Saeco', 'Sage', 'Lavazza', 'Jura', 'Krups', 'Melitta', 'Siemens', 'Bosch',
+  'Miele', 'AEG', 'Zanussi', 'Beko', 'Indesit', 'Hotpoint', 'Candy', 'Hoover', 'Dyson',
+];
+
+// Function to detect brand from product name
+function detectBrandFromName(productName: string): string | null {
+  const normalizedName = productName.toLowerCase();
+  
+  // Sort brands by length (longest first) to match more specific brands first
+  // e.g., "Black & Decker" before "Black"
+  const sortedBrands = [...KNOWN_BRANDS].sort((a, b) => b.length - a.length);
+  
+  for (const brand of sortedBrands) {
+    const brandLower = brand.toLowerCase();
+    
+    // Check for exact word match to avoid partial matches
+    // e.g., "Samsung" should match "Samsung TV" but not "Samsungabc"
+    const patterns = [
+      new RegExp(`^${brandLower}\\b`, 'i'),           // Brand at start
+      new RegExp(`\\b${brandLower}\\b`, 'i'),         // Brand as whole word anywhere
+      new RegExp(`^${brandLower.replace(/[- ]/g, '[-\\s]?')}\\b`, 'i'), // Handle variations
+    ];
+    
+    for (const pattern of patterns) {
+      if (pattern.test(normalizedName)) {
+        // Return the canonical brand name (properly capitalized)
+        return brand;
+      }
+    }
+  }
+  
+  // Special case handling for HTML entities and variations
+  if (normalizedName.includes('black') && (normalizedName.includes('decker') || normalizedName.includes('&#038;'))) {
+    return 'Black & Decker';
+  }
+  
+  return null;
+}
+
 async function fetchPage(url: string): Promise<string> {
   console.log('Fetching page:', url);
   const response = await fetch(url, {
@@ -306,14 +369,28 @@ function extractProductData(html: string, sourceUrl: string): ProductData | null
       }
     }
 
-    // Extract brand
+    // Extract brand from HTML first
     const brandMatch = html.match(/Brands?:.*?<a[^>]*>([^<]+)<\/a>/i) 
       || html.match(/<td[^>]*>Brand<\/td>\s*<td[^>]*>([^<]+)<\/td>/i)
       || html.match(/product_brand-([a-z0-9-]+)/i)
       || html.match(/\| Brand \| ([^|]+) \|/i);
-    let brand = brandMatch ? brandMatch[1].trim() : 'Unknown';
+    let brand = brandMatch ? brandMatch[1].trim() : '';
+    
     // Clean up brand name if it's a slug
-    brand = brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (brand) {
+      brand = brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    
+    // If brand is still empty or "Unknown", try to detect from product name
+    if (!brand || brand.toLowerCase() === 'unknown') {
+      const detectedBrand = detectBrandFromName(name);
+      if (detectedBrand) {
+        brand = detectedBrand;
+        console.log(`Auto-detected brand "${brand}" from product name: ${name}`);
+      } else {
+        brand = 'Unknown';
+      }
+    }
 
     // Extract category
     const categoryMatch = html.match(/Categories?:.*?<a[^>]*>([^<]+)<\/a>/i)
