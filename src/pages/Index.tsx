@@ -333,12 +333,6 @@ const Index = () => {
               </Suspense>
             )}
 
-            {/* 9. Newsletter - Above Footer */}
-            {isSectionVisible("newsletter") && (
-              <Suspense fallback={<SectionLoader />}>
-                <Newsletter />
-              </Suspense>
-            )}
 
             {/* 10. FAQ - Just Above Footer */}
             {isSectionVisible("faq") && (
