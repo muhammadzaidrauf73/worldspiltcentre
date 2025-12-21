@@ -12,9 +12,10 @@ import {
   Package, ShoppingCart, Users, TrendingUp, DollarSign, CalendarIcon, 
   ArrowUpRight, ArrowDownRight, Heart, Eye, Activity, Zap, Target,
   Clock, Star, TrendingDown, ShoppingBag, Sparkles, Crown, UserCheck,
-  Repeat, Award, Gem
+  Repeat, Award, Gem, Bell, Send, Loader2, Mail
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { AreaChart, Area, XAxis, YAxis, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { format, subDays, startOfDay, isWithinInterval, differenceInHours } from "date-fns";
@@ -27,12 +28,41 @@ const Dashboard = () => {
     to: new Date(),
   });
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [sendingVipAlerts, setSendingVipAlerts] = useState(false);
 
   // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  const handleSendVipAlerts = async () => {
+    setSendingVipAlerts(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("vip-customer-alerts", {
+        body: { inactiveDays: 30, vipThreshold: 50000 },
+      });
+
+      if (error) throw error;
+
+      if (data.inactiveCount === 0) {
+        toast.info("No inactive VIP customers found", {
+          description: "All VIP customers have ordered within the last 30 days.",
+        });
+      } else {
+        toast.success(`VIP Alert sent successfully!`, {
+          description: `Found ${data.inactiveCount} inactive VIP customer${data.inactiveCount > 1 ? "s" : ""}. Email sent to ${data.emailSentTo}`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error sending VIP alerts:", error);
+      toast.error("Failed to send VIP alerts", {
+        description: error.message || "Please try again later.",
+      });
+    } finally {
+      setSendingVipAlerts(false);
+    }
+  };
 
   const getGreeting = () => {
     const hour = currentTime.getHours();
@@ -918,7 +948,7 @@ const Dashboard = () => {
         {/* Customer Lifetime Value Analysis */}
         <Card className="border-2 border-gradient-to-r from-purple-500/20 to-pink-500/20 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                   <Gem className="h-4 w-4 text-white" />
@@ -928,10 +958,26 @@ const Dashboard = () => {
                   <p className="text-xs text-muted-foreground">Insights into customer spending patterns</p>
                 </div>
               </div>
-              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Analytics
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendVipAlerts}
+                  disabled={sendingVipAlerts}
+                  className="gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10 hover:text-amber-700"
+                >
+                  {sendingVipAlerts ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Bell className="h-4 w-4" />
+                  )}
+                  {sendingVipAlerts ? "Sending..." : "VIP Alerts"}
+                </Button>
+                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Analytics
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
