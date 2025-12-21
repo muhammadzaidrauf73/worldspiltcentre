@@ -48,6 +48,7 @@ const navItems = [
   { href: "/admin/coupons", label: "Coupons", icon: Ticket },
   { href: "/admin/coupon-analytics", label: "Coupon Analytics", icon: BarChart3 },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
+  { href: "/admin/free-delivery", label: "Free Delivery", icon: Truck },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
   { href: "/admin/company-settings", label: "Company Settings", icon: Settings },
