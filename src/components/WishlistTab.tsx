@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Heart, ShoppingBag, Trash2, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingBag, Trash2, ShoppingCart, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const WishlistTab = () => {
@@ -26,6 +26,7 @@ const WishlistTab = () => {
   const queryClient = useQueryClient();
   const [clearing, setClearing] = useState(false);
   const [movingToCart, setMovingToCart] = useState<string | null>(null);
+  const [movedSuccess, setMovedSuccess] = useState<string | null>(null);
 
   const { data: wishlistProducts = [], isLoading } = useQuery({
     queryKey: ["wishlist-products", user?.id],
@@ -131,17 +132,23 @@ const WishlistTab = () => {
         if (error) throw error;
       }
 
-      // Remove from wishlist
-      await toggleWishlist(productId);
+      // Show success animation
+      setMovedSuccess(productId);
+      setMovingToCart(null);
       
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cart-count"] });
       
       toast.success(`${productName} moved to cart`);
+      
+      // Wait for animation then remove from wishlist
+      setTimeout(async () => {
+        await toggleWishlist(productId);
+        setMovedSuccess(null);
+      }, 800);
     } catch (error) {
       toast.error("Failed to move to cart");
-    } finally {
       setMovingToCart(null);
     }
   };
@@ -245,8 +252,22 @@ const WishlistTab = () => {
             return (
               <div
                 key={product.id}
-                className="border border-border rounded-lg overflow-hidden bg-secondary/20 hover:shadow-md transition-shadow"
+                className={`relative border border-border rounded-lg overflow-hidden bg-secondary/20 hover:shadow-md transition-all duration-300 ${
+                  movedSuccess === product.id ? "scale-95 opacity-0" : ""
+                }`}
               >
+                {/* Success Overlay */}
+                {movedSuccess === product.id && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/90 animate-scale-in">
+                    <div className="text-center text-primary-foreground">
+                      <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-primary-foreground/20 flex items-center justify-center animate-scale-in">
+                        <Check className="h-10 w-10" strokeWidth={3} />
+                      </div>
+                      <p className="font-semibold">Added to Cart!</p>
+                    </div>
+                  </div>
+                )}
+
                 <Link to={`/product/${product.id}`}>
                   <div className="relative aspect-square bg-secondary/30">
                     <img
@@ -292,7 +313,7 @@ const WishlistTab = () => {
                       size="sm"
                       className="flex-1"
                       onClick={() => handleMoveToCart(product.id, product.name)}
-                      disabled={isToggling || movingToCart === product.id}
+                      disabled={isToggling || movingToCart === product.id || movedSuccess === product.id}
                     >
                       <ShoppingCart className="h-4 w-4 mr-1" />
                       {movingToCart === product.id ? "Moving..." : "Move to Cart"}
@@ -301,7 +322,7 @@ const WishlistTab = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => toggleWishlist(product.id)}
-                      disabled={isToggling}
+                      disabled={isToggling || movedSuccess === product.id}
                       className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                     >
                       <Trash2 className="h-4 w-4" />
