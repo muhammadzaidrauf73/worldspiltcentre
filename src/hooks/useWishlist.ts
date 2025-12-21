@@ -28,13 +28,31 @@ export const useWishlist = () => {
         .from("wishlist_items")
         .insert({ user_id: user.id, product_id: productId });
       if (error) throw error;
+      return productId;
+    },
+    onMutate: async (productId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["wishlist", user?.id] });
+      
+      // Snapshot previous value
+      const previousWishlist = queryClient.getQueryData<string[]>(["wishlist", user?.id]);
+      
+      // Optimistically update
+      queryClient.setQueryData<string[]>(["wishlist", user?.id], (old = []) => [...old, productId]);
+      
+      return { previousWishlist };
+    },
+    onError: (err, productId, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["wishlist", user?.id], context?.previousWishlist);
+      toast.error("Failed to add to wishlist");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       toast.success("Added to wishlist!");
     },
-    onError: () => {
-      toast.error("Failed to add to wishlist");
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist-products"] });
     },
   });
 
@@ -47,13 +65,33 @@ export const useWishlist = () => {
         .eq("user_id", user.id)
         .eq("product_id", productId);
       if (error) throw error;
+      return productId;
+    },
+    onMutate: async (productId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["wishlist", user?.id] });
+      
+      // Snapshot previous value
+      const previousWishlist = queryClient.getQueryData<string[]>(["wishlist", user?.id]);
+      
+      // Optimistically update
+      queryClient.setQueryData<string[]>(["wishlist", user?.id], (old = []) => 
+        old.filter(id => id !== productId)
+      );
+      
+      return { previousWishlist };
+    },
+    onError: (err, productId, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["wishlist", user?.id], context?.previousWishlist);
+      toast.error("Failed to remove from wishlist");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       toast.success("Removed from wishlist");
     },
-    onError: () => {
-      toast.error("Failed to remove from wishlist");
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist-products"] });
     },
   });
 
