@@ -27,6 +27,7 @@ const WishlistTab = () => {
   const [clearing, setClearing] = useState(false);
   const [movingToCart, setMovingToCart] = useState<string | null>(null);
   const [movedSuccess, setMovedSuccess] = useState<string | null>(null);
+  const [movingAllToCart, setMovingAllToCart] = useState(false);
 
   const { data: wishlistProducts = [], isLoading } = useQuery({
     queryKey: ["wishlist-products", user?.id],
@@ -172,6 +173,64 @@ const WishlistTab = () => {
     setClearing(false);
   };
 
+  const handleMoveAllToCart = async () => {
+    if (!user || wishlistProducts.length === 0) return;
+    
+    setMovingAllToCart(true);
+    
+    try {
+      // Get all current cart items
+      const { data: existingCartItems } = await supabase
+        .from("cart_items")
+        .select("product_id, quantity, id")
+        .eq("user_id", user.id);
+      
+      const existingCartMap = new Map(
+        existingCartItems?.map(item => [item.product_id, item]) || []
+      );
+      
+      // Process each wishlist item
+      for (const product of wishlistProducts) {
+        const existingItem = existingCartMap.get(product.id);
+        
+        if (existingItem) {
+          // Update quantity
+          await supabase
+            .from("cart_items")
+            .update({ quantity: existingItem.quantity + 1 })
+            .eq("id", existingItem.id);
+        } else {
+          // Insert new item
+          await supabase
+            .from("cart_items")
+            .insert({
+              user_id: user.id,
+              product_id: product.id,
+              quantity: 1,
+            });
+        }
+      }
+      
+      // Clear wishlist
+      await supabase
+        .from("wishlist_items")
+        .delete()
+        .eq("user_id", user.id);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
+      queryClient.invalidateQueries({ queryKey: ["wishlist-products"] });
+      
+      toast.success(`${wishlistProducts.length} items moved to cart`);
+    } catch (error) {
+      toast.error("Failed to move items to cart");
+    } finally {
+      setMovingAllToCart(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-card rounded-lg border border-border p-6">
@@ -187,23 +246,32 @@ const WishlistTab = () => {
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-foreground">
           My Wishlist ({wishlistProducts.length})
         </h2>
         {wishlistProducts.length > 0 && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={clearing}
-                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                {clearing ? "Clearing..." : "Clear All"}
-              </Button>
-            </AlertDialogTrigger>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={handleMoveAllToCart}
+              disabled={movingAllToCart || clearing}
+            >
+              <ShoppingCart className="h-4 w-4 mr-1" />
+              {movingAllToCart ? "Moving..." : "Move All to Cart"}
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={clearing || movingAllToCart}
+                  className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {clearing ? "Clearing..." : "Clear All"}
+                </Button>
+              </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Clear entire wishlist?</AlertDialogTitle>
@@ -222,6 +290,7 @@ const WishlistTab = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
         )}
       </div>
 
