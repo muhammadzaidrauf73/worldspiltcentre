@@ -107,7 +107,7 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
               image={product.image_url || "/placeholder.svg"}
               rating={Number(product.rating) || 0}
               reviews={product.reviews_count || 0}
-              badge={badge || (product.discount_percentage ? `${product.discount_percentage}% OFF` : undefined)}
+              badge={badge}
               index={index}
               hideQuickActions={hideQuickActions}
               buttonText={buttonText}
