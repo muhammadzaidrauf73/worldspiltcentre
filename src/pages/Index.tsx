@@ -175,7 +175,7 @@ const Index = () => {
 
                   <div 
                     ref={categoriesScrollRef}
-                    className="flex gap-2 sm:gap-3 md:gap-1 lg:gap-2 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:flex-nowrap md:justify-between scrollbar-hide"
+                    className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:grid md:grid-cols-12 md:gap-2 lg:gap-3 scrollbar-hide"
                     style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
                   >
                     {categoriesLoading ? (
@@ -191,7 +191,7 @@ const Index = () => {
                         const calculatedCount = products.filter(p => p.category_id === category.id).length;
                         const displayCount = productsLoading ? (category.product_count || 0) : calculatedCount;
                         return (
-                          <div key={category.id} className="shrink-0 md:shrink">
+                          <div key={category.id} className="shrink-0 md:shrink-0">
                             <CategoryCard
                               name={category.name}
                               icon={iconMap[category.icon || "Tv"] || Tv}
