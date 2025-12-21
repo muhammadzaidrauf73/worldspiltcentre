@@ -465,22 +465,30 @@ const Products = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {products.map((product, index) => (
-                  <Link key={product.id} to={`/product/${product.id}`}>
-                    <ProductCard
-                      id={product.id}
-                      name={product.name}
-                      brand={product.brand}
-                      price={Number(product.price)}
-                      originalPrice={product.original_price ? Number(product.original_price) : undefined}
-                      image={product.image_url || ""}
-                      rating={Number(product.rating) || 0}
-                      reviews={product.reviews_count || 0}
-                      isOnSale={product.is_on_sale || false}
-                      index={index}
-                    />
-                  </Link>
-                ))}
+                {products.map((product, index) => {
+                  // Find deal price if this is a flash deal product
+                  const dealInfo = showDealsOnly 
+                    ? flashDeals.find(d => d.product_id === product.id)
+                    : null;
+                  
+                  return (
+                    <Link key={product.id} to={`/product/${product.id}`}>
+                      <ProductCard
+                        id={product.id}
+                        name={product.name}
+                        brand={product.brand}
+                        price={dealInfo ? Number(dealInfo.deal_price) : Number(product.price)}
+                        originalPrice={dealInfo ? Number(dealInfo.original_price) : (product.original_price ? Number(product.original_price) : undefined)}
+                        image={product.image_url || ""}
+                        rating={Number(product.rating) || 0}
+                        reviews={product.reviews_count || 0}
+                        isOnSale={product.is_on_sale || false}
+                        badge={showDealsOnly ? "⚡ Flash Deal" : undefined}
+                        index={index}
+                      />
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </main>
