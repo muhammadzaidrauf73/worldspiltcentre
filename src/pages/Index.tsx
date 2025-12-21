@@ -98,18 +98,28 @@ const Index = () => {
     staleTime: 3 * 60 * 1000,
   });
 
-  const featuredProducts = products.filter(p => p.is_featured).slice(0, 10);
-  const displayFeatured = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 10);
+  const featuredProducts = useMemo(() => 
+    products.filter(p => p.is_featured).slice(0, 10), 
+    [products]
+  );
+  
+  const displayFeatured = useMemo(() => 
+    featuredProducts.length > 0 ? featuredProducts : products.slice(0, 10),
+    [featuredProducts, products]
+  );
   
   // Get products by category - show up to 3 different categories
-  const categoryProducts = categories
-    .filter(cat => products.some(p => p.category_id === cat.id))
-    .slice(0, 3)
-    .map(category => ({
-      category,
-      products: products.filter(p => p.category_id === category.id).slice(0, 8)
-    }))
-    .filter(cp => cp.products.length >= 2);
+  const categoryProducts = useMemo(() => 
+    categories
+      .filter(cat => products.some(p => p.category_id === cat.id))
+      .slice(0, 3)
+      .map(category => ({
+        category,
+        products: products.filter(p => p.category_id === category.id).slice(0, 8)
+      }))
+      .filter(cp => cp.products.length >= 2),
+    [categories, products]
+  );
 
   // Helper function to check if a section is visible
   const isSectionVisible = (sectionKey: string) => {
