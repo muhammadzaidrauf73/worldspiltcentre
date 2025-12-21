@@ -27,8 +27,14 @@ import {
   ChevronRight,
   Check,
   X,
-  ZoomIn
+  ZoomIn,
+  ChevronDown
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -677,17 +683,27 @@ const ProductDetail = () => {
             <h2 className="text-lg md:text-xl font-heading font-bold text-foreground mb-3 md:mb-4">
               Specifications
             </h2>
-            {/* Mobile: Stack layout */}
-            <div className="md:hidden bg-card rounded-lg border border-border overflow-hidden max-h-[350px] overflow-y-auto">
-              <div className="divide-y divide-border">
-                {Object.entries(specifications).map(([key, value], idx) => (
-                  <div key={key} className={`p-3 ${idx % 2 === 0 ? "bg-secondary/30" : ""}`}>
-                    <dt className="text-xs font-medium text-foreground mb-1">{key}</dt>
-                    <dd className="text-xs text-muted-foreground break-words">{value}</dd>
+            {/* Mobile: Collapsible layout */}
+            <Collapsible className="md:hidden">
+              <CollapsibleTrigger className="w-full bg-card rounded-lg border border-border p-3 flex items-center justify-between hover:bg-secondary/30 transition-colors">
+                <span className="text-sm font-medium text-foreground">
+                  View all {Object.keys(specifications).length} specifications
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="bg-card rounded-lg border border-border overflow-hidden max-h-[350px] overflow-y-auto">
+                  <div className="divide-y divide-border">
+                    {Object.entries(specifications).map(([key, value], idx) => (
+                      <div key={key} className={`p-3 ${idx % 2 === 0 ? "bg-secondary/30" : ""}`}>
+                        <dt className="text-xs font-medium text-foreground mb-1">{key}</dt>
+                        <dd className="text-xs text-muted-foreground break-words">{value}</dd>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
             {/* Desktop: Table layout */}
             <div className="hidden md:block bg-card rounded-lg border border-border overflow-hidden">
               <table className="w-full text-sm">
