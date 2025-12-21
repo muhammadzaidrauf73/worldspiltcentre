@@ -587,6 +587,17 @@ const ProductDetail = () => {
               )}
             </div>
 
+            {/* Free Delivery Badge */}
+            {product.is_free_delivery && (
+              <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg">
+                <Truck className="h-5 w-5" />
+                <div>
+                  <span className="font-semibold">Free Delivery</span>
+                  <p className="text-sm text-green-600 dark:text-green-500">This product qualifies for free shipping</p>
+                </div>
+              </div>
+            )}
+
             {/* Description */}
             <p className="text-muted-foreground">{product.description}</p>
 
