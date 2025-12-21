@@ -19,6 +19,7 @@ const Products = () => {
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get("category");
   const brandParam = searchParams.get("brand");
+  const dealsParam = searchParams.get("deals");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || "");
@@ -27,6 +28,7 @@ const Products = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [isPriceFiltered, setIsPriceFiltered] = useState(false);
+  const showDealsOnly = dealsParam === "true";
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -53,13 +55,36 @@ const Products = () => {
     },
   });
 
+  // Fetch active flash deals for filtering
+  const { data: flashDeals = [] } = useQuery({
+    queryKey: ["flash-deals-products"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flash_deals")
+        .select("product_id, deal_price, original_price")
+        .eq("is_active", true)
+        .gte("ends_at", new Date().toISOString());
+      if (error) throw error;
+      return data;
+    },
+    enabled: showDealsOnly,
+  });
+
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, priceRange, isPriceFiltered],
+    queryKey: ["products", selectedCategory, selectedBrands, sortBy, searchQuery, categories, priceRange, isPriceFiltered, showDealsOnly, flashDeals],
     queryFn: async () => {
       let query = supabase
         .from("products")
         .select("*, categories(name, slug)")
         .eq("is_active", true);
+      
+      // Filter by flash deal product IDs if showing deals only
+      if (showDealsOnly && flashDeals.length > 0) {
+        const dealProductIds = flashDeals.map(d => d.product_id).filter(Boolean);
+        if (dealProductIds.length > 0) {
+          query = query.in("id", dealProductIds);
+        }
+      }
       
       if (selectedCategory) {
         const category = categories.find(c => c.slug === selectedCategory || c.name === selectedCategory);
@@ -99,7 +124,7 @@ const Products = () => {
       if (error) throw error;
       return data;
     },
-    enabled: categories.length > 0 || !selectedCategory,
+    enabled: (categories.length > 0 || !selectedCategory) && (!showDealsOnly || flashDeals.length > 0 || !showDealsOnly),
   });
 
   // Get price range from products
@@ -144,9 +169,11 @@ const Products = () => {
 
   const hasFilters = selectedCategory || selectedBrands.length > 0 || searchQuery || isPriceFiltered;
 
-  const categoryName = selectedCategory 
-    ? categories.find(c => c.slug === selectedCategory)?.name || "Products"
-    : "All Products";
+  const categoryName = showDealsOnly 
+    ? "Flash Deals" 
+    : selectedCategory 
+      ? categories.find(c => c.slug === selectedCategory)?.name || "Products"
+      : "All Products";
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('en-PK', {
