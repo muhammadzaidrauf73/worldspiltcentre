@@ -1,9 +1,20 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, MessageCircle, Send } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const emailSchema = z.string().trim().email({ message: "Please enter a valid email" }).max(255);
 
 const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
   const { data: settings } = useQuery({
     queryKey: ['company-settings-footer'],
     queryFn: async () => {
@@ -19,6 +30,49 @@ const Footer = () => {
   });
 
   const getSetting = (key: string, fallback: string = '') => settings?.[key] || fallback;
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const result = emailSchema.safeParse(email);
+    if (!result.success) {
+      toast({
+        title: "Invalid email",
+        description: result.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    const { error } = await supabase
+      .from('newsletter_subscribers')
+      .insert({ email: result.data });
+    
+    if (error) {
+      if (error.code === '23505') {
+        toast({
+          title: "Already subscribed",
+          description: "This email is already on our list!",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to subscribe. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: "Subscribed!",
+        description: "Thank you for subscribing to our newsletter.",
+      });
+      setEmail("");
+    }
+    
+    setIsSubmitting(false);
+  };
 
   const footerLinks = {
     shop: [
@@ -91,13 +145,13 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Links Grid */}
-        <div className="grid grid-cols-3 gap-4 py-5">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-6">
           {/* Shop Links */}
           <div>
-            <h4 className="font-semibold text-primary text-xs mb-2">Shop</h4>
-            <ul className="space-y-1">
-              {footerLinks.shop.slice(0, 4).map((link) => (
+            <h4 className="font-semibold text-primary text-xs mb-3">Shop</h4>
+            <ul className="space-y-1.5">
+              {footerLinks.shop.slice(0, 5).map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
@@ -112,9 +166,9 @@ const Footer = () => {
 
           {/* Support Links */}
           <div>
-            <h4 className="font-semibold text-primary text-xs mb-2">Support</h4>
-            <ul className="space-y-1">
-              {footerLinks.support.slice(0, 4).map((link) => (
+            <h4 className="font-semibold text-primary text-xs mb-3">Support</h4>
+            <ul className="space-y-1.5">
+              {footerLinks.support.slice(0, 5).map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
@@ -129,9 +183,9 @@ const Footer = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold text-primary text-xs mb-2">Company</h4>
-            <ul className="space-y-1">
-              {footerLinks.company.slice(0, 4).map((link) => (
+            <h4 className="font-semibold text-primary text-xs mb-3">Company</h4>
+            <ul className="space-y-1.5">
+              {footerLinks.company.slice(0, 5).map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
@@ -143,20 +197,34 @@ const Footer = () => {
               ))}
             </ul>
           </div>
-        </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-4 border-t border-card/10 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-3 w-3 text-primary flex-shrink-0" />
-            <p className="text-[10px] text-card/60">
-              {getSetting('address', 'Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore')}
+          {/* Newsletter */}
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="font-semibold text-primary text-xs mb-3">Newsletter</h4>
+            <p className="text-[11px] text-card/70 mb-3">
+              Get exclusive deals & updates straight to your inbox.
             </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-8 text-xs bg-card/10 border-card/20 text-card placeholder:text-card/50 flex-1"
+                required
+              />
+              <Button 
+                type="submit" 
+                size="sm" 
+                className="h-8 px-3 bg-primary hover:bg-primary/90"
+                disabled={isSubmitting}
+              >
+                <Send className="h-3.5 w-3.5" />
+              </Button>
+            </form>
+            
             {/* Social Links */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 mt-4">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
@@ -170,11 +238,21 @@ const Footer = () => {
                 </a>
               ))}
             </div>
-            
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-4 border-t border-card/10 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3 w-3 text-primary flex-shrink-0" />
             <p className="text-[10px] text-card/60">
-              © {new Date().getFullYear()} {getSetting('company_name', 'World Spilt Centre')}
+              {getSetting('address', 'Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore')}
             </p>
           </div>
+          
+          <p className="text-[10px] text-card/60">
+            © {new Date().getFullYear()} {getSetting('company_name', 'World Spilt Centre')}. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
