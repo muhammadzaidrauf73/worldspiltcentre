@@ -5,6 +5,11 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/utils";
 import { HighlightText } from "@/lib/highlight-text";
 import { memo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   id: string;
@@ -42,10 +47,15 @@ const ProductCard = memo(({
   searchHighlight = "",
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const inWishlist = isInWishlist(id);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   // Only show discount if original price is higher than current price
   const discount = originalPrice && originalPrice > price
@@ -61,6 +71,59 @@ const ProductCard = memo(({
     setTimeout(() => setIsAnimating(false), 600);
     
     toggleWishlist(id);
+  };
+
+  const handleOrderNow = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to sign in to add items to cart",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      // Check if item already exists in cart
+      const { data: existingItem } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("product_id", id)
+        .maybeSingle();
+
+      if (existingItem) {
+        // Update quantity
+        await supabase
+          .from("cart_items")
+          .update({ quantity: existingItem.quantity + 1 })
+          .eq("id", existingItem.id);
+      } else {
+        // Add new item
+        await supabase
+          .from("cart_items")
+          .insert({ user_id: user.id, product_id: id, quantity: 1 });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      
+      // Navigate to checkout
+      navigate("/checkout");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
@@ -216,17 +279,21 @@ const ProductCard = memo(({
         {/* Action Button - Touch-friendly with hover animation and pulse */}
         {price > 0 ? (
           <Button 
+            onClick={buttonText === "Order Now" ? handleOrderNow : undefined}
+            disabled={isAddingToCart}
             className={cn(
               "w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-300",
               buttonText === "Order Now" && "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25 group/btn animate-[pulse-subtle_2s_ease-in-out_infinite]"
             )}
           >
-            {buttonText === "Order Now" ? (
+            {isAddingToCart ? (
+              <div className="h-4 w-4 mr-2 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+            ) : buttonText === "Order Now" ? (
               <ShoppingBag className="h-4 w-4 mr-2 transition-transform duration-300 group-hover/btn:scale-110 group-hover/btn:-rotate-6" />
             ) : (
               <ShoppingCart className="h-4 w-4 mr-2" />
             )}
-            {buttonText}
+            {isAddingToCart ? "Adding..." : buttonText}
           </Button>
         ) : (
           <a
