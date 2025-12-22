@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, X, ExternalLink, Megaphone, Info, Gift, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
@@ -28,6 +29,7 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery({
@@ -44,6 +46,61 @@ const NotificationBell = () => {
       return data as Notification[];
     },
   });
+
+  // Real-time subscription for new notifications
+  useEffect(() => {
+    const channel = supabase
+      .channel("notifications-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+        },
+        (payload) => {
+          console.log("New notification received:", payload);
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+          
+          // Show toast for new notification
+          const newNotification = payload.new as Notification;
+          if (newNotification.is_global) {
+            toast({
+              title: newNotification.title,
+              description: newNotification.message,
+              duration: 5000,
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "notifications",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, toast]);
 
   // Fetch read notifications for the user
   const { data: readNotifications = [] } = useQuery({
