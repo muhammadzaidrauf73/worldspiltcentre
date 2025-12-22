@@ -56,6 +56,7 @@ const ProductCard = memo(({
   const [imageError, setImageError] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddingOnly, setIsAddingOnly] = useState(false);
   
   // Only show discount if original price is higher than current price
   const discount = originalPrice && originalPrice > price
@@ -73,7 +74,59 @@ const ProductCard = memo(({
     toggleWishlist(id);
   };
 
-  const handleOrderNow = async (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to sign in to add items to cart",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    setIsAddingOnly(true);
+    try {
+      const { data: existingItem } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("product_id", id)
+        .maybeSingle();
+
+      if (existingItem) {
+        await supabase
+          .from("cart_items")
+          .update({ quantity: existingItem.quantity + 1 })
+          .eq("id", existingItem.id);
+      } else {
+        await supabase
+          .from("cart_items")
+          .insert({ user_id: user.id, product_id: id, quantity: 1 });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+      
+      toast({
+        title: "Added to cart",
+        description: `${name} has been added to your cart`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingOnly(false);
+    }
+  };
+
+  const handleShopNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -89,7 +142,6 @@ const ProductCard = memo(({
 
     setIsAddingToCart(true);
     try {
-      // Check if item already exists in cart
       const { data: existingItem } = await supabase
         .from("cart_items")
         .select("id, quantity")
@@ -98,13 +150,11 @@ const ProductCard = memo(({
         .maybeSingle();
 
       if (existingItem) {
-        // Update quantity
         await supabase
           .from("cart_items")
           .update({ quantity: existingItem.quantity + 1 })
           .eq("id", existingItem.id);
       } else {
-        // Add new item
         await supabase
           .from("cart_items")
           .insert({ user_id: user.id, product_id: id, quantity: 1 });
@@ -113,7 +163,6 @@ const ProductCard = memo(({
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["cart-count"] });
       
-      // Navigate to checkout
       navigate("/checkout");
     } catch (error) {
       toast({
@@ -154,44 +203,38 @@ const ProductCard = memo(({
         </Badge>
       )}
 
-      {/* Discount Badge */}
+      {/* Discount Badge - moved to left if no sale badge */}
       {discount > 0 && (
-        <Badge className="absolute top-2 right-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5">
+        <Badge className={cn(
+          "absolute top-2 z-10 bg-deal text-deal-foreground text-[10px] sm:text-xs font-bold px-1.5 py-0.5",
+          isOnSale || badge ? "right-2" : "right-2"
+        )}>
           {discount}% OFF
         </Badge>
       )}
 
-      {/* Action Buttons - Hidden on mobile, shown on hover for desktop */}
+      {/* Wishlist Button - Always visible on top right of image */}
       {!hideQuickActions && (
-        <div className="absolute top-10 right-2 z-10 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-smooth translate-x-2 group-hover:translate-x-0 hidden sm:flex">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleWishlistClick}
-            disabled={isToggling}
-            aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleWishlistClick}
+          disabled={isToggling}
+          aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
+          className={cn(
+            "absolute top-2 z-20 h-8 w-8 sm:h-9 sm:w-9 bg-card/90 backdrop-blur-sm shadow-md hover:bg-primary hover:text-primary-foreground rounded-full transition-all duration-200",
+            discount > 0 ? "right-16 sm:right-[4.5rem]" : "right-2",
+            inWishlist && "bg-primary text-primary-foreground"
+          )}
+        >
+          <Heart 
             className={cn(
-              "h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full transition-all duration-200",
-              inWishlist && "bg-primary text-primary-foreground"
-            )}
-          >
-            <Heart 
-              className={cn(
-                "h-4 w-4 transition-all duration-200",
-                inWishlist && "fill-current",
-                isAnimating && "animate-heart-burst"
-              )} 
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Quick view product"
-            className="h-9 w-9 bg-card shadow-md hover:bg-primary hover:text-primary-foreground rounded-full"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
+              "h-4 w-4 transition-all duration-200",
+              inWishlist && "fill-current",
+              isAnimating && "animate-heart-burst"
+            )} 
+          />
+        </Button>
       )}
 
       {/* Image - Larger on mobile for better visibility */}
@@ -276,25 +319,35 @@ const ProductCard = memo(({
           </div>
         )}
 
-        {/* Action Button - Touch-friendly with hover animation and pulse */}
+        {/* Action Buttons - Add to Cart + Shop Now */}
         {price > 0 ? (
-          <Button 
-            onClick={buttonText === "Order Now" ? handleOrderNow : undefined}
-            disabled={isAddingToCart}
-            className={cn(
-              "w-full mt-2 sm:mt-3 h-11 sm:h-10 text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-300",
-              buttonText === "Order Now" && "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25 group/btn animate-[pulse-subtle_2s_ease-in-out_infinite]"
-            )}
-          >
-            {isAddingToCart ? (
-              <div className="h-4 w-4 mr-2 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-            ) : buttonText === "Order Now" ? (
-              <ShoppingBag className="h-4 w-4 mr-2 transition-transform duration-300 group-hover/btn:scale-110 group-hover/btn:-rotate-6" />
-            ) : (
-              <ShoppingCart className="h-4 w-4 mr-2" />
-            )}
-            {isAddingToCart ? "Adding..." : buttonText}
-          </Button>
+          <div className="grid grid-cols-2 gap-2 mt-2 sm:mt-3">
+            <Button 
+              variant="outline"
+              onClick={handleAddToCart}
+              disabled={isAddingOnly || isAddingToCart}
+              className="h-10 sm:h-9 text-xs sm:text-sm font-semibold rounded-lg touch-manipulation transition-all duration-200"
+            >
+              {isAddingOnly ? (
+                <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              ) : (
+                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {isAddingOnly ? "Adding..." : "Add to Cart"}
+            </Button>
+            <Button 
+              onClick={handleShopNow}
+              disabled={isAddingToCart || isAddingOnly}
+              className="h-10 sm:h-9 text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25"
+            >
+              {isAddingToCart ? (
+                <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              ) : (
+                <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {isAddingToCart ? "..." : "Shop Now"}
+            </Button>
+          </div>
         ) : (
           <a
             href={`https://wa.me/923004649141?text=${encodeURIComponent(`Hi, I'm interested in getting the latest price for: ${name}`)}`}
@@ -310,39 +363,6 @@ const ProductCard = memo(({
               WhatsApp for Price
             </Button>
           </a>
-        )}
-
-        {/* Mobile Quick Actions - Hidden when hideQuickActions is true */}
-        {!hideQuickActions && (
-          <div className="grid grid-cols-2 gap-2 sm:hidden mt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleWishlistClick}
-              disabled={isToggling}
-              className={cn(
-                "h-9 text-xs font-medium rounded-lg touch-manipulation px-2 transition-all duration-200",
-                inWishlist && "bg-primary/10 border-primary text-primary"
-              )}
-            >
-              <Heart 
-                className={cn(
-                  "h-3.5 w-3.5 mr-1 transition-all duration-200",
-                  inWishlist && "fill-primary",
-                  isAnimating && "animate-heart-burst"
-                )} 
-              />
-              <span className="truncate">{inWishlist ? "Saved" : "Wishlist"}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 text-xs font-medium rounded-lg touch-manipulation px-2"
-            >
-              <Eye className="h-3.5 w-3.5 mr-1" />
-              <span className="truncate">Quick View</span>
-            </Button>
-          </div>
         )}
       </div>
     </div>
