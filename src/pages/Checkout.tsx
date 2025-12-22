@@ -1294,6 +1294,25 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* Total Savings Summary */}
+                {(flashDealSavings > 0 || discount > 0) && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-accent/10 border border-accent/20">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-accent flex items-center gap-1.5">
+                        🎉 Total Savings
+                      </span>
+                      <span className="text-sm font-bold text-accent">
+                        Rs.{(flashDealSavings + discount).toLocaleString()}
+                      </span>
+                    </div>
+                    {flashDealSavings > 0 && discount > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Flash Deals: Rs.{flashDealSavings.toLocaleString()} + Voucher: Rs.{discount.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-between py-3 mt-2 border-t border-border">
                   <span className="font-semibold">Total</span>
                   <span className="text-lg font-bold text-primary">Rs.{total.toLocaleString()}</span>
