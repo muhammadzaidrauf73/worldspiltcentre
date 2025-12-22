@@ -567,6 +567,8 @@ const Checkout = () => {
               code: appliedCoupon.code,
               discount: discount,
             } : null,
+            isGuestOrder: isGuestCheckout,
+            siteUrl: window.location.origin,
           },
         });
         console.log("Order confirmation email sent");
