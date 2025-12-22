@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.vip-customer-alerts]
 verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = true
