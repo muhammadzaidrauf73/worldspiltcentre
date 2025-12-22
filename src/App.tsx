@@ -63,6 +63,7 @@ const Careers = lazy(() => import("./pages/Careers"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const OrderTracking = lazy(() => import("./pages/OrderTracking"));
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminProducts = lazy(() => import("./pages/admin/Products"));
@@ -155,6 +156,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/order-tracking" element={<OrderTracking />} />
               <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
+              <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<AdminProducts />} />
               <Route path="/admin/categories" element={<AdminCategories />} />
