@@ -987,12 +987,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_guest_order_history: {
+        Args: { email_param: string; order_id_param: string }
+        Returns: {
+          created_at: string
+          id: string
+          notes: string
+          order_id: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      verify_guest_order: {
+        Args: { email_param: string; order_id_param: string }
+        Returns: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          items: Json
+          shipping_address: string
+          status: string
+          total: number
+          tracking_number: string
+          tracking_url: string
+          updated_at: string
+          user_id: string
+        }[]
       }
     }
     Enums: {
