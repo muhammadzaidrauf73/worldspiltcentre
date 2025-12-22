@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, ArrowRight, Star, Zap } from "lucide-react";
+import { Sparkles, Star, Zap } from "lucide-react";
 import ProductCarousel from "./ProductCarousel";
 import { ProductGridSkeleton } from "./ProductCardSkeleton";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SectionHeader } from "./SectionHeader";
 
 const NewArrivals = () => {
   const { data: products, isLoading } = useQuery({
@@ -65,55 +65,16 @@ const NewArrivals = () => {
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
-          <div className="flex items-center gap-4 sm:gap-5">
-            {/* Premium animated icon */}
-            <div className="relative group">
-              {/* Outer glow ring */}
-              <div className="absolute -inset-3 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-2xl opacity-30 blur-lg group-hover:opacity-50 transition-opacity duration-500" />
-              {/* Rotating border */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-2xl opacity-75 animate-spin" style={{ animationDuration: '8s' }} />
-              {/* Icon container */}
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-violet-500/40">
-                <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
-              </div>
-              {/* Sparkle accents */}
-              <Star className="absolute -top-2 -right-2 h-4 w-4 text-amber-300 fill-amber-300 animate-pulse drop-shadow-lg" style={{ animationDuration: '1.5s' }} />
-              <Star className="absolute -bottom-1 -left-1 h-3 w-3 text-pink-200 fill-pink-200 animate-pulse" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
-            </div>
-            
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold">
-                  <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 dark:from-violet-400 dark:via-fuchsia-400 dark:to-pink-400 bg-clip-text text-transparent">
-                    New Arrivals
-                  </span>
-                </h2>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 to-pink-500/20 dark:from-violet-500/30 dark:to-pink-500/30 text-violet-700 dark:text-violet-300 text-[10px] sm:text-xs font-bold border border-violet-300/50 dark:border-violet-500/30 backdrop-blur-sm">
-                  <Zap className="h-3 w-3" />
-                  JUST IN
-                </span>
-              </div>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 animate-pulse shadow-lg shadow-violet-500/50" />
-                Fresh products just landed this week
-              </p>
-            </div>
-          </div>
-          
-          <Link to="/products?sort=newest">
-            <Button 
-              variant="outline" 
-              className="group relative overflow-hidden border-violet-300/50 dark:border-violet-500/30 bg-white/50 dark:bg-violet-950/30 backdrop-blur-sm hover:border-violet-500 text-violet-600 dark:text-violet-300 h-10 sm:h-11 px-5 sm:px-6 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-violet-500/20"
-            >
-              <span className="relative z-10 flex items-center">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            </Button>
-          </Link>
-        </div>
+        <SectionHeader
+          icon={Sparkles}
+          title="New Arrivals"
+          description="Fresh products just landed this week"
+          badge={{ icon: Zap, text: "JUST IN" }}
+          accentIcon={Star}
+          secondaryAccentIcon={Star}
+          linkTo="/products?sort=newest"
+          theme="violet"
+        />
 
         {/* Products carousel */}
         <div className="relative">
