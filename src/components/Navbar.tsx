@@ -484,24 +484,28 @@ const Navbar = () => {
                   <SheetDescription className="text-xs text-primary font-medium">World Spilt Centre</SheetDescription>
                 </div>
               </div>
-              {/* Profile Button in Header */}
-              {user ? (
+              {/* Profile & Wishlist Buttons in Header */}
+              <div className="flex items-center gap-2">
                 <Link
-                  to="/profile"
+                  to="/wishlist"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+                >
+                  <Heart className="h-5 w-5 text-primary" />
+                  {wishlistItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-lg">
+                      {wishlistItems.length}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  to={user ? "/profile" : "/auth"}
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
                 >
                   <User className="h-5 w-5 text-primary" />
                 </Link>
-              ) : (
-                <Link
-                  to="/auth"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
-                >
-                  <User className="h-5 w-5 text-primary" />
-                </Link>
-              )}
+              </div>
             </div>
           </SheetHeader>
           
