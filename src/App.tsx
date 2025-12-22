@@ -60,6 +60,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const StoreLocations = lazy(() => import("./pages/StoreLocations"));
 const Careers = lazy(() => import("./pages/Careers"));
 const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 const OrderTracking = lazy(() => import("./pages/OrderTracking"));
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -84,6 +85,7 @@ const AdminProductImport = lazy(() => import("./pages/admin/ProductImport"));
 const AdminHomepageSections = lazy(() => import("./pages/admin/HomepageSections"));
 const AdminFreeDelivery = lazy(() => import("./pages/admin/FreeDelivery"));
 const AdminStoreLocations = lazy(() => import("./pages/admin/StoreLocations"));
+const AdminBlog = lazy(() => import("./pages/admin/Blog"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -148,6 +150,7 @@ const App = () => (
               <Route path="/store-locations" element={<StoreLocations />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/order-tracking" element={<OrderTracking />} />
               <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
               <Route path="/admin" element={<AdminDashboard />} />
@@ -172,6 +175,7 @@ const App = () => (
               <Route path="/admin/homepage-sections" element={<AdminHomepageSections />} />
               <Route path="/admin/free-delivery" element={<AdminFreeDelivery />} />
               <Route path="/admin/store-locations" element={<AdminStoreLocations />} />
+              <Route path="/admin/blog" element={<AdminBlog />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
