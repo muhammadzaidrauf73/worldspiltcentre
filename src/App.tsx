@@ -10,6 +10,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import BackToTop from "@/components/BackToTop";
 import PageLoader from "@/components/PageLoader";
 import RouteLoadingBar from "@/components/RouteLoadingBar";
+import WelcomePopup from "@/components/WelcomePopup";
 import Index from "./pages/Index";
 
 // Critical pages - preloaded for instant navigation
@@ -102,6 +103,15 @@ const ConditionalWhatsAppButton = () => {
   return <WhatsAppButton />;
 };
 
+// Welcome popup wrapper that hides on admin pages
+const ConditionalWelcomePopup = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+  
+  if (isAdminPage) return null;
+  return <WelcomePopup />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -111,6 +121,7 @@ const App = () => (
         <BrowserRouter>
           <RouteLoadingBar />
           <ConditionalWhatsAppButton />
+          <ConditionalWelcomePopup />
           <BackToTop />
           <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
