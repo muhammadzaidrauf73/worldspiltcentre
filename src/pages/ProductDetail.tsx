@@ -670,7 +670,7 @@ const ProductDetail = () => {
               </Button>
               <Button
                 size="lg"
-                variant="secondary"
+                variant="buyNow"
                 className="flex-1"
                 onClick={async () => {
                   await handleAddToCart();
