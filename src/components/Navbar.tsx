@@ -474,14 +474,34 @@ const Navbar = () => {
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <SheetContent side="right" className="w-[85%] max-w-sm p-0 flex flex-col border-l-4 border-l-primary">
           <SheetHeader className="p-4 border-b border-border bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-xl bg-primary/10 border border-primary/20">
-                <img src="/logo.png" alt="Logo" className="h-9 w-10 object-contain" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                  <img src="/logo.png" alt="Logo" className="h-9 w-10 object-contain" />
+                </div>
+                <div className="text-left">
+                  <SheetTitle className="font-heading font-bold text-lg text-foreground">Menu</SheetTitle>
+                  <SheetDescription className="text-xs text-primary font-medium">World Spilt Centre</SheetDescription>
+                </div>
               </div>
-              <div className="text-left">
-                <SheetTitle className="font-heading font-bold text-lg text-foreground">Menu</SheetTitle>
-                <SheetDescription className="text-xs text-primary font-medium">World Spilt Centre</SheetDescription>
-              </div>
+              {/* Profile Button in Header */}
+              {user ? (
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+                >
+                  <User className="h-5 w-5 text-primary" />
+                </Link>
+              ) : (
+                <Link
+                  to="/auth"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+                >
+                  <User className="h-5 w-5 text-primary" />
+                </Link>
+              )}
             </div>
           </SheetHeader>
           
