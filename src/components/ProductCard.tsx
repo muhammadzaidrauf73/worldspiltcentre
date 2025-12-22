@@ -327,27 +327,29 @@ const ProductCard = memo(({
               size="sm"
               onClick={handleAddToCart}
               disabled={isAddingOnly || isAddingToCart}
-              className="h-9 text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-3 w-full"
+              className="h-9 text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-2 w-full"
             >
               {isAddingOnly ? (
                 <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
               ) : (
                 <ShoppingCart className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
               )}
-              {isAddingOnly ? "Adding..." : "Add to Cart"}
+              <span className="sm:hidden">{isAddingOnly ? "Adding..." : "Add to Cart"}</span>
+              <span className="hidden sm:inline">{isAddingOnly ? "..." : "Cart"}</span>
             </Button>
             <Button 
               size="sm"
               onClick={handleShopNow}
               disabled={isAddingToCart || isAddingOnly}
-              className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-3 w-full"
+              className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-2 w-full"
             >
               {isAddingToCart ? (
                 <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin flex-shrink-0" />
               ) : (
                 <ShoppingBag className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
               )}
-              {isAddingToCart ? "Processing..." : "Buy Now"}
+              <span className="sm:hidden">{isAddingToCart ? "Processing..." : "Buy Now"}</span>
+              <span className="hidden sm:inline">{isAddingToCart ? "..." : "Buy"}</span>
             </Button>
           </div>
         ) : (
