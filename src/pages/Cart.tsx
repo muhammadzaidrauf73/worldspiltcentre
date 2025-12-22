@@ -9,8 +9,7 @@ import SEO from "@/components/SEO";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Truck, Sparkles, Gift } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Minus, Plus, Trash2, ShoppingBag, Truck } from "lucide-react";
 
 // Confetti component for celebration effect
 const Confetti = () => {
@@ -160,233 +159,186 @@ const Cart = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       {showConfetti && <Confetti />}
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-secondary/30">
         <SEO 
           title="Shopping Cart - World Spilt Centre"
-          description="Review your cart and checkout. Free delivery on orders above threshold. Secure payment options available."
-          keywords="shopping cart, checkout, buy electronics lahore, online shopping pakistan"
+          description="Review your cart and checkout. Free delivery on orders above threshold."
+          keywords="shopping cart, checkout, buy electronics lahore"
         />
         <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-heading font-bold text-foreground mb-6">
-          Shopping Cart
-        </h1>
-        
-        {cartItems.length === 0 ? (
-          <div className="text-center py-16">
-            <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6">
-              Looks like you haven't added any items to your cart yet.
-            </p>
-            <Link to="/products">
-              <Button className="bg-primary hover:bg-primary/90">
-                Continue Shopping
-              </Button>
-            </Link>
+        <div className="container mx-auto px-4 py-4 sm:py-6">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-4">
+            <ShoppingBag className="h-5 w-5 text-primary" />
+            <h1 className="text-lg font-semibold text-foreground">Shopping Cart</h1>
+            {cartItems.length > 0 && (
+              <span className="text-sm text-muted-foreground">({cartItems.length} items)</span>
+            )}
           </div>
-        ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* Free Delivery Banner */}
-              {anyProductQualifiesForFreeDelivery && (
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/40 dark:via-green-950/30 dark:to-teal-950/40 border border-emerald-200/60 dark:border-emerald-800/40 p-5 animate-fade-in shadow-sm">
-                  {/* Decorative background elements */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-200/40 to-transparent dark:from-emerald-700/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-teal-200/40 to-transparent dark:from-teal-700/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
-                  
-                  <div className="relative flex items-center gap-4">
-                    {/* Icon with animated ring */}
-                    <div className="relative shrink-0">
-                      <div className="absolute inset-0 rounded-full bg-emerald-400/30 dark:bg-emerald-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-                      <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 dark:from-emerald-500 dark:to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                        <Truck className="h-7 w-7 text-white" />
-                      </div>
+          
+          {cartItems.length === 0 ? (
+            <div className="bg-card rounded p-8 text-center">
+              <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <h2 className="text-base font-semibold text-foreground mb-1">Your cart is empty</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Start shopping to add items to your cart
+              </p>
+              <Link to="/products">
+                <Button size="sm">Continue Shopping</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-3 gap-4">
+              {/* Cart Items */}
+              <div className="lg:col-span-2 space-y-3">
+                {/* Free Delivery Banner - Compact */}
+                {anyProductQualifiesForFreeDelivery && (
+                  <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent/30 rounded">
+                    <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center shrink-0">
+                      <Truck className="h-4 w-4 text-white" />
                     </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-green-600 dark:from-emerald-400 dark:to-green-400 bg-clip-text text-transparent">
-                          Free Delivery Unlocked!
-                        </h3>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-semibold">
-                          <Sparkles className="h-3 w-3" />
-                          BONUS
-                        </span>
-                      </div>
-                      <p className="text-sm text-emerald-700/80 dark:text-emerald-300/70 mt-1 leading-relaxed">
-                        Your cart includes{" "}
-                        <span className="font-semibold text-emerald-800 dark:text-emerald-200">
-                          {freeDeliveryProducts.length === 1 
-                            ? freeDeliveryProducts[0] 
-                            : `${freeDeliveryProducts.length} eligible products`}
-                        </span>
-                        {" "}— <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE shipping</span> on your entire order!
+                    <div>
+                      <p className="text-sm font-semibold text-accent">Free Delivery Unlocked!</p>
+                      <p className="text-xs text-muted-foreground">
+                        Your order qualifies for free shipping
                       </p>
                     </div>
                   </div>
-                </div>
-              )}
-              {cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="bg-card rounded-lg border border-border p-4 flex gap-4"
-                >
-                  <Link to={`/product/${item.product_id}`} className="shrink-0">
-                    <div className="w-24 h-24 rounded-lg bg-secondary/30 overflow-hidden">
-                      <img
-                        src={item.products?.image_url || "/placeholder.svg"}
-                        alt={item.products?.name}
-                        className="w-full h-full object-contain p-2"
-                      />
-                    </div>
-                  </Link>
-                  
-                  <div className="flex-1 min-w-0">
-                    <Link to={`/product/${item.product_id}`}>
-                      <h3 className="font-medium text-foreground hover:text-primary line-clamp-2">
-                        {item.products?.name}
-                      </h3>
-                    </Link>
-                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                      <p className="text-sm text-muted-foreground">{item.products?.brand}</p>
-                      {item.products?.is_free_delivery && (
-                        <Badge variant="secondary" className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border-0 text-[10px] px-1.5 py-0 h-5 gap-1">
-                          <Truck className="h-3 w-3" />
-                          Free Delivery
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="font-bold text-primary mt-1">
-                      Rs.{Number(item.products?.price).toLocaleString()}
-                    </p>
-                    
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center border border-border rounded">
-                        <button
-                          onClick={() => updateQuantityMutation.mutate({ 
-                            itemId: item.id, 
-                            quantity: item.quantity - 1 
-                          })}
-                          className="p-1.5 hover:bg-secondary"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="px-3 text-sm font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantityMutation.mutate({ 
-                            itemId: item.id, 
-                            quantity: item.quantity + 1 
-                          })}
-                          className="p-1.5 hover:bg-secondary"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      <button
-                        onClick={() => removeItemMutation.mutate(item.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-card rounded-lg border border-border p-6 sticky top-24">
-                <h2 className="font-semibold text-foreground mb-4">Order Summary</h2>
-                
-                {/* Free Delivery Progress Indicator */}
-                {!anyProductQualifiesForFreeDelivery && subtotal < 10000 && (
-                  <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border border-emerald-200/50 dark:border-emerald-800/30">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Truck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                        Free Delivery Progress
-                      </span>
-                    </div>
-                    <div className="relative h-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full overflow-hidden mb-2">
-                      <div 
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((subtotal / 10000) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] sm:text-xs text-emerald-600/80 dark:text-emerald-400/70 mb-2">
-                      Add <span className="font-bold text-emerald-700 dark:text-emerald-300">Rs.{(10000 - subtotal).toLocaleString()}</span> more for free shipping
-                    </p>
-                    <Link 
-                      to="/products?delivery=free"
-                      className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors group"
-                    >
-                      <Gift className="h-3 w-3" />
-                      Or browse Free Delivery products
-                      <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
-                  </div>
                 )}
 
-                {/* Unlocked Free Delivery Message */}
-                {(anyProductQualifiesForFreeDelivery || subtotal >= 10000) && (
-                  <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/40 dark:to-green-900/40 border border-emerald-300/50 dark:border-emerald-700/30">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <Truck className="h-3.5 w-3.5 text-white" />
+                {/* Products Card */}
+                <div className="bg-card rounded p-4">
+                  <div className="divide-y divide-border">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+                        <Link to={`/product/${item.product_id}`} className="shrink-0">
+                          <div className="w-16 h-16 rounded border border-border bg-white overflow-hidden">
+                            <img
+                              src={item.products?.image_url || "/placeholder.svg"}
+                              alt={item.products?.name}
+                              className="w-full h-full object-contain p-1"
+                            />
+                          </div>
+                        </Link>
+                        
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/product/${item.product_id}`}>
+                            <p className="text-sm line-clamp-2 hover:text-primary">
+                              {item.products?.name}
+                            </p>
+                          </Link>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-muted-foreground">{item.products?.brand}</span>
+                            {item.products?.is_free_delivery && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">
+                                Free Delivery
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-sm font-bold text-primary">
+                              Rs.{Number(item.products?.price).toLocaleString()}
+                            </p>
+                            
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center border border-border rounded">
+                                <button
+                                  onClick={() => updateQuantityMutation.mutate({ 
+                                    itemId: item.id, 
+                                    quantity: item.quantity - 1 
+                                  })}
+                                  className="p-1 hover:bg-secondary"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="px-2.5 text-xs font-medium">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateQuantityMutation.mutate({ 
+                                    itemId: item.id, 
+                                    quantity: item.quantity + 1 
+                                  })}
+                                  className="p-1 hover:bg-secondary"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                              
+                              <button
+                                onClick={() => removeItemMutation.mutate(item.id)}
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                        ✓ Free Delivery Unlocked!
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Order Summary */}
+              <div className="lg:col-span-1">
+                <div className="bg-card rounded p-4 sticky top-20">
+                  {/* Free Delivery Progress */}
+                  {!anyProductQualifiesForFreeDelivery && subtotal < 10000 && (
+                    <div className="mb-4 p-3 rounded bg-secondary/50 border border-border">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-muted-foreground">Free delivery progress</span>
+                        <span className="font-medium">{Math.round((subtotal / 10000) * 100)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-border rounded-full overflow-hidden mb-2">
+                        <div 
+                          className="h-full bg-accent rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min((subtotal / 10000) * 100, 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Add Rs.{(10000 - subtotal).toLocaleString()} more for free shipping
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
+                      <span>Rs.{subtotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Shipping</span>
+                      <span className={shipping === 0 ? 'text-accent font-medium' : ''}>
+                        {shipping === 0 ? "FREE" : `Rs.${shipping}`}
                       </span>
                     </div>
                   </div>
-                )}
-                
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
-                    <span className="font-medium">Rs.{subtotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="font-medium">
-                      {shipping === 0 ? (
-                        <span className="text-accent">FREE</span>
-                      ) : (
-                        `Rs.${shipping}`
-                      )}
-                    </span>
-                  </div>
-                  <div className="border-t border-border pt-3 flex justify-between text-base">
+
+                  <div className="flex justify-between py-3 mt-2 border-t border-border">
                     <span className="font-semibold">Total</span>
-                    <span className="font-bold text-primary">Rs.{total.toLocaleString()}</span>
+                    <span className="text-lg font-bold text-primary">Rs.{total.toLocaleString()}</span>
                   </div>
-                </div>
-                
-                <Button 
-                  className="w-full mt-6 bg-primary hover:bg-primary/90"
-                  onClick={() => navigate("/checkout")}
-                >
-                  Proceed to Checkout
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                
-                <Link to="/products">
-                  <Button variant="outline" className="w-full mt-3">
-                    Continue Shopping
+                  
+                  <Button 
+                    className="w-full h-10 font-semibold"
+                    onClick={() => navigate("/checkout")}
+                  >
+                    Proceed to Checkout
                   </Button>
-                </Link>
+                  
+                  <Link to="/products" className="block mt-2">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Continue Shopping
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-      
+          )}
+        </div>
+        
         <Footer />
       </div>
     </PullToRefresh>
