@@ -461,77 +461,148 @@ const Navbar = () => {
           </div>
         </div>
 
+        {/* Mobile Menu Overlay */}
+        <div 
+          className={`md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+            isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setIsMenuOpen(false)}
+        />
+        
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background animate-fade-in max-h-[75vh] overflow-y-auto">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex flex-col gap-1">
-                {navLinks.map((link) => (
+        <div 
+          className={`md:hidden fixed top-0 right-0 h-full w-[85%] max-w-sm bg-background border-l border-border shadow-2xl z-50 transform transition-transform duration-300 ease-out ${
+            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="Logo" className="h-10 w-11 object-contain" />
+                <div>
+                  <h2 className="font-heading font-bold text-lg text-foreground">Menu</h2>
+                  <p className="text-xs text-muted-foreground">World Spilt Centre</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto py-4 px-3">
+              {/* Main Navigation */}
+              <div className="space-y-1">
+                {navLinks.map((link, index) => (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`py-3.5 px-4 rounded-xl transition-all flex items-center min-h-[48px] ${
+                    className={`py-3.5 px-4 rounded-xl transition-all duration-200 flex items-center gap-3 min-h-[52px] group ${
                       link.highlight 
-                        ? "text-primary font-medium bg-primary/5" 
-                        : "text-foreground hover:bg-secondary active:bg-secondary/80"
+                        ? "text-primary font-semibold bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20" 
+                        : "text-foreground hover:bg-primary/5 hover:text-primary"
                     }`}
                     onClick={() => setIsMenuOpen(false)}
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    {link.name}
-                    {link.highlight && <span className="ml-2 w-2 h-2 bg-destructive rounded-full animate-pulse" />}
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                      link.highlight ? 'bg-primary/20' : 'bg-secondary group-hover:bg-primary/10'
+                    }`}>
+                      {link.highlight ? (
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      )}
+                    </div>
+                    <span className="flex-1">{link.name}</span>
+                    {link.highlight && (
+                      <span className="w-2.5 h-2.5 bg-destructive rounded-full animate-pulse shadow-lg shadow-destructive/30" />
+                    )}
                   </Link>
                 ))}
                 
                 <Link
                   to="/products"
-                  className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center min-h-[48px]"
+                  className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-all duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  All Products
+                  <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                    <ShoppingCart className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <span>All Products</span>
                 </Link>
                 
+                <Link
+                  to="/contact"
+                  className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-all duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                    <Phone className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <span>Contact Us</span>
+                </Link>
+              </div>
+              
+              {/* User Section */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">Account</p>
+                
                 {user ? (
-                  <>
+                  <div className="space-y-1 mt-2">
                     <Link
                       to="/profile"
-                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center gap-3 min-h-[48px]"
+                      className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-all duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                        <User className="h-4 w-4 text-muted-foreground" />
+                      <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                        <User className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
-                      My Profile
+                      <span>My Profile</span>
                     </Link>
                     <Link
                       to="/orders"
-                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center gap-3 min-h-[48px]"
+                      className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-all duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                      <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
-                      Orders
+                      <span>My Orders</span>
                     </Link>
                     <Link
                       to="/wishlist"
-                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center gap-3 min-h-[48px]"
+                      className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-all duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                        <Heart className="h-4 w-4 text-muted-foreground" />
+                      <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                        <Heart className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                       </div>
-                      Wishlist
+                      <div className="flex-1 flex items-center justify-between">
+                        <span>Wishlist</span>
+                        {wishlistItems.length > 0 && (
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
+                            {wishlistItems.length}
+                          </Badge>
+                        )}
+                      </div>
                     </Link>
                     {isAdmin && (
                       <Link
                         to="/admin"
-                        className="py-3.5 px-4 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-xl flex items-center gap-3 min-h-[48px] font-medium"
+                        className="py-3.5 px-4 text-primary bg-gradient-to-r from-primary/10 to-transparent hover:from-primary/15 rounded-xl flex items-center gap-3 min-h-[52px] font-semibold transition-all duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
                           <Shield className="h-4 w-4 text-primary" />
                         </div>
-                        Admin Panel
+                        <span>Admin Panel</span>
                       </Link>
                     )}
                     <button
@@ -539,69 +610,70 @@ const Navbar = () => {
                         handleSignOut();
                         setIsMenuOpen(false);
                       }}
-                      className="py-3.5 px-4 text-left text-destructive hover:bg-destructive/10 active:bg-destructive/20 rounded-xl flex items-center gap-3 min-h-[48px] w-full"
+                      className="w-full py-3.5 px-4 text-left text-destructive hover:bg-destructive/5 rounded-xl flex items-center gap-3 min-h-[52px] transition-all duration-200"
                     >
-                      <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center">
                         <LogOut className="h-4 w-4 text-destructive" />
                       </div>
-                      Sign Out
+                      <span>Sign Out</span>
                     </button>
-                  </>
+                  </div>
                 ) : (
                   <Link
                     to="/auth"
-                    className="py-3.5 px-4 text-primary font-medium bg-primary/5 hover:bg-primary/10 active:bg-primary/20 rounded-xl flex items-center gap-3 min-h-[48px]"
+                    className="mt-2 py-3.5 px-4 text-primary font-semibold bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:from-primary/15 rounded-xl flex items-center gap-3 min-h-[52px] transition-all duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
                       <User className="h-4 w-4 text-primary" />
                     </div>
-                    Login / Register
+                    <span>Login / Register</span>
                   </Link>
                 )}
-                
-                <div className="border-t border-border my-3 pt-4">
-                  <p className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">Categories</p>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {categories.map((cat) => (
-                      <Link
-                        key={cat.id}
-                        to={`/products?category=${encodeURIComponent(cat.name)}`}
-                        className="py-3 px-3 text-sm text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl transition-all flex items-center gap-2.5 min-h-[44px] border border-border/50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {cat.image_url ? (
-                          <img src={cat.image_url} alt={cat.name} className="w-7 h-7 rounded-lg object-cover" />
-                        ) : (
-                          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
-                          </div>
-                        )}
-                        <span className="truncate text-sm">{cat.name}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Contact Info */}
-                <div className="border-t border-border mt-2 pt-4">
-                  <a 
-                    href="tel:0300-4649141" 
-                    className="py-4 px-4 text-foreground bg-primary/5 hover:bg-primary/10 rounded-xl flex items-center gap-4"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Phone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-medium">Need Help? Call Us</p>
-                      <p className="font-bold text-foreground">0300-4649141</p>
-                    </div>
-                  </a>
+              </div>
+              
+              {/* Categories Grid */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">Shop by Category</p>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {categories.map((cat) => (
+                    <Link
+                      key={cat.id}
+                      to={`/products?category=${encodeURIComponent(cat.name)}`}
+                      className="py-3 px-3 text-sm text-foreground hover:bg-primary/5 hover:text-primary hover:border-primary/30 rounded-xl transition-all duration-200 flex items-center gap-2.5 min-h-[48px] border border-border/50 group"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {cat.image_url ? (
+                        <img src={cat.image_url} alt={cat.name} className="w-8 h-8 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center group-hover:from-primary/30 transition-colors">
+                          <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <span className="truncate text-sm font-medium">{cat.name}</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
+            
+            {/* Footer - Contact */}
+            <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-transparent">
+              <a 
+                href="tel:0300-4649141" 
+                className="py-4 px-4 text-foreground bg-background hover:bg-primary/5 rounded-xl flex items-center gap-4 border border-border/50 hover:border-primary/30 transition-all duration-200 shadow-sm"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                  <Phone className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Need Help?</p>
+                  <p className="font-bold text-foreground text-lg">0300-4649141</p>
+                </div>
+              </a>
+            </div>
           </div>
-        )}
+        </div>
       </nav>
     </header>
   );
