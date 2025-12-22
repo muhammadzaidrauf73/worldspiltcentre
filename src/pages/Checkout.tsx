@@ -124,12 +124,19 @@ const Checkout = () => {
     return sum + (Number(item.products?.price) || 0) * item.quantity;
   }, 0);
 
+  // Check if ALL products in cart qualify for free delivery
+  const allProductsQualifyForFreeDelivery = cartItems.length > 0 && cartItems.every(
+    item => item.products?.is_free_delivery === true
+  );
+
   const selectedShippingOption = shippingOptions.find(s => s.id === selectedShipping);
-  const shippingCost = selectedShippingOption 
-    ? (selectedShippingOption.free_shipping_threshold && subtotal >= selectedShippingOption.free_shipping_threshold 
-        ? 0 
-        : Number(selectedShippingOption.price))
-    : 0;
+  const shippingCost = allProductsQualifyForFreeDelivery 
+    ? 0 
+    : selectedShippingOption 
+      ? (selectedShippingOption.free_shipping_threshold && subtotal >= selectedShippingOption.free_shipping_threshold 
+          ? 0 
+          : Number(selectedShippingOption.price))
+      : 0;
 
   // Calculate discount
   const calculateDiscount = () => {
@@ -471,51 +478,64 @@ const Checkout = () => {
                   <Truck className="h-5 w-5 text-primary" />
                   Shipping Method
                 </h2>
-                <RadioGroup 
-                  value={selectedShipping} 
-                  onValueChange={setSelectedShipping}
-                  className="space-y-3"
-                >
-                  {shippingOptions.map((option) => {
-                    const isFree = option.free_shipping_threshold && subtotal >= option.free_shipping_threshold;
-                    return (
-                      <div
-                        key={option.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
-                          selectedShipping === option.id 
-                            ? "border-primary bg-primary/5" 
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedShipping(option.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <RadioGroupItem value={option.id} id={option.id} />
-                          <div>
-                            <Label htmlFor={option.id} className="font-medium cursor-pointer">
-                              {option.name}
-                            </Label>
-                            <p className="text-sm text-muted-foreground">
-                              {option.description}
-                              {option.estimated_days && ` • ${option.estimated_days}`}
-                            </p>
+                
+                {allProductsQualifyForFreeDelivery ? (
+                  <div className="flex items-center gap-3 p-4 rounded-lg border border-accent bg-accent/10">
+                    <CheckCircle className="h-5 w-5 text-accent" />
+                    <div>
+                      <p className="font-medium text-accent">Free Delivery</p>
+                      <p className="text-sm text-muted-foreground">
+                        All products in your cart qualify for free delivery
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <RadioGroup 
+                    value={selectedShipping} 
+                    onValueChange={setSelectedShipping}
+                    className="space-y-3"
+                  >
+                    {shippingOptions.map((option) => {
+                      const isFree = option.free_shipping_threshold && subtotal >= option.free_shipping_threshold;
+                      return (
+                        <div
+                          key={option.id}
+                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
+                            selectedShipping === option.id 
+                              ? "border-primary bg-primary/5" 
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedShipping(option.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <RadioGroupItem value={option.id} id={option.id} />
+                            <div>
+                              <Label htmlFor={option.id} className="font-medium cursor-pointer">
+                                {option.name}
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                {option.description}
+                                {option.estimated_days && ` • ${option.estimated_days}`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {isFree ? (
+                              <span className="text-accent font-semibold">FREE</span>
+                            ) : (
+                              <span className="font-semibold">Rs.{Number(option.price).toLocaleString()}</span>
+                            )}
+                            {option.free_shipping_threshold && !isFree && (
+                              <p className="text-xs text-muted-foreground">
+                                Free over Rs.{Number(option.free_shipping_threshold).toLocaleString()}
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          {isFree ? (
-                            <span className="text-accent font-semibold">FREE</span>
-                          ) : (
-                            <span className="font-semibold">Rs.{Number(option.price).toLocaleString()}</span>
-                          )}
-                          {option.free_shipping_threshold && !isFree && (
-                            <p className="text-xs text-muted-foreground">
-                              Free over Rs.{Number(option.free_shipping_threshold).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
+                      );
+                    })}
+                  </RadioGroup>
+                )}
               </div>
 
               {/* Payment - COD Only */}
@@ -638,7 +658,9 @@ const Checkout = () => {
                   )}
                   
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
+                    <span className="text-muted-foreground">
+                      {allProductsQualifyForFreeDelivery ? "Free Delivery" : "Shipping"}
+                    </span>
                     <span className="font-medium">
                       {shippingCost === 0 ? (
                         <span className="text-accent">FREE</span>
