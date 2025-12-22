@@ -250,35 +250,116 @@ const Products = () => {
     </div>
   );
 
+  // Get brand product counts
+  const brandProductCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach(product => {
+      if (product.brand) {
+        counts[product.brand] = (counts[product.brand] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [products]);
+
+
   // Brand Filter Component with Checkboxes
   const BrandFilter = ({ onSelect }: { onSelect?: () => void }) => (
     <div className="mb-6">
       <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Brand</h3>
-      <ScrollArea className="h-64">
-        <div className="space-y-2 pr-3">
-          {brands.map((brand: any) => (
-            <div 
-              key={brand.id} 
-              className="flex items-center gap-3 cursor-pointer hover:text-primary transition-colors"
-              onClick={() => {
-                toggleBrand(brand.name);
-                onSelect?.();
-              }}
-            >
-              <Checkbox 
-                checked={selectedBrands.includes(brand.name)}
-                onCheckedChange={() => toggleBrand(brand.name)}
-                className="h-4 w-4"
-              />
-              <span className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                {brand.name}
-              </span>
-            </div>
-          ))}
+      <ScrollArea className="h-56">
+        <div className="space-y-1 pr-3">
+          {brands.map((brand: any) => {
+            const count = brandProductCounts[brand.name] || 0;
+            return (
+              <div 
+                key={brand.id} 
+                className={`flex items-center gap-3 cursor-pointer hover:bg-secondary/50 transition-colors rounded-md px-2 py-1.5 ${
+                  selectedBrands.includes(brand.name) ? "bg-primary/10" : ""
+                }`}
+                onClick={() => {
+                  toggleBrand(brand.name);
+                  onSelect?.();
+                }}
+              >
+                <Checkbox 
+                  checked={selectedBrands.includes(brand.name)}
+                  onCheckedChange={() => toggleBrand(brand.name)}
+                  className="h-4 w-4"
+                />
+                <span className={`text-sm flex-1 truncate ${
+                  selectedBrands.includes(brand.name) ? "text-primary font-medium" : "text-muted-foreground"
+                }`}>
+                  {brand.name}
+                </span>
+                {count > 0 && (
+                  <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-full">
+                    {count}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
     </div>
   );
+
+  // Category Filter Component
+  const CategoryFilter = ({ onSelect }: { onSelect?: () => void }) => {
+    // Calculate total products from categories
+    const totalProducts = categories.reduce((sum, cat) => sum + (cat.product_count || 0), 0);
+    
+    return (
+      <div className="mb-6">
+        <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Categories</h3>
+        <ScrollArea className="h-52">
+          <div className="space-y-1 pr-3">
+            <button
+              onClick={() => { 
+                setSelectedCategory(""); 
+                onSelect?.();
+              }}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all flex items-center justify-between ${
+                !selectedCategory 
+                  ? "bg-primary text-primary-foreground font-medium" 
+                  : "hover:bg-secondary text-muted-foreground"
+              }`}
+            >
+              <span>All Categories</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                !selectedCategory ? "bg-primary-foreground/20" : "bg-secondary"
+              }`}>
+                {totalProducts}
+              </span>
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => { 
+                  setSelectedCategory(cat.slug); 
+                  onSelect?.();
+                }}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all flex items-center justify-between ${
+                  selectedCategory === cat.slug 
+                    ? "bg-primary text-primary-foreground font-medium" 
+                    : "hover:bg-secondary text-muted-foreground"
+                }`}
+              >
+                <span className="truncate pr-2">{cat.name}</span>
+                {(cat.product_count || 0) > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
+                    selectedCategory === cat.slug ? "bg-primary-foreground/20" : "bg-secondary"
+                  }`}>
+                    {cat.product_count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  };
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -342,36 +423,13 @@ const Products = () => {
                     <PriceFilter />
 
                     {/* Categories */}
-                    <div className="mb-6">
-                      <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Categories</h3>
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => { setSelectedCategory(""); setFiltersOpen(false); }}
-                          className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                            !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
-                          }`}
-                        >
-                          All Categories
-                        </button>
-                        {categories.map((cat) => (
-                          <button
-                            key={cat.id}
-                            onClick={() => { setSelectedCategory(cat.slug); setFiltersOpen(false); }}
-                            className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                              selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
-                            }`}
-                          >
-                            {cat.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    <CategoryFilter onSelect={() => setFiltersOpen(false)} />
 
                     {/* Free Delivery Filter */}
                     <FreeDeliveryFilter onSelect={() => setFiltersOpen(false)} />
 
                     {/* Brands */}
-                    {brands.length > 0 && <BrandFilter />}
+                    {brands.length > 0 && <BrandFilter onSelect={() => setFiltersOpen(false)} />}
                   </div>
                 </ScrollArea>
               </SheetContent>
@@ -410,32 +468,7 @@ const Products = () => {
               <PriceFilter />
 
               {/* Categories */}
-              <div className="mb-6">
-                <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Categories</h3>
-                <ScrollArea className="h-48">
-                  <div className="space-y-1 pr-3">
-                    <button
-                      onClick={() => setSelectedCategory("")}
-                      className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                        !selectedCategory ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
-                      }`}
-                    >
-                      All Categories
-                    </button>
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.slug)}
-                        className={`w-full text-left px-2 py-1.5 rounded text-sm transition-smooth ${
-                          selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-muted-foreground"
-                        }`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
+              <CategoryFilter />
 
               {/* Free Delivery Filter */}
               <FreeDeliveryFilter />
