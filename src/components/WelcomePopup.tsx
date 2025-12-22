@@ -5,13 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 const emailSchema = z.string().trim().email({ message: "Please enter a valid email" }).max(255);
 
 const POPUP_STORAGE_KEY = "wsc_welcome_popup_shown";
-const POPUP_DELAY_MS = 3000; // Show after 3 seconds
-const POPUP_COOLDOWN_DAYS = 7; // Don't show again for 7 days
 
 const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,7 +18,41 @@ const WelcomePopup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  // Fetch popup settings
+  const { data: settings } = useQuery({
+    queryKey: ['welcome-popup-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('key, value')
+        .in('key', [
+          'welcome_popup_enabled',
+          'welcome_popup_title',
+          'welcome_popup_subtitle',
+          'welcome_popup_discount',
+          'welcome_popup_description',
+          'welcome_popup_delay',
+          'welcome_popup_cooldown'
+        ]);
+      if (error) throw error;
+      return data?.reduce((acc, item) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {} as Record<string, string | null>) || {};
+    },
+  });
+
+  const isEnabled = settings?.welcome_popup_enabled !== 'false';
+  const title = settings?.welcome_popup_title || 'Get 10% OFF';
+  const subtitle = settings?.welcome_popup_subtitle || 'Your First Order';
+  const discount = settings?.welcome_popup_discount || '10';
+  const description = settings?.welcome_popup_description || 'Subscribe to our newsletter and receive an exclusive discount code plus early access to deals!';
+  const delaySeconds = parseInt(settings?.welcome_popup_delay || '3', 10);
+  const cooldownDays = parseInt(settings?.welcome_popup_cooldown || '7', 10);
+
   useEffect(() => {
+    if (!isEnabled) return;
+
     const checkAndShowPopup = () => {
       const lastShown = localStorage.getItem(POPUP_STORAGE_KEY);
       
@@ -27,7 +60,7 @@ const WelcomePopup = () => {
         const lastShownDate = new Date(parseInt(lastShown));
         const daysSinceShown = (Date.now() - lastShownDate.getTime()) / (1000 * 60 * 60 * 24);
         
-        if (daysSinceShown < POPUP_COOLDOWN_DAYS) {
+        if (daysSinceShown < cooldownDays) {
           return; // Don't show popup yet
         }
       }
@@ -35,13 +68,14 @@ const WelcomePopup = () => {
       // Show popup after delay
       const timer = setTimeout(() => {
         setIsOpen(true);
-      }, POPUP_DELAY_MS);
+      }, delaySeconds * 1000);
 
       return () => clearTimeout(timer);
     };
 
-    checkAndShowPopup();
-  }, []);
+    const cleanup = checkAndShowPopup();
+    return cleanup;
+  }, [isEnabled, delaySeconds, cooldownDays]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -83,13 +117,15 @@ const WelcomePopup = () => {
     } else {
       toast({
         title: "Welcome! 🎉",
-        description: "You've been subscribed! Check your email for your discount code.",
+        description: `You've been subscribed! Your ${discount}% discount code has been sent to your email.`,
       });
       handleClose();
     }
 
     setIsSubmitting(false);
   };
+
+  if (!isEnabled) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -129,13 +165,13 @@ const WelcomePopup = () => {
 
             {/* Heading */}
             <h2 className="text-3xl sm:text-4xl font-heading font-bold text-white mb-2">
-              Get <span className="text-yellow-300">10% OFF</span>
+              {title}
             </h2>
             <p className="text-white/90 text-lg mb-2">
-              Your First Order
+              {subtitle}
             </p>
             <p className="text-white/70 text-sm mb-6 max-w-xs mx-auto">
-              Subscribe to our newsletter and receive an exclusive discount code plus early access to deals!
+              {description}
             </p>
 
             {/* Form */}
@@ -160,7 +196,7 @@ const WelcomePopup = () => {
                   "Subscribing..."
                 ) : (
                   <>
-                    Claim My Discount
+                    Claim My {discount}% Discount
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </>
                 )}

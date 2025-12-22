@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, Building2, Phone, Globe, FileText, Bell } from "lucide-react";
+import { Save, Building2, Phone, Globe, FileText, Bell, Gift } from "lucide-react";
 
 interface CompanySetting {
   id: string;
@@ -87,11 +87,15 @@ const AdminCompanySettings = () => {
   };
 
   const isTextArea = (key: string) => {
-    return ["about_us", "terms_conditions", "privacy_policy", "return_policy", "address"].includes(key);
+    return ["about_us", "terms_conditions", "privacy_policy", "return_policy", "address", "welcome_popup_description"].includes(key);
   };
 
   const isAnnouncementSetting = (key: string) => {
     return key.startsWith("announcement_");
+  };
+
+  const isPopupSetting = (key: string) => {
+    return key.startsWith("welcome_popup_");
   };
 
   const isColorSetting = (key: string) => {
@@ -126,10 +130,14 @@ const AdminCompanySettings = () => {
         </div>
 
         <Tabs defaultValue="general" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               General
+            </TabsTrigger>
+            <TabsTrigger value="marketing" className="flex items-center gap-2">
+              <Gift className="h-4 w-4" />
+              Marketing
             </TabsTrigger>
             <TabsTrigger value="contact" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
@@ -137,7 +145,7 @@ const AdminCompanySettings = () => {
             </TabsTrigger>
             <TabsTrigger value="social" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
-              Social Links
+              Social
             </TabsTrigger>
             <TabsTrigger value="pages" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -252,6 +260,123 @@ const AdminCompanySettings = () => {
                     />
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="marketing" className="space-y-4">
+            {/* Welcome Popup Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Gift className="h-5 w-5" />
+                  Welcome Popup
+                </CardTitle>
+                <CardDescription>Configure the promotional popup for first-time visitors</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Welcome Popup</Label>
+                    <p className="text-sm text-muted-foreground">Show the popup to first-time visitors</p>
+                  </div>
+                  <Switch
+                    checked={getValueByKey("welcome_popup_enabled") === "true"}
+                    onCheckedChange={(checked) => handleChange("welcome_popup_enabled", checked ? "true" : "false")}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="welcome_popup_title">Popup Title</Label>
+                    <Input
+                      id="welcome_popup_title"
+                      value={getValueByKey("welcome_popup_title")}
+                      onChange={(e) => handleChange("welcome_popup_title", e.target.value)}
+                      placeholder="Get 10% OFF"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="welcome_popup_subtitle">Subtitle</Label>
+                    <Input
+                      id="welcome_popup_subtitle"
+                      value={getValueByKey("welcome_popup_subtitle")}
+                      onChange={(e) => handleChange("welcome_popup_subtitle", e.target.value)}
+                      placeholder="Your First Order"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="welcome_popup_description">Description</Label>
+                  <Textarea
+                    id="welcome_popup_description"
+                    value={getValueByKey("welcome_popup_description")}
+                    onChange={(e) => handleChange("welcome_popup_description", e.target.value)}
+                    placeholder="Subscribe to our newsletter and receive an exclusive discount code..."
+                    rows={2}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="welcome_popup_discount">Discount %</Label>
+                    <Input
+                      id="welcome_popup_discount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={getValueByKey("welcome_popup_discount")}
+                      onChange={(e) => handleChange("welcome_popup_discount", e.target.value)}
+                      placeholder="10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="welcome_popup_delay">Delay (seconds)</Label>
+                    <Input
+                      id="welcome_popup_delay"
+                      type="number"
+                      min="0"
+                      max="60"
+                      value={getValueByKey("welcome_popup_delay")}
+                      onChange={(e) => handleChange("welcome_popup_delay", e.target.value)}
+                      placeholder="3"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="welcome_popup_cooldown">Cooldown (days)</Label>
+                    <Input
+                      id="welcome_popup_cooldown"
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={getValueByKey("welcome_popup_cooldown")}
+                      onChange={(e) => handleChange("welcome_popup_cooldown", e.target.value)}
+                      placeholder="7"
+                    />
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="space-y-2">
+                  <Label>Preview</Label>
+                  <div className="bg-primary rounded-xl p-6 text-center relative overflow-hidden">
+                    <div className="absolute top-2 left-2 w-12 h-12 bg-white/10 rounded-full blur-xl" />
+                    <div className="relative">
+                      <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-3 py-1 mb-2">
+                        <span className="text-yellow-300 text-xs">✨</span>
+                        <span className="text-white font-bold text-xs">EXCLUSIVE OFFER</span>
+                        <span className="text-yellow-300 text-xs">✨</span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-1">
+                        {getValueByKey("welcome_popup_title") || "Get 10% OFF"}
+                      </h3>
+                      <p className="text-white/90">
+                        {getValueByKey("welcome_popup_subtitle") || "Your First Order"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
