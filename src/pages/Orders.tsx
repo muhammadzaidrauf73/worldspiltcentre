@@ -23,7 +23,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Package, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download, ChevronDown, Clock, ArrowLeft } from "lucide-react";
+import { Package, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download, ChevronDown, Clock, ArrowLeft, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 
 interface OrderItem {
@@ -52,6 +52,7 @@ const Orders = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [downloadingInvoice, setDownloadingInvoice] = useState<string | null>(null);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -177,6 +178,64 @@ const Orders = () => {
 
   const getCancellationStatus = (orderId: string) => {
     return cancellationRequests.find((req: any) => req.order_id === orderId);
+  };
+
+  const handleReorder = async (orderId: string, items: OrderItem[]) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Please sign in",
+        description: "You need to be signed in to reorder.",
+      });
+      return;
+    }
+
+    setReorderingId(orderId);
+    try {
+      // Add each item to cart
+      for (const item of items) {
+        // Check if item already in cart
+        const { data: existingItem } = await supabase
+          .from("cart_items")
+          .select("id, quantity")
+          .eq("user_id", user.id)
+          .eq("product_id", item.product_id)
+          .maybeSingle();
+
+        if (existingItem) {
+          // Update quantity
+          await supabase
+            .from("cart_items")
+            .update({ quantity: existingItem.quantity + item.quantity })
+            .eq("id", existingItem.id);
+        } else {
+          // Insert new item
+          await supabase
+            .from("cart_items")
+            .insert({
+              user_id: user.id,
+              product_id: item.product_id,
+              quantity: item.quantity,
+            });
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      toast({
+        title: "Items added to cart",
+        description: `${items.length} item(s) from this order have been added to your cart.`,
+      });
+      navigate("/cart");
+    } catch (error) {
+      console.error("Error reordering:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add items to cart. Please try again.",
+      });
+    } finally {
+      setReorderingId(null);
+    }
   };
 
   const handleRefresh = async () => {
@@ -387,43 +446,62 @@ const Orders = () => {
                           </Collapsible>
                         </div>
 
-                        {/* Cancel Order Button */}
-                        {(order.status === "pending" || order.status === "processing") && (
-                          <div className="mt-4 pt-4 border-t border-border">
-                            {(() => {
-                              const cancelRequest = getCancellationStatus(order.id);
-                              if (cancelRequest) {
+                        {/* Order Actions */}
+                        <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-3">
+                          {/* Re-order Button */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReorder(order.id, items)}
+                            disabled={reorderingId === order.id}
+                            className="gap-2"
+                          >
+                            {reorderingId === order.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RotateCcw className="h-4 w-4" />
+                            )}
+                            Re-order
+                          </Button>
+
+                          {/* Cancel Order Button */}
+                          {(order.status === "pending" || order.status === "processing") && (
+                            <>
+                              {(() => {
+                                const cancelRequest = getCancellationStatus(order.id);
+                                if (cancelRequest) {
+                                  return (
+                                    <div className={`flex-1 p-3 rounded-lg text-sm ${
+                                      cancelRequest.status === 'pending' 
+                                        ? 'bg-yellow-500/10 text-yellow-700 border border-yellow-500/20'
+                                        : cancelRequest.status === 'approved'
+                                        ? 'bg-green-500/10 text-green-700 border border-green-500/20'
+                                        : 'bg-red-500/10 text-red-700 border border-red-500/20'
+                                    }`}>
+                                      <p className="font-medium">
+                                        Cancellation {cancelRequest.status === 'pending' ? 'Requested' : cancelRequest.status.charAt(0).toUpperCase() + cancelRequest.status.slice(1)}
+                                      </p>
+                                      {cancelRequest.admin_notes && (
+                                        <p className="mt-1 text-xs opacity-80">{cancelRequest.admin_notes}</p>
+                                      )}
+                                    </div>
+                                  );
+                                }
                                 return (
-                                  <div className={`p-3 rounded-lg text-sm ${
-                                    cancelRequest.status === 'pending' 
-                                      ? 'bg-yellow-500/10 text-yellow-700 border border-yellow-500/20'
-                                      : cancelRequest.status === 'approved'
-                                      ? 'bg-green-500/10 text-green-700 border border-green-500/20'
-                                      : 'bg-red-500/10 text-red-700 border border-red-500/20'
-                                  }`}>
-                                    <p className="font-medium">
-                                      Cancellation {cancelRequest.status === 'pending' ? 'Requested' : cancelRequest.status.charAt(0).toUpperCase() + cancelRequest.status.slice(1)}
-                                    </p>
-                                    {cancelRequest.admin_notes && (
-                                      <p className="mt-1 text-xs opacity-80">{cancelRequest.admin_notes}</p>
-                                    )}
-                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive/50 hover:bg-destructive/10"
+                                    onClick={() => handleCancelRequest(order.id)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Request Cancellation
+                                  </Button>
                                 );
-                              }
-                              return (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-destructive border-destructive/50 hover:bg-destructive/10"
-                                  onClick={() => handleCancelRequest(order.id)}
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Request Cancellation
-                                </Button>
-                              );
-                            })()}
-                          </div>
-                        )}
+                              })()}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
