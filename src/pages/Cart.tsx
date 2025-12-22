@@ -304,6 +304,43 @@ const Cart = () => {
               <div className="bg-card rounded-lg border border-border p-6 sticky top-24">
                 <h2 className="font-semibold text-foreground mb-4">Order Summary</h2>
                 
+                {/* Free Delivery Progress Indicator */}
+                {!anyProductQualifiesForFreeDelivery && subtotal < 10000 && (
+                  <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border border-emerald-200/50 dark:border-emerald-800/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Truck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                        Free Delivery Progress
+                      </span>
+                    </div>
+                    <div className="relative h-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full overflow-hidden mb-2">
+                      <div 
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((subtotal / 10000) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-emerald-600/80 dark:text-emerald-400/70">
+                      Add <span className="font-bold text-emerald-700 dark:text-emerald-300">Rs.{(10000 - subtotal).toLocaleString()}</span> more for free shipping
+                      <br />
+                      <span className="text-muted-foreground">or add a product with free delivery</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Unlocked Free Delivery Message */}
+                {(anyProductQualifiesForFreeDelivery || subtotal >= 10000) && (
+                  <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/40 dark:to-green-900/40 border border-emerald-300/50 dark:border-emerald-700/30">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <Truck className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                        ✓ Free Delivery Unlocked!
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
@@ -319,11 +356,6 @@ const Cart = () => {
                       )}
                     </span>
                   </div>
-                  {shipping > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Free shipping on orders over Rs.10,000
-                    </p>
-                  )}
                   <div className="border-t border-border pt-3 flex justify-between text-base">
                     <span className="font-semibold">Total</span>
                     <span className="font-bold text-primary">Rs.{total.toLocaleString()}</span>
