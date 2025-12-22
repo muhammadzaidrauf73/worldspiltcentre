@@ -319,7 +319,7 @@ const ProductCard = memo(({
           </div>
         )}
 
-        {/* Action Buttons - Add to Cart + Shop Now */}
+        {/* Action Buttons - Add to Cart + Buy Now */}
         {price > 0 ? (
           <div className="grid grid-cols-2 gap-1.5 mt-2 sm:mt-3">
             <Button 
@@ -327,27 +327,27 @@ const ProductCard = memo(({
               size="sm"
               onClick={handleAddToCart}
               disabled={isAddingOnly || isAddingToCart}
-              className="h-9 text-[10px] sm:text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-2"
+              className="h-9 text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-2"
             >
               {isAddingOnly ? (
-                <div className="h-3 w-3 mr-1 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
+                <div className="h-3.5 w-3.5 mr-1 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
               ) : (
-                <ShoppingCart className="h-3 w-3 mr-1 flex-shrink-0" />
+                <ShoppingCart className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
               )}
-              <span className="truncate">{isAddingOnly ? "Adding" : "Add to Cart"}</span>
+              {isAddingOnly ? "Adding" : "Cart"}
             </Button>
             <Button 
               size="sm"
               onClick={handleShopNow}
               disabled={isAddingToCart || isAddingOnly}
-              className="h-9 text-[10px] sm:text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-2"
+              className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-2"
             >
               {isAddingToCart ? (
-                <div className="h-3 w-3 mr-1 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin flex-shrink-0" />
+                <div className="h-3.5 w-3.5 mr-1 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin flex-shrink-0" />
               ) : (
-                <ShoppingBag className="h-3 w-3 mr-1 flex-shrink-0" />
+                <ShoppingBag className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
               )}
-              <span className="truncate">{isAddingToCart ? "..." : "Shop Now"}</span>
+              {isAddingToCart ? "..." : "Buy Now"}
             </Button>
           </div>
         ) : (
