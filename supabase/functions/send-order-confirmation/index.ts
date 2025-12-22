@@ -26,6 +26,8 @@ interface OrderConfirmationRequest {
     code: string;
     discount: number;
   } | null;
+  isGuestOrder?: boolean;
+  siteUrl?: string;
 }
 
 function generateInvoicePDF(data: OrderConfirmationRequest): string {
@@ -166,14 +168,20 @@ const handler = async (req: Request): Promise<Response> => {
     const body = await req.json();
     console.log("Request body received:", JSON.stringify(body));
     
-    const { customerEmail, customerName, customerPhone, orderId, items, total, shippingAddress, coupon }: OrderConfirmationRequest = body;
+    const { customerEmail, customerName, customerPhone, orderId, items, total, shippingAddress, coupon, isGuestOrder, siteUrl }: OrderConfirmationRequest = body;
 
     if (!customerEmail || !orderId) {
       console.error("Missing required fields:", { customerEmail: !!customerEmail, orderId: !!orderId });
       throw new Error("Missing required fields: customerEmail or orderId");
     }
 
-    console.log(`Preparing email for: ${customerEmail}, Order: ${orderId}`);
+    console.log(`Preparing email for: ${customerEmail}, Order: ${orderId}, Guest: ${isGuestOrder}`);
+    
+    // Build tracking URL
+    const baseUrl = siteUrl || "https://worldspiltcentre.com";
+    const trackingUrl = isGuestOrder 
+      ? `${baseUrl}/order-tracking?orderId=${orderId}&email=${encodeURIComponent(customerEmail)}`
+      : `${baseUrl}/order-tracking?orderId=${orderId}`;
 
     // Generate PDF invoice
     console.log("Generating PDF invoice...");
@@ -290,6 +298,10 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="background-color: #e0f2fe; padding: 15px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #0ea5e9;">
               <p style="margin: 0; font-weight: bold; color: #0369a1; font-size: 14px;">📎 Invoice Attached</p>
               <p style="margin: 5px 0 0 0; color: #0284c7; font-size: 13px;">Your invoice PDF is attached to this email for your records.</p>
+            </div>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${trackingUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: bold; font-size: 14px;">Track Your Order</a>
             </div>
             
             <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 25px 0; border-left: 4px solid #f59e0b;">
