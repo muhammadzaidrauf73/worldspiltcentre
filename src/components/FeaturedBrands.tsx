@@ -102,9 +102,6 @@ const FeaturedBrands = memo(() => {
         {/* Orbital Container */}
         <div className="flex justify-center items-center">
           <div className="relative w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] md:w-[440px] md:h-[440px]">
-            
-            {/* Orbit Ring - static dashed circle aligned with brands */}
-            <div className="absolute inset-[18%] rounded-full border-2 border-dashed border-primary/30" />
 
             {/* Rotating brands container */}
             <div 
