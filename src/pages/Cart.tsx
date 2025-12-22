@@ -154,6 +154,17 @@ const Cart = () => {
     },
   });
 
+  // Calculate total flash deal savings
+  const flashDealSavings = cartItems.reduce((sum, item) => {
+    const flashDeal = activeFlashDeals.find(d => d.product_id === item.product_id);
+    if (flashDeal) {
+      const originalPrice = Number(flashDeal.original_price);
+      const dealPrice = Number(flashDeal.deal_price);
+      return sum + (originalPrice - dealPrice) * item.quantity;
+    }
+    return sum;
+  }, 0);
+
   const subtotal = cartItems.reduce((sum, item) => {
     return sum + getEffectivePrice(item) * item.quantity;
   }, 0);
@@ -357,6 +368,14 @@ const Cart = () => {
                       <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
                       <span>Rs.{subtotal.toLocaleString()}</span>
                     </div>
+                    {flashDealSavings > 0 && (
+                      <div className="flex justify-between text-deal">
+                        <span className="flex items-center gap-1">
+                          ⚡ Flash Deal Savings
+                        </span>
+                        <span className="font-medium">-Rs.{flashDealSavings.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
                       <span className={shipping === 0 ? 'text-accent font-medium' : ''}>

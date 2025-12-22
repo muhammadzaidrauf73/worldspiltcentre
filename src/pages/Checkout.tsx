@@ -82,6 +82,7 @@ const Checkout = () => {
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [saveNewAddress, setSaveNewAddress] = useState(false);
   const [newAddressLabel, setNewAddressLabel] = useState("Home");
+  const [isEditingReviewInfo, setIsEditingReviewInfo] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -281,6 +282,17 @@ const Checkout = () => {
       });
     }
   }, [storeLocations, locationChecked, requestLocation]);
+
+  // Calculate total flash deal savings
+  const flashDealSavings = cartItems.reduce((sum, item) => {
+    const flashDeal = activeFlashDeals.find(d => d.product_id === item.product_id);
+    if (flashDeal) {
+      const originalPrice = Number(flashDeal.original_price);
+      const dealPrice = Number(flashDeal.deal_price);
+      return sum + (originalPrice - dealPrice) * item.quantity;
+    }
+    return sum;
+  }, 0);
 
   const subtotal = cartItems.reduce((sum, item) => {
     return sum + getEffectivePrice(item) * item.quantity;
@@ -1115,29 +1127,75 @@ const Checkout = () => {
               {/* Step 3: Review */}
               {currentStep === 3 && (
                 <>
-                  {/* Delivery Info Summary */}
+                  {/* Delivery Info Summary - Editable */}
                   <div className="bg-card rounded p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-primary" />
-                        Delivery Address
+                        Delivery & Contact Info
                       </h2>
                       <Button 
                         type="button" 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => setCurrentStep(1)}
+                        onClick={() => setIsEditingReviewInfo(!isEditingReviewInfo)}
                         className="h-6 text-xs text-primary"
                       >
-                        Edit
+                        {isEditingReviewInfo ? "Done" : "Edit"}
                       </Button>
                     </div>
-                    <div className="text-sm space-y-1">
-                      <p className="font-medium">{formData.name}</p>
-                      <p className="text-muted-foreground">{formData.phone}</p>
-                      <p className="text-muted-foreground">{formData.email}</p>
-                      <p className="text-muted-foreground">{formData.address}</p>
-                    </div>
+                    
+                    {isEditingReviewInfo ? (
+                      <div className="space-y-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="review-name" className="text-xs text-muted-foreground">Full Name</Label>
+                            <Input
+                              id="review-name"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              className="h-9 text-sm mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="review-phone" className="text-xs text-muted-foreground">Phone</Label>
+                            <Input
+                              id="review-phone"
+                              value={formData.phone}
+                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              className="h-9 text-sm mt-1"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="review-email" className="text-xs text-muted-foreground">Email</Label>
+                          <Input
+                            id="review-email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className="h-9 text-sm mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="review-address" className="text-xs text-muted-foreground">Delivery Address</Label>
+                          <Textarea
+                            id="review-address"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            rows={2}
+                            className="text-sm resize-none mt-1"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm space-y-1">
+                        <p className="font-medium">{formData.name}</p>
+                        <p className="text-muted-foreground">{formData.phone}</p>
+                        <p className="text-muted-foreground">{formData.email}</p>
+                        <p className="text-muted-foreground">{formData.address}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Products Summary */}
@@ -1214,6 +1272,14 @@ const Checkout = () => {
                     <span className="text-muted-foreground">Subtotal ({cartItems.length} items)</span>
                     <span>Rs.{subtotal.toLocaleString()}</span>
                   </div>
+                  {flashDealSavings > 0 && (
+                    <div className="flex justify-between text-deal">
+                      <span className="flex items-center gap-1">
+                        ⚡ Flash Deal Savings
+                      </span>
+                      <span className="font-medium">-Rs.{flashDealSavings.toLocaleString()}</span>
+                    </div>
+                  )}
                   {appliedCoupon && discount > 0 && (
                     <div className="flex justify-between text-accent">
                       <span>Voucher Discount</span>
