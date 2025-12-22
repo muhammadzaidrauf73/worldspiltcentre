@@ -506,6 +506,15 @@ const Products = () => {
                     </button>
                   </span>
                 )}
+                {freeDeliveryOnly && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400 rounded-full text-sm">
+                    <Truck className="h-3 w-3" />
+                    Free Delivery
+                    <button onClick={() => setFreeDeliveryOnly(false)}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
               </div>
             )}
 
