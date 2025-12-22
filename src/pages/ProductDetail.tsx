@@ -290,13 +290,25 @@ const ProductDetail = () => {
             </Badge>
           )}
           
-          {/* Tap to fullscreen button */}
-          <button
-            onClick={() => setIsFullscreen(true)}
-            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-card/80 flex items-center justify-center"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </button>
+          {/* Top right buttons - Wishlist and Zoom */}
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
+            <button
+              onClick={() => id && toggleWishlist(id)}
+              disabled={isToggling}
+              className={cn(
+                "w-8 h-8 rounded-full bg-card/80 flex items-center justify-center",
+                inWishlist && "bg-primary/20"
+              )}
+            >
+              <Heart className={cn("h-4 w-4", inWishlist && "fill-primary text-primary")} />
+            </button>
+            <button
+              onClick={() => setIsFullscreen(true)}
+              className="w-8 h-8 rounded-full bg-card/80 flex items-center justify-center"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </button>
+          </div>
           
           <img
             src={images[selectedImage] || "/placeholder.svg"}
@@ -474,6 +486,19 @@ const ProductDetail = () => {
                   {discount}% OFF
                 </Badge>
               )}
+              
+              {/* Wishlist button - Desktop */}
+              <button
+                onClick={() => id && toggleWishlist(id)}
+                disabled={isToggling}
+                className={cn(
+                  "absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card transition-colors",
+                  inWishlist && "bg-primary/20"
+                )}
+              >
+                <Heart className={cn("h-5 w-5", inWishlist && "fill-primary text-primary")} />
+              </button>
+              
               <img
                 src={images[selectedImage] || "/placeholder.svg"}
                 alt={product.name}
@@ -659,14 +684,19 @@ const ProductDetail = () => {
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {addingToCart ? "Adding..." : "Add to Cart"}
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => id && toggleWishlist(id)}
-                disabled={isToggling}
-                className={cn(inWishlist && "bg-primary/10 border-primary text-primary")}
+              <Button
+                size="lg"
+                variant="secondary"
+                className="flex-1"
+                onClick={async () => {
+                  await handleAddToCart();
+                  if (user) {
+                    window.location.href = '/checkout';
+                  }
+                }}
+                disabled={addingToCart || product.stock_quantity === 0}
               >
-                <Heart className={cn("h-5 w-5", inWishlist && "fill-primary")} />
+                Buy Now
               </Button>
             </div>
 
