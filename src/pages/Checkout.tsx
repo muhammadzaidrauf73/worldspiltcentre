@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ const FREE_DELIVERY_RADIUS_KM = 5;
 
 const Checkout = () => {
   const { user, loading: authLoading } = useAuth();
+  const { cartItems: contextCartItems, isLoading: cartLoading, clearCart } = useCart();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { latitude, longitude, loading: locationLoading, error: locationError, requestLocation } = useGeolocation();
@@ -87,6 +89,9 @@ const Checkout = () => {
   const [isGuestCheckout, setIsGuestCheckout] = useState(false);
   const [expressCheckoutReady, setExpressCheckoutReady] = useState(false);
 
+  // Use cart items from context
+  const cartItems = contextCartItems;
+
   // Guest checkout allowed - no redirect
   useEffect(() => {
     if (!authLoading && !user) {
@@ -94,21 +99,6 @@ const Checkout = () => {
       setUseNewAddress(true);
     }
   }, [user, authLoading]);
-
-  // Fetch cart items
-  const { data: cartItems = [], isLoading: cartLoading } = useQuery({
-    queryKey: ["cart", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*, products(*)")
-        .eq("user_id", user.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
 
   // Fetch active flash deals to apply deal prices
   const { data: activeFlashDeals = [] } = useQuery({
@@ -553,15 +543,8 @@ const Checkout = () => {
         }
       }
 
-      // Clear cart (only for logged in users)
-      if (user) {
-        const { error: cartError } = await supabase
-          .from("cart_items")
-          .delete()
-          .eq("user_id", user.id);
-
-        if (cartError) throw cartError;
-      }
+      // Clear cart (works for both guests and logged in users)
+      await clearCart();
 
       // Send order confirmation email
       try {

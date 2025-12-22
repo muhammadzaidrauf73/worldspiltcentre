@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -10,7 +11,7 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { FlashDealTimer } from "@/components/FlashDealTimer";
-import { Minus, Plus, Trash2, ShoppingBag, Truck } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Truck, LogIn } from "lucide-react";
 
 // Confetti component for celebration effect
 const Confetti = () => {
@@ -50,33 +51,11 @@ const Confetti = () => {
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
+  const { cartItems, isLoading, updateQuantity, removeFromCart, refreshCart } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [showConfetti, setShowConfetti] = useState(false);
   const hasShownConfetti = useRef(false);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
-
-  const { data: cartItems = [], isLoading } = useQuery({
-    queryKey: ["cart", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*, products(*)")
-        .eq("user_id", user.id);
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
 
   // Fetch active flash deals to apply deal prices
   const { data: activeFlashDeals = [] } = useQuery({
@@ -120,45 +99,33 @@ const Cart = () => {
     return Number(item.products?.original_price) || null;
   };
 
-  const updateQuantityMutation = useMutation({
-    mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
-      if (quantity <= 0) {
-        const { error } = await supabase
-          .from("cart_items")
-          .delete()
-          .eq("id", itemId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity })
-          .eq("id", itemId);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-    },
-  });
+  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
+    try {
+      await updateQuantity(itemId, quantity);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update quantity.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  const removeItemMutation = useMutation({
-    mutationFn: async (itemId: string) => {
-      const { error } = await supabase
-        .from("cart_items")
-        .delete()
-        .eq("id", itemId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+  const handleRemoveItem = async (itemId: string) => {
+    try {
+      await removeFromCart(itemId);
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart.",
       });
-    },
-  });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove item.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Calculate total flash deal savings
   const flashDealSavings = cartItems.reduce((sum, item) => {
@@ -195,11 +162,11 @@ const Cart = () => {
       setTimeout(() => setShowConfetti(false), 4000);
     }
   }, [anyProductQualifiesForFreeDelivery, cartItems.length]);
+  
   const total = subtotal + shipping;
 
   const handleRefresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["cart"] });
-    await queryClient.invalidateQueries({ queryKey: ["cart-count"] });
+    await refreshCart();
   };
 
   if (authLoading || isLoading) {
@@ -246,6 +213,22 @@ const Cart = () => {
             <div className="grid lg:grid-cols-3 gap-4">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-3">
+                {/* Guest User Banner */}
+                {!user && (
+                  <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded">
+                    <LogIn className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Shopping as Guest</p>
+                      <p className="text-xs text-muted-foreground">
+                        Sign in to save your cart and access order history
+                      </p>
+                    </div>
+                    <Link to="/auth">
+                      <Button variant="outline" size="sm">Sign In</Button>
+                    </Link>
+                  </div>
+                )}
+
                 {/* Free Delivery Banner - Compact */}
                 {anyProductQualifiesForFreeDelivery && (
                   <div className="flex items-center gap-3 p-3 bg-accent/10 border border-accent/30 rounded">
@@ -318,20 +301,14 @@ const Cart = () => {
                             <div className="flex items-center gap-3">
                               <div className="flex items-center border border-border rounded">
                                 <button
-                                  onClick={() => updateQuantityMutation.mutate({ 
-                                    itemId: item.id, 
-                                    quantity: item.quantity - 1 
-                                  })}
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                                   className="p-1 hover:bg-secondary"
                                 >
                                   <Minus className="h-3 w-3" />
                                 </button>
                                 <span className="px-2.5 text-xs font-medium">{item.quantity}</span>
                                 <button
-                                  onClick={() => updateQuantityMutation.mutate({ 
-                                    itemId: item.id, 
-                                    quantity: item.quantity + 1 
-                                  })}
+                                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                                   className="p-1 hover:bg-secondary"
                                 >
                                   <Plus className="h-3 w-3" />
@@ -339,7 +316,7 @@ const Cart = () => {
                               </div>
                               
                               <button
-                                onClick={() => removeItemMutation.mutate(item.id)}
+                                onClick={() => handleRemoveItem(item.id)}
                                 className="text-muted-foreground hover:text-destructive"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -406,8 +383,14 @@ const Cart = () => {
                     className="w-full h-10 font-semibold"
                     onClick={() => navigate("/checkout")}
                   >
-                    Proceed to Checkout
+                    {user ? "Proceed to Checkout" : "Continue as Guest"}
                   </Button>
+                  
+                  {!user && (
+                    <p className="text-xs text-center text-muted-foreground mt-2">
+                      or <Link to="/auth" className="text-primary hover:underline">sign in</Link> for easier checkout
+                    </p>
+                  )}
                   
                   <Link to="/products" className="block mt-2">
                     <Button variant="outline" size="sm" className="w-full">

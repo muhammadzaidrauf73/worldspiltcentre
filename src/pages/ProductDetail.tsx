@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/hooks/useWishlist";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -39,6 +40,7 @@ import {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { addToCart } = useCart();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
@@ -187,39 +189,21 @@ const ProductDetail = () => {
   const specifications = product?.specifications as Record<string, string> || {};
 
   const handleAddToCart = async () => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be logged in to add items to cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    if (!id) return;
+    
     setAddingToCart(true);
 
-    const { error } = await supabase
-      .from("cart_items")
-      .upsert({
-        user_id: user.id,
-        product_id: id,
-        quantity,
-      }, {
-        onConflict: "user_id,product_id",
+    try {
+      await addToCart(id, quantity);
+      toast({
+        title: "Added to cart",
+        description: `${product?.name} has been added to your cart.`,
       });
-
-    if (error) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to add item to cart. Please try again.",
         variant: "destructive",
-      });
-    } else {
-      // Invalidate cart count to update the navbar badge
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      toast({
-        title: "Added to cart",
-        description: `${product?.name} has been added to your cart.`,
       });
     }
 
