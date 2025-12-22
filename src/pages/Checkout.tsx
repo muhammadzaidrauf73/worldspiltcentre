@@ -581,12 +581,11 @@ const Checkout = () => {
       
       toast.success("Order placed successfully! Check your email for confirmation.");
       
-      // Redirect based on user status
-      if (user) {
-        navigate("/account");
-      } else {
-        navigate(`/order-tracking?orderId=${orderResult.id}`);
-      }
+      // Redirect to order confirmation page
+      const confirmationUrl = user 
+        ? `/order-confirmation?orderId=${orderResult.id}`
+        : `/order-confirmation?orderId=${orderResult.id}&email=${encodeURIComponent(formData.email)}`;
+      navigate(confirmationUrl);
     } catch (error: any) {
       console.error("Order error:", error);
       toast.error("Failed to place order: " + error.message);
