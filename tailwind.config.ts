@@ -126,7 +126,12 @@ export default {
           "100%": { transform: "translateX(-50%)" },
         },
         shimmer: {
+          "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
+        },
+        "shimmer-fast": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(200%)" },
         },
         pulse: {
           "0%, 100%": { opacity: "1" },
@@ -178,7 +183,8 @@ export default {
         "scale-in": "scale-in 0.3s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "scroll-x": "scroll-x 20s linear infinite",
-        shimmer: "shimmer 2s infinite",
+        shimmer: "shimmer 3s ease-in-out infinite",
+        "shimmer-fast": "shimmer-fast 2s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "pulse-subtle": "pulse-subtle 2s ease-in-out infinite",
         bounce: "bounce 1s infinite",
