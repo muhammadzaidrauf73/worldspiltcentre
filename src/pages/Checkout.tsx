@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin, ShoppingCart, Package, Check, Star, Home, Building2 } from "lucide-react";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
@@ -78,6 +80,8 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(1); // 1: Shipping, 2: Payment, 3: Review
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
+  const [saveNewAddress, setSaveNewAddress] = useState(false);
+  const [newAddressLabel, setNewAddressLabel] = useState("Home");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -457,6 +461,36 @@ const Checkout = () => {
           });
       }
 
+      // Save new address to address book if requested
+      if (useNewAddress && saveNewAddress && formData.address) {
+        try {
+          // Parse address - simple split by comma for city extraction
+          const addressParts = formData.address.split(',').map(p => p.trim());
+          const city = addressParts.length > 1 ? addressParts[addressParts.length - 2] || addressParts[0] : addressParts[0];
+          
+          const { error: addressError } = await supabase
+            .from("addresses")
+            .insert({
+              user_id: user.id,
+              label: newAddressLabel,
+              full_name: formData.name,
+              phone: formData.phone,
+              address_line1: formData.address,
+              city: city,
+              is_default: savedAddresses.length === 0, // Make default if first address
+            });
+          
+          if (addressError) {
+            console.error("Failed to save address:", addressError);
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["addresses"] });
+          }
+        } catch (addressSaveError) {
+          console.error("Error saving address:", addressSaveError);
+          // Don't fail the order if address save fails
+        }
+      }
+
       // Clear cart
       const { error: cartError } = await supabase
         .from("cart_items")
@@ -790,6 +824,59 @@ const Checkout = () => {
                           required
                           className="text-sm resize-none"
                         />
+
+                        {/* Save address option */}
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
+                          <Checkbox
+                            id="save-address"
+                            checked={saveNewAddress}
+                            onCheckedChange={(checked) => setSaveNewAddress(checked === true)}
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="save-address" className="text-sm font-medium cursor-pointer">
+                              Save this address for future orders
+                            </Label>
+                            {saveNewAddress && (
+                              <div className="mt-2 flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setNewAddressLabel("Home")}
+                                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                                    newAddressLabel === "Home"
+                                      ? "bg-primary text-primary-foreground border-primary"
+                                      : "border-border hover:border-primary"
+                                  }`}
+                                >
+                                  <Home className="h-3 w-3 inline mr-1" />
+                                  Home
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewAddressLabel("Office")}
+                                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                                    newAddressLabel === "Office"
+                                      ? "bg-primary text-primary-foreground border-primary"
+                                      : "border-border hover:border-primary"
+                                  }`}
+                                >
+                                  <Building2 className="h-3 w-3 inline mr-1" />
+                                  Office
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewAddressLabel("Other")}
+                                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                                    newAddressLabel === "Other"
+                                      ? "bg-primary text-primary-foreground border-primary"
+                                      : "border-border hover:border-primary"
+                                  }`}
+                                >
+                                  Other
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )}
 
