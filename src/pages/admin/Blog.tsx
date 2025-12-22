@@ -80,11 +80,11 @@ const AdminBlog = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
-      toast({ title: "Blog post created successfully" });
+      toast({ title: "Blog post created successfully", duration: 2000 });
       resetForm();
     },
     onError: (error: Error) => {
-      toast({ title: "Error creating post", description: error.message, variant: "destructive" });
+      toast({ title: "Error creating post", description: error.message, variant: "destructive", duration: 2000 });
     },
   });
 
@@ -102,11 +102,11 @@ const AdminBlog = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
-      toast({ title: "Blog post updated successfully" });
+      toast({ title: "Blog post updated successfully", duration: 2000 });
       resetForm();
     },
     onError: (error: Error) => {
-      toast({ title: "Error updating post", description: error.message, variant: "destructive" });
+      toast({ title: "Error updating post", description: error.message, variant: "destructive", duration: 2000 });
     },
   });
 
@@ -117,10 +117,10 @@ const AdminBlog = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
-      toast({ title: "Blog post deleted successfully" });
+      toast({ title: "Blog post deleted successfully", duration: 2000 });
     },
     onError: (error: Error) => {
-      toast({ title: "Error deleting post", description: error.message, variant: "destructive" });
+      toast({ title: "Error deleting post", description: error.message, variant: "destructive", duration: 2000 });
     },
   });
 
