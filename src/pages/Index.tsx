@@ -22,6 +22,7 @@ const TopSellers = lazy(() => import("@/components/TopSellers"));
 const CustomerReviews = lazy(() => import("@/components/CustomerReviews"));
 const Newsletter = lazy(() => import("@/components/Newsletter"));
 const FAQ = lazy(() => import("@/components/FAQ"));
+const FreeDeliveryProducts = lazy(() => import("@/components/FreeDeliveryProducts"));
 const Footer = lazy(() => import("@/components/Footer"));
 
 // Lightweight loading placeholder
@@ -234,6 +235,13 @@ const Index = () => {
             {isSectionVisible("top_sellers") && (
               <Suspense fallback={<SectionLoader />}>
                 <TopSellers />
+              </Suspense>
+            )}
+
+            {/* Free Delivery Products */}
+            {isSectionVisible("free_delivery") && (
+              <Suspense fallback={<SectionLoader />}>
+                <FreeDeliveryProducts />
               </Suspense>
             )}
 
