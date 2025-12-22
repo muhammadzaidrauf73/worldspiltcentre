@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -126,10 +126,11 @@ const Navbar = () => {
       {/* Announcement Bar */}
       {announcementEnabled && announcementMessage && (
         <div 
-          className="py-2 text-center text-sm font-medium"
+          className="py-2 text-center text-sm font-medium relative overflow-hidden"
           style={{ backgroundColor: announcementBgColor, color: announcementTextColor }}
         >
-          <div className="container mx-auto px-4 flex items-center justify-center gap-2">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
+          <div className="container mx-auto px-4 flex items-center justify-center gap-2 relative">
             <span className="animate-pulse">🔔</span>
             <span>{announcementMessage}</span>
           </div>
@@ -137,116 +138,119 @@ const Navbar = () => {
       )}
 
       {/* Main Navbar */}
-      <nav className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
+      <nav className="bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between gap-6">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="World Spilt Centre" 
-                className="h-10 w-[44px] object-contain"
-                width={44}
-                height={40}
-              />
+            <Link to="/" className="flex items-center gap-3 shrink-0 group">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/5 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <img 
+                  src="/logo.png" 
+                  alt="World Spilt Centre" 
+                  className="h-11 w-12 object-contain relative"
+                  width={48}
+                  height={44}
+                />
+              </div>
               <div className="hidden sm:block">
-                <h1 className="font-heading font-bold text-lg text-foreground leading-tight">
+                <h1 className="font-heading font-bold text-xl text-foreground leading-tight tracking-tight">
                   World <span className="text-primary">Spilt</span> Centre
                 </h1>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Electronics</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-medium">Premium Electronics</p>
               </div>
             </Link>
 
             {/* Search Bar - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-2xl">
-              <SearchAutocomplete placeholder="Search for products..." />
+            <div className="hidden md:flex flex-1 max-w-xl">
+              <div className="relative w-full">
+                <SearchAutocomplete placeholder="Search for products, brands..." />
+              </div>
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-1 md:gap-3">
+            <div className="flex items-center gap-2 md:gap-4">
               {/* Phone - Desktop */}
-              <div className="hidden lg:flex items-center gap-3 mr-2 group cursor-pointer">
-                <div className="icon-btn icon-btn-ring">
+              <a href="tel:0300-4649141" className="hidden lg:flex items-center gap-3 mr-2 group cursor-pointer hover:bg-secondary/50 rounded-xl px-3 py-2 transition-colors">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <Phone className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Call Us</p>
-                  <p className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors">0300-4649141</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Call Us</p>
+                  <p className="font-semibold text-foreground text-sm">0300-4649141</p>
                 </div>
-              </div>
+              </a>
 
-              {/* User Menu */}
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="hidden sm:flex">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                {/* User Menu */}
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="hidden sm:flex h-10 w-10 rounded-full hover:bg-secondary">
+                        <User className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52 p-2">
+                      <DropdownMenuItem asChild className="rounded-lg">
+                        <Link to="/account" className="cursor-pointer flex items-center gap-2 py-2">
+                          <User className="h-4 w-4" />
+                          My Account
+                        </Link>
+                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem asChild className="rounded-lg">
+                            <Link to="/admin" className="cursor-pointer text-primary flex items-center gap-2 py-2">
+                              <Shield className="h-4 w-4" />
+                              Admin Panel
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive rounded-lg flex items-center gap-2 py-2">
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link to="/auth" aria-label="Login or Register">
+                    <Button variant="ghost" size="icon" className="hidden sm:flex h-10 w-10 rounded-full hover:bg-secondary" aria-label="Login or Register">
                       <User className="h-5 w-5" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem asChild>
-                      <Link to="/account" className="cursor-pointer">
-                        <User className="h-4 w-4 mr-2" />
-                        My Account
-                      </Link>
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link to="/admin" className="cursor-pointer text-primary">
-                            <Shield className="h-4 w-4 mr-2" />
-                            Admin Panel
-                          </Link>
-                        </DropdownMenuItem>
-                      </>
+                  </Link>
+                )}
+                
+                <Link to="/wishlist">
+                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-secondary">
+                    <Heart className="h-5 w-5" />
+                    {wishlistItems.length > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-lg">
+                        {wishlistItems.length}
+                      </span>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link to="/auth" aria-label="Login or Register">
-                  <Button variant="ghost" size="icon" className="hidden sm:flex" aria-label="Login or Register">
-                    <User className="h-5 w-5" />
                   </Button>
                 </Link>
-              )}
-              
-              <Link to="/wishlist">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Heart className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
-                    {wishlistItems.length}
-                  </Badge>
-                </Button>
-              </Link>
-              
-              <Link to="/cart">
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
-                    {cartCount}
-                  </Badge>
-                </Button>
-              </Link>
-              
-              <div className="hidden lg:flex items-center">
-                <div className="text-right ml-1">
-                  <p className="text-xs text-muted-foreground">Cart</p>
-                  <p className="font-semibold text-foreground text-sm">
-                    {cartCount} items
-                  </p>
-                </div>
+                
+                <Link to="/cart">
+                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-secondary">
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-lg">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
               </div>
               
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="md:hidden h-10 w-10 rounded-full"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
                 {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -255,13 +259,13 @@ const Navbar = () => {
           </div>
 
           {/* Search Bar - Mobile */}
-          <div className="mt-3 md:hidden">
+          <div className="mt-4 md:hidden">
             <SearchAutocomplete placeholder="Search products..." isMobile />
           </div>
         </div>
 
         {/* Categories Bar - Desktop with Mega Menu */}
-        <div className="hidden md:block bg-card border-t border-border shadow-sm">
+        <div className="hidden md:block bg-secondary/30 border-t border-border/30">
           <div className="container mx-auto px-4">
             <div className="flex items-center">
               {/* Shop by Categories with Mega Menu */}
@@ -271,63 +275,65 @@ const Navbar = () => {
                 onMouseLeave={() => setIsMegaMenuOpen(false)}
               >
                 <Button 
-                  className="flex items-center gap-3 h-12 px-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none font-semibold text-sm shadow-md"
+                  className="flex items-center gap-3 h-12 px-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none font-semibold text-sm"
                 >
-                  <Menu className="h-5 w-5" />
-                  <span>Shop by Categories</span>
-                  <ChevronDown className={`h-4 w-4 ml-1 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
+                  <Menu className="h-4 w-4" />
+                  <span>All Categories</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} />
                 </Button>
                 
                 {/* Mega Menu */}
                 {isMegaMenuOpen && (
-                  <div className="absolute top-full left-0 w-[800px] bg-card border border-border rounded-b-xl shadow-2xl z-50 animate-fade-in">
+                  <div className="absolute top-full left-0 w-[820px] bg-background border border-border rounded-b-2xl shadow-2xl z-50 animate-fade-in overflow-hidden">
                     <div className="grid grid-cols-12 gap-0">
                       {/* Categories List */}
-                      <div className="col-span-4 bg-secondary/30 p-4 border-r border-border">
-                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 px-2">
-                          All Categories
+                      <div className="col-span-4 bg-secondary/40 p-5 border-r border-border/50">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 px-2">
+                          Browse Categories
                         </h3>
                         <div 
-                          className="space-y-1 max-h-[320px] overflow-y-auto pr-2"
-                          style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--primary)) hsl(var(--secondary))' }}
+                          className="space-y-1 max-h-[340px] overflow-y-auto pr-2"
+                          style={{ scrollbarWidth: 'thin' }}
                         >
                           {categories.map((cat) => (
                             <Link
                               key={cat.id}
                               to={`/products?category=${encodeURIComponent(cat.name)}`}
-                              className="flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-primary/10 hover:text-primary rounded-lg transition-all duration-200 group"
+                              className="flex items-center gap-3 px-3 py-3 text-sm text-foreground hover:bg-primary/10 hover:text-primary rounded-xl transition-all duration-200 group"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
                               {cat.image_url ? (
                                 <img 
                                   src={cat.image_url} 
                                   alt={cat.name}
-                                  className="w-9 h-9 rounded-xl object-cover border border-border shadow-sm"
+                                  className="w-10 h-10 rounded-xl object-cover border border-border shadow-sm"
                                 />
                               ) : (
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
-                                  <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200">
+                                  <span className="text-sm font-bold text-primary">{cat.name.charAt(0)}</span>
                                 </div>
                               )}
-                              <span className="flex-1">{cat.name}</span>
+                              <span className="flex-1 font-medium">{cat.name}</span>
                               <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-primary" />
                             </Link>
                           ))}
                         </div>
                         <Link
                           to="/products"
-                          className="flex items-center gap-2 mt-4 px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          className="flex items-center gap-2 mt-4 px-3 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-all"
                           onClick={() => setIsMegaMenuOpen(false)}
                         >
-                          Browse All Categories
+                          View All Categories
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </div>
                       
                       {/* Featured Products */}
-                      <div className="col-span-8 p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Sparkles className="h-4 w-4 text-primary" />
+                      <div className="col-span-8 p-6">
+                        <div className="flex items-center gap-2 mb-5">
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                          </div>
                           <h3 className="text-sm font-bold text-foreground">Featured Products</h3>
                         </div>
                         
@@ -340,24 +346,24 @@ const Navbar = () => {
                                 className="group"
                                 onClick={() => setIsMegaMenuOpen(false)}
                               >
-                                <div className="relative bg-secondary/30 rounded-xl p-3 border border-border hover:border-primary/30 transition-all duration-200 hover:shadow-lg">
+                                <div className="relative bg-secondary/50 rounded-2xl p-4 border border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-xl hover:-translate-y-1">
                                   {product.discount_percentage && product.discount_percentage > 0 && (
-                                    <span className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                                    <span className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold px-2.5 py-1 rounded-full shadow-lg">
                                       -{product.discount_percentage}%
                                     </span>
                                   )}
-                                  <div className="aspect-square rounded-lg overflow-hidden bg-background mb-3">
+                                  <div className="aspect-square rounded-xl overflow-hidden bg-background mb-3">
                                     <img 
                                       src={product.image_url || '/placeholder.svg'} 
                                       alt={product.name}
                                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                     />
                                   </div>
-                                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                                  <h4 className="text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors min-h-[40px]">
                                     {product.name}
                                   </h4>
                                   <div className="mt-2 flex items-center gap-2">
-                                    <span className="text-sm font-bold text-primary">
+                                    <span className="text-base font-bold text-primary">
                                       {formatPrice(product.price)}
                                     </span>
                                     {product.original_price && product.original_price > product.price && (
@@ -373,8 +379,8 @@ const Navbar = () => {
                         ) : (
                           <div className="grid grid-cols-3 gap-4">
                             {[1, 2, 3].map((i) => (
-                              <div key={i} className="bg-secondary/30 rounded-xl p-3 border border-border">
-                                <div className="aspect-square rounded-lg bg-muted animate-pulse mb-3" />
+                              <div key={i} className="bg-secondary/50 rounded-2xl p-4 border border-border/50">
+                                <div className="aspect-square rounded-xl bg-muted animate-pulse mb-3" />
                                 <div className="h-4 bg-muted rounded animate-pulse mb-2" />
                                 <div className="h-4 w-1/2 bg-muted rounded animate-pulse" />
                               </div>
@@ -383,18 +389,18 @@ const Navbar = () => {
                         )}
                         
                         {/* Quick Links */}
-                        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                        <div className="mt-6 pt-5 border-t border-border/50 flex items-center justify-between">
                           <div className="flex items-center gap-6">
                             <Link 
                               to="/products?deals=true" 
-                              className="text-sm font-medium text-destructive hover:underline flex items-center gap-1"
+                              className="text-sm font-medium text-destructive hover:underline flex items-center gap-2 bg-destructive/10 px-3 py-1.5 rounded-full"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
                               🔥 Hot Deals
                             </Link>
                             <Link 
                               to="/products?sort=newest" 
-                              className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-1"
+                              className="text-sm font-medium text-foreground hover:text-primary flex items-center gap-2"
                               onClick={() => setIsMegaMenuOpen(false)}
                             >
                               ✨ New Arrivals
@@ -415,12 +421,12 @@ const Navbar = () => {
               </div>
               
               {/* Navigation Links */}
-              <nav className="flex items-center ml-1">
+              <nav className="flex items-center ml-2">
                 {navLinks.map((link) => (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`relative px-5 py-4 text-sm font-medium transition-all duration-200 hover:bg-secondary/50 ${
+                    className={`relative px-5 py-4 text-sm font-medium transition-all duration-200 hover:bg-background/50 ${
                       link.highlight 
                         ? "text-primary" 
                         : "text-foreground hover:text-primary"
@@ -428,27 +434,27 @@ const Navbar = () => {
                   >
                     {link.name}
                     {link.highlight && (
-                      <span className="absolute top-2 right-1 w-1.5 h-1.5 bg-destructive rounded-full animate-pulse"></span>
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full animate-pulse"></span>
                     )}
                   </Link>
                 ))}
                 <Link
                   to="/products"
-                  className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
+                  className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-background/50 transition-all duration-200"
                 >
                   All Products
                 </Link>
                 {user && (
                   <Link
                     to="/orders"
-                    className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
+                    className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-background/50 transition-all duration-200"
                   >
                     Orders
                   </Link>
                 )}
                 <Link
                   to="/contact"
-                  className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
+                  className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-background/50 transition-all duration-200"
                 >
                   Contact
                 </Link>
@@ -458,7 +464,7 @@ const Navbar = () => {
               {!user && (
                 <Link
                   to="/auth"
-                  className="ml-auto flex items-center gap-2 px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-full transition-all duration-200"
+                  className="ml-auto flex items-center gap-2 px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-full transition-all duration-200 border border-primary/20"
                 >
                   <User className="h-4 w-4" />
                   Login / Register
@@ -470,14 +476,14 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card animate-fade-in max-h-[70vh] overflow-y-auto">
-            <div className="container mx-auto px-3 py-3">
-              <div className="flex flex-col gap-0.5">
+          <div className="md:hidden border-t border-border bg-background animate-fade-in max-h-[75vh] overflow-y-auto">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex flex-col gap-1">
                 {navLinks.map((link) => (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`py-3.5 px-4 rounded-lg transition-smooth flex items-center min-h-[48px] ${
+                    className={`py-3.5 px-4 rounded-xl transition-all flex items-center min-h-[48px] ${
                       link.highlight 
                         ? "text-primary font-medium bg-primary/5" 
                         : "text-foreground hover:bg-secondary active:bg-secondary/80"
@@ -485,12 +491,13 @@ const Navbar = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {link.name}
+                    {link.highlight && <span className="ml-2 w-2 h-2 bg-destructive rounded-full animate-pulse" />}
                   </Link>
                 ))}
                 
                 <Link
                   to="/products"
-                  className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center min-h-[48px]"
+                  className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center min-h-[48px]"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   All Products
@@ -500,35 +507,43 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/profile"
-                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
+                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <User className="h-5 w-5 text-muted-foreground" />
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                      </div>
                       My Profile
                     </Link>
                     <Link
                       to="/orders"
-                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
+                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                      </div>
                       Orders
                     </Link>
                     <Link
                       to="/wishlist"
-                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
+                      className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      <Heart className="h-5 w-5 text-muted-foreground" />
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <Heart className="h-4 w-4 text-muted-foreground" />
+                      </div>
                       Wishlist
                     </Link>
                     {isAdmin && (
                       <Link
                         to="/admin"
-                        className="py-3.5 px-4 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-lg flex items-center gap-3 min-h-[48px] font-medium"
+                        className="py-3.5 px-4 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-xl flex items-center gap-3 min-h-[48px] font-medium"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        <Shield className="h-5 w-5" />
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Shield className="h-4 w-4 text-primary" />
+                        </div>
                         Admin Panel
                       </Link>
                     )}
@@ -537,56 +552,62 @@ const Navbar = () => {
                         handleSignOut();
                         setIsMenuOpen(false);
                       }}
-                      className="py-3.5 px-4 text-left text-destructive hover:bg-destructive/10 active:bg-destructive/20 rounded-lg flex items-center gap-3 min-h-[48px] w-full"
+                      className="py-3.5 px-4 text-left text-destructive hover:bg-destructive/10 active:bg-destructive/20 rounded-xl flex items-center gap-3 min-h-[48px] w-full"
                     >
-                      <LogOut className="h-5 w-5" />
+                      <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                        <LogOut className="h-4 w-4 text-destructive" />
+                      </div>
                       Sign Out
                     </button>
                   </>
                 ) : (
                   <Link
                     to="/auth"
-                    className="py-3.5 px-4 text-primary font-medium hover:bg-primary/10 active:bg-primary/20 rounded-lg flex items-center gap-3 min-h-[48px]"
+                    className="py-3.5 px-4 text-primary font-medium bg-primary/5 hover:bg-primary/10 active:bg-primary/20 rounded-xl flex items-center gap-3 min-h-[48px]"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <User className="h-5 w-5" />
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
                     Login / Register
                   </Link>
                 )}
                 
-                <div className="border-t border-border my-2 pt-2">
-                  <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Categories</p>
-                  <div className="grid grid-cols-2 gap-1">
+                <div className="border-t border-border my-3 pt-4">
+                  <p className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">Categories</p>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
                     {categories.map((cat) => (
                       <Link
                         key={cat.id}
                         to={`/products?category=${encodeURIComponent(cat.name)}`}
-                        className="py-3 px-3 text-sm text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg transition-smooth flex items-center gap-2 min-h-[44px]"
+                        className="py-3 px-3 text-sm text-foreground hover:bg-secondary active:bg-secondary/80 rounded-xl transition-all flex items-center gap-2.5 min-h-[44px] border border-border/50"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         {cat.image_url ? (
-                          <img src={cat.image_url} alt={cat.name} className="w-6 h-6 rounded object-cover" />
+                          <img src={cat.image_url} alt={cat.name} className="w-7 h-7 rounded-lg object-cover" />
                         ) : (
-                          <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+                          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
                             <span className="text-xs font-bold text-primary">{cat.name.charAt(0)}</span>
                           </div>
                         )}
-                        <span className="truncate">{cat.name}</span>
+                        <span className="truncate text-sm">{cat.name}</span>
                       </Link>
                     ))}
                   </div>
                 </div>
                 
                 {/* Contact Info */}
-                <div className="border-t border-border mt-2 pt-3">
+                <div className="border-t border-border mt-2 pt-4">
                   <a 
                     href="tel:0300-4649141" 
-                    className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
+                    className="py-4 px-4 text-foreground bg-primary/5 hover:bg-primary/10 rounded-xl flex items-center gap-4"
                   >
-                    <Phone className="h-5 w-5 text-primary" />
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Call Us</p>
-                      <p className="font-semibold">0300-4649141</p>
+                      <p className="text-xs text-muted-foreground font-medium">Need Help? Call Us</p>
+                      <p className="font-bold text-foreground">0300-4649141</p>
                     </div>
                   </a>
                 </div>
