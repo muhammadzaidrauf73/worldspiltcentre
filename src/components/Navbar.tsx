@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles, Search } from "lucide-react";
@@ -26,6 +26,20 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { isAdmin } = useAdmin();
   const { wishlistItems } = useWishlist();
+
+  useEffect(() => {
+    // Prevent background scroll when the mobile drawer is open
+    if (isMenuOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+
+    document.body.style.overflow = "";
+    return;
+  }, [isMenuOpen]);
   
   const navigate = useNavigate();
 
