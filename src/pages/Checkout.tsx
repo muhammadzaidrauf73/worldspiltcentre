@@ -7,11 +7,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, Percent, MapPin } from "lucide-react";
+import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin } from "lucide-react";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 
 interface ShippingOption {
@@ -450,232 +449,111 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-secondary/30">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/cart")}
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Cart
-        </Button>
-
-        <h1 className="text-2xl font-heading font-bold text-foreground mb-8">Checkout</h1>
+      <div className="container mx-auto px-4 py-4 sm:py-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate("/cart")}
+            className="h-8 px-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-lg font-semibold text-foreground">Checkout</h1>
+          <span className="text-sm text-muted-foreground">({cartItems.length} items)</span>
+        </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-4">
             {/* Left Column - Forms */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Contact Information */}
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  Contact Information
-                </h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
+            <div className="lg:col-span-2 space-y-3">
+              
+              {/* Delivery Address */}
+              <div className="bg-card rounded p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    Delivery Address
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
                     <Input
-                      id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Enter your full name"
+                      placeholder="Full Name *"
                       required
+                      className="h-9 text-sm"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="Enter your email"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="Enter your phone number"
+                      placeholder="Phone Number *"
                       required
+                      className="h-9 text-sm"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* Shipping Address */}
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-primary" />
-                  Shipping Address
-                </h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Full Address *</Label>
-                    <Textarea
-                      id="address"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="Enter your complete address including city and postal code"
-                      rows={3}
-                      required
-                    />
-                  </div>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Email Address *"
+                    required
+                    className="h-9 text-sm"
+                  />
+                  <Textarea
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Complete Address (House No, Street, City, Postal Code) *"
+                    rows={2}
+                    required
+                    className="text-sm resize-none"
+                  />
                   
-                  {/* Location Status for Free Delivery */}
+                  {/* Location-based Free Delivery */}
                   {hasEligibleBrandProducts && (
-                    <div className="p-3 rounded-lg bg-secondary/50 border border-border">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium">Location for Free Delivery</span>
-                        </div>
-                        {locationLoading ? (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Detecting...
-                          </span>
-                        ) : nearestStoreDistance !== null ? (
-                          <span className={`text-xs font-medium ${isWithinDeliveryRadius ? 'text-accent' : 'text-muted-foreground'}`}>
-                            {nearestStoreDistance.toFixed(1)}km from store
-                          </span>
-                        ) : locationError ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setLocationChecked(false);
-                            }}
-                            className="h-7 text-xs"
-                          >
-                            Enable Location
-                          </Button>
-                        ) : null}
+                    <div className="flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-xs">
+                          {locationLoading ? (
+                            <span className="flex items-center gap-1">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Checking location...
+                            </span>
+                          ) : isWithinDeliveryRadius ? (
+                            <span className="text-accent font-medium">Free delivery eligible! ({nearestStoreDistance?.toFixed(1)}km from store)</span>
+                          ) : nearestStoreDistance !== null ? (
+                            <span className="text-muted-foreground">{nearestStoreDistance.toFixed(1)}km from store (5km needed for free delivery)</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setLocationChecked(false)}
+                              className="text-primary hover:underline"
+                            >
+                              Enable location for free delivery
+                            </button>
+                          )}
+                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {hasEligibleBrandProducts && !isWithinDeliveryRadius && !locationLoading && (
-                          <>Your cart has Gree/Pearl products. Enable location to check if you qualify for free delivery within {FREE_DELIVERY_RADIUS_KM}km.</>
-                        )}
-                        {isWithinDeliveryRadius && (
-                          <span className="text-accent">You qualify for free delivery!</span>
-                        )}
-                      </p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Shipping Method */}
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-primary" />
-                  Shipping Method
+              {/* Products */}
+              <div className="bg-card rounded p-4">
+                <h2 className="text-sm font-semibold text-foreground mb-3">
+                  Package ({cartItems.length} items)
                 </h2>
-                
-                {anyProductQualifiesForFreeDelivery ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-4 rounded-lg border border-accent bg-accent/10">
-                      <CheckCircle className="h-5 w-5 text-accent" />
-                      <div>
-                        <p className="font-medium text-accent">Free Delivery</p>
-                        <p className="text-sm text-muted-foreground">
-                          {locationBasedFreeDelivery 
-                            ? `Your cart includes Gree/Pearl products and you're within ${FREE_DELIVERY_RADIUS_KM}km of our store – enjoy free delivery!`
-                            : "Your cart includes a product with free delivery – enjoy free shipping on your entire order!"
-                          }
-                        </p>
-                      </div>
-                    </div>
-                    {locationBasedFreeDelivery && nearestStoreDistance !== null && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>Distance to nearest store: {nearestStoreDistance.toFixed(1)}km</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <RadioGroup 
-                    value={selectedShipping} 
-                    onValueChange={setSelectedShipping}
-                    className="space-y-3"
-                  >
-                    {shippingOptions.map((option) => {
-                      const isFree = option.free_shipping_threshold && subtotal >= option.free_shipping_threshold;
-                      return (
-                        <div
-                          key={option.id}
-                          className={`flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer ${
-                            selectedShipping === option.id 
-                              ? "border-primary bg-primary/5" 
-                              : "border-border hover:border-primary/50"
-                          }`}
-                          onClick={() => setSelectedShipping(option.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <RadioGroupItem value={option.id} id={option.id} />
-                            <div>
-                              <Label htmlFor={option.id} className="font-medium cursor-pointer">
-                                {option.name}
-                              </Label>
-                              <p className="text-sm text-muted-foreground">
-                                {option.description}
-                                {option.estimated_days && ` • ${option.estimated_days}`}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            {isFree ? (
-                              <span className="text-accent font-semibold">FREE</span>
-                            ) : (
-                              <span className="font-semibold">Rs.{Number(option.price).toLocaleString()}</span>
-                            )}
-                            {option.free_shipping_threshold && !isFree && (
-                              <p className="text-xs text-muted-foreground">
-                                Free over Rs.{Number(option.free_shipping_threshold).toLocaleString()}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </RadioGroup>
-                )}
-              </div>
-
-              {/* Payment - COD Only */}
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h2 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  Payment Method
-                </h2>
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-primary bg-primary/5">
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Cash on Delivery (COD)</p>
-                    <p className="text-sm text-muted-foreground">Pay when you receive your order</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Order Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-card rounded-lg border border-border p-6 sticky top-24">
-                <h2 className="font-semibold text-foreground mb-4">Order Summary</h2>
-                
-                {/* Items */}
-                <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
+                <div className="divide-y divide-border">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex gap-3">
-                      <div className="w-16 h-16 rounded bg-secondary/30 shrink-0 overflow-hidden">
+                    <div key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+                      <div className="w-14 h-14 rounded border border-border bg-white shrink-0 overflow-hidden">
                         <img
                           src={item.products?.image_url || "/placeholder.svg"}
                           alt={item.products?.name}
@@ -683,29 +561,103 @@ const Checkout = () => {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium line-clamp-2">{item.products?.name}</p>
-                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                        <p className="text-sm font-semibold text-primary">
-                          Rs.{(Number(item.products?.price) * item.quantity).toLocaleString()}
-                        </p>
+                        <p className="text-sm line-clamp-2 mb-1">{item.products?.name}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
+                          <span className="text-sm font-semibold text-primary">
+                            Rs.{(Number(item.products?.price) * item.quantity).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
+              </div>
 
-                {/* Coupon Section */}
-                <div className="border-t border-border pt-4 mb-4">
-                  <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-                    <Tag className="h-4 w-4" />
-                    Apply Coupon
-                  </h3>
-                  
+              {/* Shipping */}
+              <div className="bg-card rounded p-4">
+                <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-primary" />
+                  Delivery Option
+                </h2>
+                
+                {anyProductQualifiesForFreeDelivery ? (
+                  <div className="flex items-center gap-2 p-3 rounded bg-accent/10 border border-accent/30">
+                    <CheckCircle className="h-4 w-4 text-accent shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-accent">Free Delivery</p>
+                      <p className="text-xs text-muted-foreground">
+                        {locationBasedFreeDelivery 
+                          ? "Gree/Pearl products within 5km"
+                          : "Eligible product in cart"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <RadioGroup 
+                    value={selectedShipping} 
+                    onValueChange={setSelectedShipping}
+                    className="space-y-2"
+                  >
+                    {shippingOptions.map((option) => {
+                      const isFree = option.free_shipping_threshold && subtotal >= option.free_shipping_threshold;
+                      return (
+                        <div
+                          key={option.id}
+                          className={`flex items-center justify-between p-3 rounded border cursor-pointer transition-colors ${
+                            selectedShipping === option.id 
+                              ? "border-primary bg-primary/5" 
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedShipping(option.id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem value={option.id} id={option.id} className="h-4 w-4" />
+                            <div>
+                              <p className="text-sm font-medium">{option.name}</p>
+                              {option.estimated_days && (
+                                <p className="text-xs text-muted-foreground">{option.estimated_days}</p>
+                              )}
+                            </div>
+                          </div>
+                          <span className={`text-sm font-semibold ${isFree ? 'text-accent' : ''}`}>
+                            {isFree ? "FREE" : `Rs.${Number(option.price).toLocaleString()}`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                )}
+              </div>
+
+              {/* Payment */}
+              <div className="bg-card rounded p-4">
+                <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Payment Method
+                </h2>
+                <div className="flex items-center gap-2 p-3 rounded border border-primary bg-primary/5">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Cash on Delivery</p>
+                    <p className="text-xs text-muted-foreground">Pay when you receive</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-card rounded p-4 sticky top-20">
+                {/* Coupon */}
+                <div className="mb-4">
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                    <div className="flex items-center justify-between p-2 bg-accent/10 border border-accent/30 rounded">
                       <div className="flex items-center gap-2">
-                        <Percent className="h-4 w-4 text-emerald-600" />
+                        <Tag className="h-4 w-4 text-accent" />
                         <div>
-                          <p className="text-sm font-medium text-emerald-600">{appliedCoupon.code}</p>
+                          <p className="text-sm font-medium text-accent">{appliedCoupon.code}</p>
                           <p className="text-xs text-muted-foreground">
                             {appliedCoupon.discount_type === "percentage" 
                               ? `${appliedCoupon.discount_value}% off`
@@ -719,91 +671,82 @@ const Checkout = () => {
                         variant="ghost"
                         size="sm"
                         onClick={removeCoupon}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        className="h-6 w-6 p-0"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Enter coupon code"
-                          value={couponCode}
-                          onChange={(e) => {
-                            setCouponCode(e.target.value.toUpperCase());
-                            setCouponError("");
-                          }}
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={applyCoupon}
-                          disabled={couponLoading}
-                        >
-                          {couponLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Apply"
-                          )}
-                        </Button>
-                      </div>
-                      {couponError && (
-                        <p className="text-xs text-destructive">{couponError}</p>
-                      )}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter voucher code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponError("");
+                        }}
+                        className="h-9 text-sm flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={applyCoupon}
+                        disabled={couponLoading}
+                        className="h-9 px-4"
+                      >
+                        {couponLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Apply"}
+                      </Button>
                     </div>
+                  )}
+                  {couponError && (
+                    <p className="text-xs text-destructive mt-1">{couponError}</p>
                   )}
                 </div>
 
-                <div className="border-t border-border pt-4 space-y-2 text-sm">
+                {/* Summary */}
+                <div className="space-y-2 text-sm border-t border-border pt-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">Rs.{subtotal.toLocaleString()}</span>
+                    <span>Rs.{subtotal.toLocaleString()}</span>
                   </div>
-                  
                   {appliedCoupon && discount > 0 && (
-                    <div className="flex justify-between text-emerald-600">
-                      <span>Discount ({appliedCoupon.code})</span>
-                      <span className="font-medium">-Rs.{discount.toLocaleString()}</span>
+                    <div className="flex justify-between text-accent">
+                      <span>Voucher</span>
+                      <span>-Rs.{discount.toLocaleString()}</span>
                     </div>
                   )}
-                  
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {anyProductQualifiesForFreeDelivery ? "Free Delivery" : "Shipping"}
-                    </span>
-                    <span className="font-medium">
-                      {shippingCost === 0 ? (
-                        <span className="text-accent">FREE</span>
-                      ) : (
-                        `Rs.${shippingCost.toLocaleString()}`
-                      )}
+                    <span className="text-muted-foreground">Shipping</span>
+                    <span className={shippingCost === 0 ? 'text-accent' : ''}>
+                      {shippingCost === 0 ? "FREE" : `Rs.${shippingCost.toLocaleString()}`}
                     </span>
                   </div>
-                  <div className="border-t border-border pt-2 flex justify-between text-base">
-                    <span className="font-semibold">Total</span>
-                    <span className="font-bold text-primary">Rs.{total.toLocaleString()}</span>
-                  </div>
+                </div>
+
+                <div className="flex justify-between py-3 mt-2 border-t border-border">
+                  <span className="font-semibold">Total</span>
+                  <span className="text-lg font-bold text-primary">Rs.{total.toLocaleString()}</span>
                 </div>
 
                 <Button 
                   type="submit"
-                  className="w-full mt-6 bg-primary hover:bg-primary/90"
+                  className="w-full h-11 bg-primary hover:bg-primary/90 font-semibold"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Placing Order...
+                      Processing...
                     </>
                   ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Place Order
-                    </>
+                    "Place Order"
                   )}
                 </Button>
+
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  By placing order, you agree to our Terms & Conditions
+                </p>
               </div>
             </div>
           </div>
