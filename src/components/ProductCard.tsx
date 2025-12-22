@@ -65,7 +65,7 @@ const ProductCard = memo(({
 
   return (
     <div
-      className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
+      className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in touch-pan-y"
       style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
       {/* Sale Badge - Circular */}
