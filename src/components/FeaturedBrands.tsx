@@ -105,14 +105,14 @@ const FeaturedBrands = memo(() => {
         <div className="flex justify-center items-center">
           <div className="relative w-80 h-80 sm:w-[420px] sm:h-[420px] md:w-[500px] md:h-[500px]">
             
-            {/* Orbit Ring - Slow rotation */}
+            {/* Orbit Ring - passes through brand centers (8% inset = 42% radius from center) */}
             <div 
-              className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30"
+              className="absolute inset-[8%] rounded-full border-2 border-dashed border-primary/30"
               style={{ animation: 'spin 60s linear infinite' }}
             />
             
             {/* Center Circle */}
-            <div className="absolute inset-[35%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10">
+            <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10">
               <div className="text-center">
                 <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary">Brands</span>
                 <p className="text-xs text-muted-foreground mt-1 hidden sm:block">Click to explore</p>
