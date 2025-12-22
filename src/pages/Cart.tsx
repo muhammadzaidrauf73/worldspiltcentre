@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,13 +9,52 @@ import SEO from "@/components/SEO";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Truck, Sparkles } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Truck, Sparkles, Gift } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+// Confetti component for celebration effect
+const Confetti = () => {
+  const colors = ['#10b981', '#34d399', '#6ee7b7', '#fbbf24', '#f59e0b', '#3b82f6', '#8b5cf6'];
+  const confettiPieces = Array.from({ length: 50 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    delay: Math.random() * 0.5,
+    duration: 2 + Math.random() * 2,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rotation: Math.random() * 360,
+    size: 6 + Math.random() * 8,
+  }));
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {confettiPieces.map((piece) => (
+        <div
+          key={piece.id}
+          className="absolute animate-confetti"
+          style={{
+            left: `${piece.left}%`,
+            top: '-20px',
+            width: `${piece.size}px`,
+            height: `${piece.size}px`,
+            backgroundColor: piece.color,
+            borderRadius: piece.id % 3 === 0 ? '50%' : '2px',
+            transform: `rotate(${piece.rotation}deg)`,
+            animationDelay: `${piece.delay}s`,
+            animationDuration: `${piece.duration}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showConfetti, setShowConfetti] = useState(false);
+  const hasShownConfetti = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -94,6 +133,15 @@ const Cart = () => {
     .map(item => item.products?.name);
 
   const shipping = anyProductQualifiesForFreeDelivery ? 0 : (subtotal > 10000 ? 0 : 500);
+
+  // Trigger confetti when free delivery is unlocked
+  useEffect(() => {
+    if (anyProductQualifiesForFreeDelivery && !hasShownConfetti.current && cartItems.length > 0) {
+      hasShownConfetti.current = true;
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4000);
+    }
+  }, [anyProductQualifiesForFreeDelivery, cartItems.length]);
   const total = subtotal + shipping;
 
   const handleRefresh = async () => {
@@ -111,6 +159,7 @@ const Cart = () => {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
+      {showConfetti && <Confetti />}
       <div className="min-h-screen bg-background">
         <SEO 
           title="Shopping Cart - World Spilt Centre"
@@ -202,7 +251,15 @@ const Cart = () => {
                         {item.products?.name}
                       </h3>
                     </Link>
-                    <p className="text-sm text-muted-foreground">{item.products?.brand}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <p className="text-sm text-muted-foreground">{item.products?.brand}</p>
+                      {item.products?.is_free_delivery && (
+                        <Badge variant="secondary" className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border-0 text-[10px] px-1.5 py-0 h-5 gap-1">
+                          <Truck className="h-3 w-3" />
+                          Free Delivery
+                        </Badge>
+                      )}
+                    </div>
                     <p className="font-bold text-primary mt-1">
                       Rs.{Number(item.products?.price).toLocaleString()}
                     </p>
