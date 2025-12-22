@@ -65,7 +65,7 @@ const FlashDeal = () => {
   }, [deals]);
 
   return (
-    <section className="py-8 sm:py-14 relative overflow-hidden" id="deals">
+    <section className="py-8 sm:py-12 relative overflow-hidden" id="deals">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-deal/5 via-transparent to-primary/5" />
       
@@ -73,14 +73,6 @@ const FlashDeal = () => {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 left-1/4 w-[500px] h-[500px] bg-deal/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-32 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-      </div>
-
-      {/* Floating decorations */}
-      <div className="absolute top-16 right-[12%] opacity-20">
-        <Zap className="h-8 w-8 text-deal animate-pulse" style={{ animationDuration: '1.5s' }} />
-      </div>
-      <div className="absolute bottom-20 left-[8%] opacity-20">
-        <Flame className="h-7 w-7 text-primary animate-bounce" style={{ animationDuration: '2s' }} />
       </div>
       
       <div className="container mx-auto px-4 relative z-10">

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { memo, useState } from "react";
-import { Award, Sparkles, ShieldCheck } from "lucide-react";
+import { Award } from "lucide-react";
 
 const BrandCircle = memo(({ brand, index }: { brand: any; index: number }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -16,9 +16,9 @@ const BrandCircle = memo(({ brand, index }: { brand: any; index: number }) => {
       title={brand.name}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
-      <div className="relative w-18 h-18 sm:w-22 sm:h-22 md:w-26 md:h-26 flex items-center justify-center p-3 sm:p-4 rounded-2xl bg-card backdrop-blur-sm border-2 border-border shadow-lg hover:border-primary hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:scale-110 hover:-translate-y-2">
+      <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center p-3 sm:p-4 rounded-2xl bg-card backdrop-blur-sm border border-border shadow-md hover:border-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 hover:scale-105">
         {/* Glow effect on hover */}
-        <div className="absolute inset-0 rounded-2xl bg-primary/0 group-hover:bg-primary/5 transition-all duration-500" />
+        <div className="absolute inset-0 rounded-2xl bg-primary/0 group-hover:bg-primary/5 transition-all duration-300" />
         
         {brand.logo_url && !imageError ? (
           <>
@@ -32,7 +32,7 @@ const BrandCircle = memo(({ brand, index }: { brand: any; index: number }) => {
               decoding="async"
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
-              className={`max-w-[85%] max-h-[85%] object-contain transition-all duration-500 group-hover:scale-110 ${
+              className={`max-w-[80%] max-h-[80%] object-contain transition-all duration-300 group-hover:scale-105 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
             />
@@ -43,10 +43,6 @@ const BrandCircle = memo(({ brand, index }: { brand: any; index: number }) => {
           </span>
         )}
       </div>
-      {/* Brand name */}
-      <p className="text-center mt-2 text-xs sm:text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors truncate max-w-[80px] sm:max-w-[100px] mx-auto">
-        {brand.name}
-      </p>
     </Link>
   );
 });
@@ -90,7 +86,7 @@ const FeaturedBrands = memo(() => {
   if (brands.length === 0) return null;
 
   return (
-    <section className="py-8 sm:py-14 relative overflow-hidden">
+    <section className="py-8 sm:py-12 relative overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
@@ -99,66 +95,29 @@ const FeaturedBrands = memo(() => {
         <div className="absolute -top-40 right-1/4 w-[600px] h-[600px] bg-primary/3 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 left-1/4 w-[500px] h-[500px] bg-accent/3 rounded-full blur-3xl" />
       </div>
-
-      {/* Floating decorations */}
-      <div className="absolute top-16 left-[8%] opacity-15">
-        <Award className="h-8 w-8 text-primary animate-pulse" style={{ animationDuration: '2s' }} />
-      </div>
-      <div className="absolute bottom-20 right-[12%] opacity-15">
-        <Sparkles className="h-7 w-7 text-accent animate-bounce" style={{ animationDuration: '3s' }} />
-      </div>
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-8 sm:mb-12">
-          <div className="flex items-center gap-4 sm:gap-5 mb-4">
-            {/* Animated icon */}
-            <div className="relative group">
-              <div className="absolute -inset-3 bg-primary/20 rounded-2xl blur-lg group-hover:bg-primary/30 transition-all duration-500" />
-              <div className="absolute -inset-1 bg-primary rounded-2xl opacity-75 animate-spin" style={{ animationDuration: '8s' }} />
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/30">
-                <Award className="h-7 w-7 sm:h-8 sm:w-8 text-primary-foreground drop-shadow-lg" />
-              </div>
-              <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-accent drop-shadow-lg animate-pulse" style={{ animationDuration: '1.5s' }} />
+        <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
             </div>
           </div>
           
-          <div className="flex items-center gap-2 flex-wrap justify-center mb-2">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-foreground">
-              Shop by Brand
-            </h2>
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold border border-primary/30 backdrop-blur-sm">
-              <ShieldCheck className="h-3 w-3" />
-              TRUSTED
-            </span>
-          </div>
-          <p className="text-sm sm:text-base text-muted-foreground flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse shadow-lg shadow-primary/50" />
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-foreground mb-1">
+            Shop by Brand
+          </h2>
+          <p className="text-sm text-muted-foreground">
             Premium brands with guaranteed quality
           </p>
         </div>
 
         {/* Brands Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4 sm:gap-6 md:gap-8 place-items-center">
-          {brands.slice(0, 16).map((brand: any, index: number) => (
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 sm:gap-4 place-items-center">
+          {brands.slice(0, 20).map((brand: any, index: number) => (
             <BrandCircle key={brand.id} brand={brand} index={index} />
           ))}
-        </div>
-
-        {/* Bottom trust badges */}
-        <div className="mt-8 sm:mt-12 flex flex-wrap justify-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card backdrop-blur-md border border-border shadow-md">
-            <ShieldCheck className="h-5 w-5 text-accent" />
-            <span className="text-xs sm:text-sm font-medium text-foreground">100% Authentic</span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card backdrop-blur-md border border-border shadow-md">
-            <Award className="h-5 w-5 text-primary" />
-            <span className="text-xs sm:text-sm font-medium text-foreground">Official Partners</span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card backdrop-blur-md border border-border shadow-md">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <span className="text-xs sm:text-sm font-medium text-foreground">Premium Quality</span>
-          </div>
         </div>
       </div>
     </section>
