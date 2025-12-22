@@ -134,7 +134,7 @@ const OrderTracking = () => {
                 </Button>
               </form>
               {user && (
-                <Link to="/account?tab=orders" className="block mt-4">
+                <Link to="/orders" className="block mt-4">
                   <Button variant="link" size="sm">
                     View all my orders
                   </Button>

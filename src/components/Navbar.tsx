@@ -216,7 +216,7 @@ const Navbar = () => {
                 </Link>
               )}
               
-              <Link to="/account?tab=wishlist">
+              <Link to="/wishlist">
                 <Button variant="ghost" size="icon" className="relative">
                   <Heart className="h-5 w-5" />
                   <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
@@ -440,7 +440,7 @@ const Navbar = () => {
                 </Link>
                 {user && (
                   <Link
-                    to="/account?tab=orders"
+                    to="/orders"
                     className="px-5 py-4 text-sm font-medium text-foreground hover:text-primary hover:bg-secondary/50 transition-all duration-200"
                   >
                     Orders
@@ -499,15 +499,15 @@ const Navbar = () => {
                 {user ? (
                   <>
                     <Link
-                      to="/account"
+                      to="/profile"
                       className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <User className="h-5 w-5 text-muted-foreground" />
-                      My Account
+                      My Profile
                     </Link>
                     <Link
-                      to="/account?tab=orders"
+                      to="/orders"
                       className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -515,7 +515,7 @@ const Navbar = () => {
                       Orders
                     </Link>
                     <Link
-                      to="/account?tab=wishlist"
+                      to="/wishlist"
                       className="py-3.5 px-4 text-foreground hover:bg-secondary active:bg-secondary/80 rounded-lg flex items-center gap-3 min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
