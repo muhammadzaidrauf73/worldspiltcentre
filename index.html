@@ -30,22 +30,48 @@
     <meta name="twitter:description" content="Quality electronics & home appliances. Best prices in Lahore!" />
     <meta name="twitter:image" content="/logo.png" />
 
-    <!-- Structured Data -->
+    <!-- Structured Data - Organization -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Store",
+      "@type": "Organization",
       "name": "World Spilt Centre",
-      "description": "Quality electronics and home appliances store in Lahore, Pakistan",
+      "alternateName": ["World Split Centre", "WSC Electronics", "World Spilt Center"],
       "url": "https://worldspiltcentre.com",
-      "logo": "/logo.png",
-      "image": "/logo.png",
-      "telephone": "+923004649141",
+      "logo": "https://worldspiltcentre.com/logo.png",
+      "sameAs": [
+        "https://www.facebook.com/worldspiltcentre",
+        "https://www.instagram.com/worldspiltcentre"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+92-300-4649141",
+        "contactType": "customer service",
+        "areaServed": "PK",
+        "availableLanguage": ["English", "Urdu"]
+      }
+    }
+    </script>
+
+    <!-- Structured Data - Local Business -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ElectronicsStore",
+      "name": "World Spilt Centre",
+      "alternateName": "World Split Centre",
+      "description": "Best electronics store in Lahore, Pakistan. Shop air conditioners, LED TVs, refrigerators, washing machines & home appliances at lowest prices.",
+      "url": "https://worldspiltcentre.com",
+      "logo": "https://worldspiltcentre.com/logo.png",
+      "image": "https://worldspiltcentre.com/logo.png",
+      "telephone": "+92-300-4649141",
+      "email": "support@worldspiltcentre.com",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers",
-        "addressLocality": "Model Town, Lahore",
-        "addressRegion": "Punjab",
+        "addressLocality": "Model Town",
+        "addressRegion": "Lahore, Punjab",
+        "postalCode": "54000",
         "addressCountry": "PK"
       },
       "geo": {
@@ -53,10 +79,44 @@
         "latitude": "31.4826",
         "longitude": "74.3252"
       },
-      "openingHours": "Mo-Su 10:00-22:00",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "10:00",
+          "closes": "22:00"
+        }
+      ],
       "priceRange": "$$",
-      "paymentAccepted": "Cash, Credit Card, Bank Transfer",
-      "currenciesAccepted": "PKR"
+      "paymentAccepted": "Cash, Credit Card, JazzCash, Easypaisa, Bank Transfer",
+      "currenciesAccepted": "PKR",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Electronics & Home Appliances",
+        "itemListElement": [
+          {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Air Conditioners"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "LED TVs"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Refrigerators"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Washing Machines"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Product", "name": "Microwave Ovens"}}
+        ]
+      }
+    }
+    </script>
+
+    <!-- Structured Data - WebSite with SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "World Spilt Centre",
+      "alternateName": "World Split Centre",
+      "url": "https://worldspiltcentre.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://worldspiltcentre.com/products?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
     </script>
 
