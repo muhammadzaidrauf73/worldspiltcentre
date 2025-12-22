@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import BackToTop from "@/components/BackToTop";
 import PageLoader from "@/components/PageLoader";
 import RouteLoadingBar from "@/components/RouteLoadingBar";
 import Index from "./pages/Index";
@@ -109,6 +110,7 @@ const App = () => (
         <BrowserRouter>
           <RouteLoadingBar />
           <ConditionalWhatsAppButton />
+          <BackToTop />
           <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
             <Routes>
