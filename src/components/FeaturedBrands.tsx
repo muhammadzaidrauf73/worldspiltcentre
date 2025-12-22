@@ -103,17 +103,14 @@ const FeaturedBrands = memo(() => {
 
         {/* Orbital Container */}
         <div className="flex justify-center items-center">
-          <div className="relative w-80 h-80 sm:w-[400px] sm:h-[400px] md:w-[480px] md:h-[480px]">
+          <div className="relative w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] md:w-[440px] md:h-[440px]">
             
-            {/* Orbit Ring - rotating dashed circle */}
-            <div 
-              className="absolute inset-[15%] rounded-full border-2 border-dashed border-primary/30"
-              style={{ animation: 'spin 40s linear infinite' }}
-            />
+            {/* Orbit Ring - static dashed circle aligned with brands */}
+            <div className="absolute inset-[18%] rounded-full border-2 border-dashed border-primary/30" />
             
             {/* Center Circle */}
-            <div className="absolute inset-[40%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10 shadow-lg">
-              <span className="text-base sm:text-lg md:text-xl font-bold text-primary">Brands</span>
+            <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10 shadow-lg">
+              <span className="text-sm sm:text-base md:text-lg font-bold text-primary">Brands</span>
             </div>
 
             {/* Rotating brands container */}
@@ -126,7 +123,7 @@ const FeaturedBrands = memo(() => {
             >
               {orbitBrands.map((brand: any, index: number) => {
                 const angle = (index / orbitBrands.length) * 360 - 90;
-                const radius = 35; // percentage from center - same distance for all
+                const radius = 32; // fixed radius for all brands - same distance
                 const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
                 const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
                 
