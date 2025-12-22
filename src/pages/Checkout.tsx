@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin, ShoppingCart, Package, Check, Star, Home, Building2 } from "lucide-react";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { addDays, format } from "date-fns";
+import { FlashDealTimer } from "@/components/FlashDealTimer";
 
 interface ShippingOption {
   id: string;
@@ -111,7 +112,7 @@ const Checkout = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("flash_deals")
-        .select("product_id, deal_price, original_price, name")
+        .select("product_id, deal_price, original_price, name, ends_at")
         .eq("is_active", true)
         .gte("ends_at", new Date().toISOString());
       if (error) throw error;
@@ -1215,11 +1216,16 @@ const Checkout = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm line-clamp-2 mb-1">{item.products?.name}</p>
-                            {hasFlashDeal(item) && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-deal/10 text-deal font-medium">
-                                ⚡ Flash Deal
-                              </span>
-                            )}
+                            <div className="flex items-center flex-wrap gap-1.5">
+                              {hasFlashDeal(item) && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-deal/10 text-deal font-medium">
+                                  ⚡ Flash Deal
+                                </span>
+                              )}
+                              {getFlashDealInfo(item) && (
+                                <FlashDealTimer endsAt={getFlashDealInfo(item)!.ends_at} compact />
+                              )}
+                            </div>
                             <div className="flex items-center justify-between mt-1">
                               <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
                               <span className="text-sm font-semibold text-primary">
