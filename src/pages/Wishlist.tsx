@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import WishlistTab from "@/components/WishlistTab";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, Package } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const Wishlist = () => {
   const { user, loading: authLoading } = useAuth();
@@ -54,21 +54,6 @@ const Wishlist = () => {
             </h1>
           </div>
 
-          {/* Quick Links */}
-          <div className="flex gap-3 mb-6">
-            <Link to="/profile">
-              <Button variant="outline" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                Profile
-              </Button>
-            </Link>
-            <Link to="/orders">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Package className="h-4 w-4" />
-                Orders
-              </Button>
-            </Link>
-          </div>
           
           <WishlistTab />
         </div>
