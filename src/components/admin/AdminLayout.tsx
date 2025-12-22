@@ -25,7 +25,8 @@ import {
   XCircle,
   LayoutGrid,
   MapPin,
-  FileText
+  FileText,
+  Bell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ const navItems = [
   { href: "/admin/free-delivery", label: "Free Delivery", icon: Truck },
   { href: "/admin/store-locations", label: "Store Locations", icon: MapPin },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/blog", label: "Blog Posts", icon: FileText },
   { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
   { href: "/admin/company-settings", label: "Company Settings", icon: Settings },
