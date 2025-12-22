@@ -321,33 +321,33 @@ const ProductCard = memo(({
 
         {/* Action Buttons - Add to Cart + Buy Now */}
         {price > 0 ? (
-          <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mt-2 sm:mt-3">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1.5 mt-2 sm:mt-3">
             <Button 
               variant="outline"
               size="sm"
               onClick={handleAddToCart}
               disabled={isAddingOnly || isAddingToCart}
-              className="h-8 sm:h-9 text-[11px] sm:text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-1.5 sm:px-2 min-w-0"
+              className="h-9 text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-3 w-full"
             >
               {isAddingOnly ? (
-                <div className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
+                <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
               ) : (
-                <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1 flex-shrink-0" />
+                <ShoppingCart className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
               )}
-              <span className="whitespace-nowrap">{isAddingOnly ? "..." : "Cart"}</span>
+              {isAddingOnly ? "Adding..." : "Add to Cart"}
             </Button>
             <Button 
               size="sm"
               onClick={handleShopNow}
               disabled={isAddingToCart || isAddingOnly}
-              className="h-8 sm:h-9 text-[11px] sm:text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-1.5 sm:px-2 min-w-0"
+              className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-3 w-full"
             >
               {isAddingToCart ? (
-                <div className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin flex-shrink-0" />
+                <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin flex-shrink-0" />
               ) : (
-                <ShoppingBag className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1 flex-shrink-0" />
+                <ShoppingBag className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
               )}
-              <span className="whitespace-nowrap">{isAddingToCart ? "..." : "Buy Now"}</span>
+              {isAddingToCart ? "Processing..." : "Buy Now"}
             </Button>
           </div>
         ) : (
