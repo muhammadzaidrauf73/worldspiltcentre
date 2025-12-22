@@ -106,10 +106,6 @@ const FeaturedBrands = memo(() => {
             {/* Orbit Ring - static dashed circle aligned with brands */}
             <div className="absolute inset-[18%] rounded-full border-2 border-dashed border-primary/30" />
             
-            {/* Center Circle */}
-            <div className="absolute inset-[38%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10 shadow-lg">
-              <span className="text-sm sm:text-base md:text-lg font-bold text-primary">Brands</span>
-            </div>
 
             {/* Rotating brands container */}
             <div 
