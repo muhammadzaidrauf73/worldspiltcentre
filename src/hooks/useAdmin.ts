@@ -3,31 +3,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const useAdmin = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, session } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) {
+      if (!user || !session) {
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
+        // Use server-side verification via Edge Function
+        const { data, error } = await supabase.functions.invoke('verify-admin');
 
         if (error) {
-          console.error("Error checking admin status:", error);
+          console.error("Error verifying admin status:", error);
           setIsAdmin(false);
         } else {
-          setIsAdmin(!!data);
+          setIsAdmin(data?.isAdmin === true);
         }
       } catch (err) {
         console.error("Error:", err);
@@ -40,7 +36,7 @@ export const useAdmin = () => {
     if (!authLoading) {
       checkAdminStatus();
     }
-  }, [user, authLoading]);
+  }, [user, session, authLoading]);
 
   return { isAdmin, loading: loading || authLoading };
 };
