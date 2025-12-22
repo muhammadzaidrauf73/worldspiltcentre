@@ -87,6 +87,7 @@ const Footer = () => {
       { name: "FAQs", path: "/#faq" },
       { name: "Shipping Info", path: "/shipping" },
       { name: "Returns Policy", path: "/returns" },
+      { name: "Refund Policy", path: "/refund-policy" },
       { name: "Warranty", path: "/warranty" },
     ],
     company: [
@@ -95,7 +96,7 @@ const Footer = () => {
       { name: "Store Locations", path: "/store-locations" },
       { name: "Careers", path: "/careers" },
       { name: "Privacy Policy", path: "/privacy" },
-      { name: "Terms", path: "/terms" },
+      { name: "Terms of Service", path: "/terms" },
     ],
   };
 
