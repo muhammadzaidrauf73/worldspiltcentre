@@ -9,6 +9,7 @@ import SEO from "@/components/SEO";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { FlashDealTimer } from "@/components/FlashDealTimer";
 import { Minus, Plus, Trash2, ShoppingBag, Truck } from "lucide-react";
 
 // Confetti component for celebration effect
@@ -83,7 +84,7 @@ const Cart = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("flash_deals")
-        .select("product_id, deal_price, original_price")
+        .select("product_id, deal_price, original_price, ends_at")
         .eq("is_active", true)
         .gte("ends_at", new Date().toISOString());
       if (error) throw error;
@@ -103,6 +104,11 @@ const Cart = () => {
   // Helper to check if item has flash deal
   const hasFlashDeal = (item: any) => {
     return activeFlashDeals.some(d => d.product_id === item.product_id);
+  };
+
+  // Get flash deal info for an item
+  const getFlashDealInfo = (item: any) => {
+    return activeFlashDeals.find(d => d.product_id === item.product_id);
   };
 
   // Get original price for flash deal display
@@ -276,7 +282,7 @@ const Cart = () => {
                               {item.products?.name}
                             </p>
                           </Link>
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex items-center flex-wrap gap-2 mt-0.5">
                             <span className="text-xs text-muted-foreground">{item.products?.brand}</span>
                             {hasFlashDeal(item) && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-deal/10 text-deal font-medium">
@@ -289,6 +295,13 @@ const Cart = () => {
                               </span>
                             )}
                           </div>
+                          
+                          {/* Flash Deal Countdown Timer */}
+                          {getFlashDealInfo(item) && (
+                            <div className="mt-1.5">
+                              <FlashDealTimer endsAt={getFlashDealInfo(item)!.ends_at} compact />
+                            </div>
+                          )}
                           
                           <div className="flex items-center justify-between mt-2">
                             <div>
