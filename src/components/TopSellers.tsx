@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, ArrowRight, Crown, Flame, Star, TrendingUp } from "lucide-react";
+import { Trophy, Crown, Flame, Star, TrendingUp } from "lucide-react";
 import ProductCarousel from "./ProductCarousel";
 import { ProductGridSkeleton } from "./ProductCardSkeleton";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SectionHeader } from "./SectionHeader";
 
 const TopSellers = () => {
   const { data: products, isLoading } = useQuery({
@@ -65,55 +65,16 @@ const TopSellers = () => {
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
-          <div className="flex items-center gap-4 sm:gap-5">
-            {/* Premium animated icon */}
-            <div className="relative group">
-              {/* Outer glow */}
-              <div className="absolute -inset-3 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 rounded-2xl opacity-30 blur-lg group-hover:opacity-50 transition-opacity duration-500" />
-              {/* Rotating gold ring */}
-              <div className="absolute -inset-1.5 rounded-2xl border-2 border-dashed border-amber-400/60 dark:border-amber-500/40 animate-spin" style={{ animationDuration: '15s' }} />
-              {/* Icon container */}
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 flex items-center justify-center shadow-2xl shadow-orange-500/40 rotate-3 hover:rotate-0 transition-transform duration-300">
-                <Trophy className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
-              </div>
-              {/* Crown accent */}
-              <Crown className="absolute -top-3 -right-2 h-6 w-6 text-yellow-400 drop-shadow-lg animate-bounce" style={{ animationDuration: '2.5s' }} />
-              {/* Fire accent */}
-              <Flame className="absolute -bottom-1 -left-1 h-4 w-4 text-orange-300 animate-pulse" style={{ animationDuration: '1s' }} />
-            </div>
-            
-            {/* Title & Description */}
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 dark:from-amber-400 dark:via-orange-400 dark:to-red-400 bg-clip-text text-transparent">
-                  Top Sellers
-                </h2>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 dark:from-orange-500/30 dark:to-red-500/30 text-orange-700 dark:text-orange-300 text-[10px] sm:text-xs font-bold border border-orange-300/50 dark:border-orange-500/30 backdrop-blur-sm animate-pulse" style={{ animationDuration: '2s' }}>
-                  <Flame className="h-3 w-3" />
-                  HOT
-                </span>
-              </div>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-orange-500" />
-                Our most loved products this month
-              </p>
-            </div>
-          </div>
-          
-          <Link to="/products?sort=bestselling">
-            <Button 
-              variant="outline" 
-              className="group relative overflow-hidden border-amber-300/50 dark:border-amber-500/30 bg-white/50 dark:bg-amber-950/30 backdrop-blur-sm hover:border-orange-500 text-amber-700 dark:text-amber-300 h-10 sm:h-11 px-5 sm:px-6 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20"
-            >
-              <span className="relative z-10 flex items-center">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            </Button>
-          </Link>
-        </div>
+        <SectionHeader
+          icon={Trophy}
+          title="Top Sellers"
+          description="Our most loved products this month"
+          badge={{ icon: Flame, text: "HOT" }}
+          accentIcon={Crown}
+          secondaryAccentIcon={Flame}
+          linkTo="/products?sort=bestselling"
+          theme="amber"
+        />
 
         {/* Products */}
         <ProductCarousel products={products} badge="🏆 Best Seller" />

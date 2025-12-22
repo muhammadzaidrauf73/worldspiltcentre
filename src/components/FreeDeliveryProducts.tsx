@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCarousel from "@/components/ProductCarousel";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
-import { Truck, ArrowRight, Gift, Package, Sparkles, CheckCircle2, Zap } from "lucide-react";
+import { Truck, ArrowRight, Gift, Package, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "./SectionHeader";
 
 const FreeDeliveryProducts = () => {
   const { data: products = [], isLoading } = useQuery({
@@ -51,55 +52,15 @@ const FreeDeliveryProducts = () => {
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 gap-4">
-          <div className="flex items-center gap-4 sm:gap-5">
-            {/* Premium animated icon */}
-            <div className="relative group">
-              {/* Outer glow */}
-              <div className="absolute -inset-3 bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-2xl opacity-30 blur-lg group-hover:opacity-50 transition-opacity duration-500" />
-              {/* Dashed rotating border */}
-              <div className="absolute -inset-2 rounded-2xl border-2 border-dashed border-emerald-400/50 dark:border-emerald-500/30 animate-spin" style={{ animationDuration: '20s' }} />
-              {/* Ping effect */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-400/40 to-teal-400/40 animate-ping" style={{ animationDuration: '3s' }} />
-              {/* Icon container */}
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500 flex items-center justify-center shadow-2xl shadow-emerald-500/40 -rotate-3 hover:rotate-0 transition-transform duration-300">
-                <Truck className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-lg" />
-              </div>
-              {/* Sparkle accent */}
-              <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-yellow-400 drop-shadow-lg animate-pulse" style={{ animationDuration: '1.5s' }} />
-            </div>
-            
-            {/* Title & Description */}
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-emerald-600 via-green-500 to-teal-600 dark:from-emerald-400 dark:via-green-400 dark:to-teal-400 bg-clip-text text-transparent">
-                  Free Delivery
-                </h2>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 dark:from-amber-500/30 dark:to-yellow-500/30 text-amber-700 dark:text-amber-300 text-[10px] sm:text-xs font-bold border border-amber-300/50 dark:border-amber-500/30 backdrop-blur-sm shadow-sm">
-                  <Gift className="h-3 w-3" />
-                  ZERO COST
-                </span>
-              </div>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                Add any of these to unlock free shipping on your order!
-              </p>
-            </div>
-          </div>
-          
-          <Link to="/products?delivery=free">
-            <Button 
-              variant="outline" 
-              className="group relative overflow-hidden border-emerald-300/50 dark:border-emerald-500/30 bg-white/50 dark:bg-emerald-950/30 backdrop-blur-sm hover:border-emerald-500 text-emerald-700 dark:text-emerald-300 h-10 sm:h-11 px-5 sm:px-6 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20"
-            >
-              <span className="relative z-10 flex items-center">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            </Button>
-          </Link>
-        </div>
+        <SectionHeader
+          icon={Truck}
+          title="Free Delivery"
+          description="Add any of these to unlock free shipping on your order!"
+          badge={{ icon: Gift, text: "ZERO COST" }}
+          accentIcon={Sparkles}
+          linkTo="/products?delivery=free"
+          theme="emerald"
+        />
 
         {/* Products */}
         {isLoading ? (
