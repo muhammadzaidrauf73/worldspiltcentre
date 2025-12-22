@@ -90,7 +90,7 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
       {/* Scrollable Container */}
       <div
         ref={scrollRef}
-        className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth scrollbar-hide"
+        className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth scrollbar-hide touch-pan-x"
         style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
       >
         {products.map((product, index) => (
