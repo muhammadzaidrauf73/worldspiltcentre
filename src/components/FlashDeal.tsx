@@ -124,6 +124,9 @@ const FlashDeal = () => {
                   </div>
                 </div>
                 <div className="p-2">
+                  <p className="text-foreground text-xs font-medium line-clamp-2 min-h-[2rem] mb-1">
+                    {deal.name}
+                  </p>
                   <p className="text-primary font-bold text-sm">
                     Rs.{deal.deal_price.toLocaleString()}
                   </p>
