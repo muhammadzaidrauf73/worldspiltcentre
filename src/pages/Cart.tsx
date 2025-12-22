@@ -143,26 +143,41 @@ const Cart = () => {
             <div className="lg:col-span-2 space-y-4">
               {/* Free Delivery Banner */}
               {anyProductQualifiesForFreeDelivery && (
-                <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 border border-green-500/30 rounded-xl p-4 flex items-start gap-4 animate-fade-in">
-                  <div className="shrink-0 w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <Truck className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-green-700 dark:text-green-400">
-                        🎉 Free Delivery Unlocked!
-                      </h3>
-                      <Sparkles className="h-4 w-4 text-yellow-500" />
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/40 dark:via-green-950/30 dark:to-teal-950/40 border border-emerald-200/60 dark:border-emerald-800/40 p-5 animate-fade-in shadow-sm">
+                  {/* Decorative background elements */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-200/40 to-transparent dark:from-emerald-700/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-teal-200/40 to-transparent dark:from-teal-700/20 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+                  
+                  <div className="relative flex items-center gap-4">
+                    {/* Icon with animated ring */}
+                    <div className="relative shrink-0">
+                      <div className="absolute inset-0 rounded-full bg-emerald-400/30 dark:bg-emerald-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+                      <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 dark:from-emerald-500 dark:to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                        <Truck className="h-7 w-7 text-white" />
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Your cart includes{" "}
-                      <span className="font-medium text-foreground">
-                        {freeDeliveryProducts.length === 1 
-                          ? freeDeliveryProducts[0] 
-                          : `${freeDeliveryProducts.length} products`}
-                      </span>{" "}
-                      with free delivery – enjoy <span className="font-semibold text-green-600 dark:text-green-400">FREE shipping</span> on your entire order!
-                    </p>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-green-600 dark:from-emerald-400 dark:to-green-400 bg-clip-text text-transparent">
+                          Free Delivery Unlocked!
+                        </h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+                          <Sparkles className="h-3 w-3" />
+                          BONUS
+                        </span>
+                      </div>
+                      <p className="text-sm text-emerald-700/80 dark:text-emerald-300/70 mt-1 leading-relaxed">
+                        Your cart includes{" "}
+                        <span className="font-semibold text-emerald-800 dark:text-emerald-200">
+                          {freeDeliveryProducts.length === 1 
+                            ? freeDeliveryProducts[0] 
+                            : `${freeDeliveryProducts.length} eligible products`}
+                        </span>
+                        {" "}— <span className="font-bold text-emerald-600 dark:text-emerald-400">FREE shipping</span> on your entire order!
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
