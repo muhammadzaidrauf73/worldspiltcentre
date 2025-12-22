@@ -221,6 +221,10 @@ const Orders = () => {
                 Profile
               </Button>
             </Link>
+            <Button variant="default" size="sm" className="gap-2">
+              <Package className="h-4 w-4" />
+              Orders
+            </Button>
             <Link to="/wishlist">
               <Button variant="outline" size="sm" className="gap-2">
                 <Heart className="h-4 w-4" />
