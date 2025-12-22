@@ -177,11 +177,11 @@ const Navbar = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1">
-                {/* User Menu */}
+                {/* User Menu - visible on all screen sizes */}
                 {user ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="hidden sm:flex h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors">
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors">
                         <User className="h-5 w-5" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -212,7 +212,7 @@ const Navbar = () => {
                   </DropdownMenu>
                 ) : (
                   <Link to="/auth" aria-label="Login or Register">
-                    <Button variant="ghost" size="icon" className="hidden sm:flex h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors" aria-label="Login or Register">
+                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors" aria-label="Login or Register">
                       <User className="h-5 w-5" />
                     </Button>
                   </Link>
@@ -474,37 +474,13 @@ const Navbar = () => {
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         <SheetContent side="right" className="w-[85%] max-w-sm p-0 flex flex-col border-l-4 border-l-primary">
           <SheetHeader className="p-4 border-b border-border bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-xl bg-primary/10 border border-primary/20">
-                  <img src="/logo.png" alt="Logo" className="h-9 w-10 object-contain" />
-                </div>
-                <div className="text-left">
-                  <SheetTitle className="font-heading font-bold text-lg text-foreground">Menu</SheetTitle>
-                  <SheetDescription className="text-xs text-primary font-medium">World Spilt Centre</SheetDescription>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                <img src="/logo.png" alt="Logo" className="h-9 w-10 object-contain" />
               </div>
-              {/* Profile & Wishlist Buttons in Header */}
-              <div className="flex items-center gap-2">
-                <Link
-                  to="/wishlist"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
-                >
-                  <Heart className="h-5 w-5 text-primary" />
-                  {wishlistItems.length > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-lg">
-                      {wishlistItems.length}
-                    </span>
-                  )}
-                </Link>
-                <Link
-                  to={user ? "/profile" : "/auth"}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
-                >
-                  <User className="h-5 w-5 text-primary" />
-                </Link>
+              <div className="text-left">
+                <SheetTitle className="font-heading font-bold text-lg text-foreground">Menu</SheetTitle>
+                <SheetDescription className="text-xs text-primary font-medium">World Spilt Centre</SheetDescription>
               </div>
             </div>
           </SheetHeader>
@@ -570,16 +546,6 @@ const Navbar = () => {
               {user ? (
                 <div className="space-y-1 mt-2">
                   <Link
-                    to="/profile"
-                    className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                      <User className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                    </div>
-                    <span>My Profile</span>
-                  </Link>
-                  <Link
                     to="/orders"
                     className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-colors"
                     onClick={() => setIsMenuOpen(false)}
@@ -588,23 +554,6 @@ const Navbar = () => {
                       <ShoppingCart className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                     </div>
                     <span>My Orders</span>
-                  </Link>
-                  <Link
-                    to="/wishlist"
-                    className="py-3.5 px-4 text-foreground hover:bg-primary/5 hover:text-primary rounded-xl flex items-center gap-3 min-h-[52px] group transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-secondary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                      <Heart className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                    </div>
-                    <div className="flex-1 flex items-center justify-between">
-                      <span>Wishlist</span>
-                      {wishlistItems.length > 0 && (
-                        <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-                          {wishlistItems.length}
-                        </Badge>
-                      )}
-                    </div>
                   </Link>
                   {isAdmin && (
                     <Link
