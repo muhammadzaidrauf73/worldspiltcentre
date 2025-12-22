@@ -23,7 +23,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Package, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download, ChevronDown, Clock, ArrowLeft, User, Heart } from "lucide-react";
+import { Package, ShoppingBag, Truck, ExternalLink, MapPin, XCircle, Loader2, Download, ChevronDown, Clock, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 
 interface OrderItem {
@@ -213,25 +213,6 @@ const Orders = () => {
             </h1>
           </div>
 
-          {/* Quick Links */}
-          <div className="flex gap-3 mb-6">
-            <Link to="/profile">
-              <Button variant="outline" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                Profile
-              </Button>
-            </Link>
-            <Button variant="default" size="sm" className="gap-2">
-              <Package className="h-4 w-4" />
-              Orders
-            </Button>
-            <Link to="/wishlist">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Heart className="h-4 w-4" />
-                Wishlist
-              </Button>
-            </Link>
-          </div>
           
           <div className="bg-card rounded-lg border border-border p-6">
             {ordersLoading ? (

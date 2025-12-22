@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Save, LogOut, Package, Heart, ArrowLeft } from "lucide-react";
+import { User, Save, LogOut, ArrowLeft } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -127,21 +127,6 @@ const Profile = () => {
           </h1>
         </div>
 
-        {/* Quick Links */}
-        <div className="flex gap-3 mb-6">
-          <Link to="/orders">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Package className="h-4 w-4" />
-              Orders
-            </Button>
-          </Link>
-          <Link to="/wishlist">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Heart className="h-4 w-4" />
-              Wishlist
-            </Button>
-          </Link>
-        </div>
         
         <div className="bg-card rounded-lg border border-border p-6 max-w-xl">
           <div className="flex items-center gap-3 mb-6">
