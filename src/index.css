@@ -38,7 +38,19 @@ body {
 .overflow-x-auto,
 .overflow-scroll {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  /* Important: allow scroll chaining to the page (prevents “stuck” scrolling over cards/carousels) */
+  overscroll-behavior: auto;
+}
+
+/* Contain overscroll only on the axis the container actually scrolls */
+.overflow-x-auto {
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+}
+
+.overflow-y-auto {
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: auto;
 }
 
 /* Hide scrollbar utility */
