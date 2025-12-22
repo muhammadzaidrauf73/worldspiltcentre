@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart, User, Menu, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import NotificationBell from "@/components/NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -217,6 +218,8 @@ const Navbar = () => {
                     </Button>
                   </Link>
                 )}
+
+                <NotificationBell />
                 
                 <Link to="/wishlist">
                   <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors">
