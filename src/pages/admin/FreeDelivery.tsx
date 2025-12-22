@@ -86,7 +86,7 @@ const AdminFreeDelivery = () => {
 
   // Products with free delivery
   const freeDeliveryProducts = useMemo(() => 
-    products.filter((p) => p.is_free_delivery), 
+    products.filter((p) => p.is_free_delivery === true), 
     [products]
   );
 
@@ -102,7 +102,7 @@ const AdminFreeDelivery = () => {
 
   // Products without free delivery for bulk add
   const availableProducts = useMemo(() => 
-    products.filter((p) => !p.is_free_delivery), 
+    products.filter((p) => p.is_free_delivery !== true), 
     [products]
   );
 
