@@ -124,13 +124,13 @@ const Checkout = () => {
     return sum + (Number(item.products?.price) || 0) * item.quantity;
   }, 0);
 
-  // Check if ALL products in cart qualify for free delivery
-  const allProductsQualifyForFreeDelivery = cartItems.length > 0 && cartItems.every(
+  // Check if ANY product in cart qualifies for free delivery (then all products get free delivery)
+  const anyProductQualifiesForFreeDelivery = cartItems.length > 0 && cartItems.some(
     item => item.products?.is_free_delivery === true
   );
 
   const selectedShippingOption = shippingOptions.find(s => s.id === selectedShipping);
-  const shippingCost = allProductsQualifyForFreeDelivery 
+  const shippingCost = anyProductQualifiesForFreeDelivery 
     ? 0 
     : selectedShippingOption 
       ? (selectedShippingOption.free_shipping_threshold && subtotal >= selectedShippingOption.free_shipping_threshold 
@@ -479,13 +479,13 @@ const Checkout = () => {
                   Shipping Method
                 </h2>
                 
-                {allProductsQualifyForFreeDelivery ? (
+                {anyProductQualifiesForFreeDelivery ? (
                   <div className="flex items-center gap-3 p-4 rounded-lg border border-accent bg-accent/10">
                     <CheckCircle className="h-5 w-5 text-accent" />
                     <div>
                       <p className="font-medium text-accent">Free Delivery</p>
                       <p className="text-sm text-muted-foreground">
-                        All products in your cart qualify for free delivery
+                        Your cart includes a product with free delivery – enjoy free shipping on your entire order!
                       </p>
                     </div>
                   </div>
@@ -659,7 +659,7 @@ const Checkout = () => {
                   
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      {allProductsQualifyForFreeDelivery ? "Free Delivery" : "Shipping"}
+                      {anyProductQualifiesForFreeDelivery ? "Free Delivery" : "Shipping"}
                     </span>
                     <span className="font-medium">
                       {shippingCost === 0 ? (
