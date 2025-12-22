@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, User, Menu, X, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles, Search } from "lucide-react";
+import { ShoppingCart, User, Menu, Heart, Phone, ChevronDown, LogOut, Shield, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,6 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -26,20 +33,6 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { isAdmin } = useAdmin();
   const { wishlistItems } = useWishlist();
-
-  useEffect(() => {
-    // Prevent background scroll when the mobile drawer is open
-    if (isMenuOpen) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
-
-    document.body.style.overflow = "";
-    return;
-  }, [isMenuOpen]);
   
   const navigate = useNavigate();
 
@@ -252,9 +245,9 @@ const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 className="md:hidden h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary transition-colors"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={() => setIsMenuOpen(true)}
               >
-                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                <Menu className="h-5 w-5" />
               </Button>
             </div>
           </div>
@@ -477,40 +470,18 @@ const Navbar = () => {
 
       </nav>
 
-      {/* Mobile Menu - Rendered outside nav for proper stacking */}
-      {/* Mobile Menu Overlay */}
-      {isMenuOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]"
-          onClick={() => setIsMenuOpen(false)}
-        />
-      )}
-      
-      {/* Mobile Menu Drawer */}
-      <div 
-        className={`md:hidden fixed top-0 right-0 h-full w-[85%] max-w-sm bg-background border-l border-border shadow-2xl z-[9999] transform transition-transform duration-300 ease-out ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+      {/* Mobile Menu Sheet */}
+      <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <SheetContent side="right" className="w-[85%] max-w-sm p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="Logo" className="h-10 w-11 object-contain" />
-              <div>
-                <h2 className="font-heading font-bold text-lg text-foreground">Menu</h2>
-                <p className="text-xs text-muted-foreground">World Spilt Centre</p>
+              <div className="text-left">
+                <SheetTitle className="font-heading font-bold text-lg text-foreground">Menu</SheetTitle>
+                <SheetDescription className="text-xs text-muted-foreground">World Spilt Centre</SheetDescription>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full hover:bg-primary/10 text-foreground hover:text-primary"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          </SheetHeader>
           
           {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto py-4 px-3">
@@ -688,8 +659,8 @@ const Navbar = () => {
               </div>
             </a>
           </div>
-        </div>
-      </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 };
