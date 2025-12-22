@@ -468,13 +468,19 @@ const Checkout = () => {
 
   const estimatedDelivery = getEstimatedDeliveryDate();
 
-  // Progress steps
+  // Progress steps with navigation
   const steps = [
-    { id: 1, label: "Cart", icon: ShoppingCart, completed: true },
-    { id: 2, label: "Shipping", icon: Truck, completed: false, active: true },
-    { id: 3, label: "Payment", icon: CreditCard, completed: false },
-    { id: 4, label: "Confirmation", icon: Check, completed: false },
+    { id: 1, label: "Cart", icon: ShoppingCart, completed: true, action: () => navigate("/cart") },
+    { id: 2, label: "Shipping", icon: Truck, completed: false, active: true, action: () => document.getElementById("shipping-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: 3, label: "Payment", icon: CreditCard, completed: false, action: () => document.getElementById("payment-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: 4, label: "Confirmation", icon: Check, completed: false, action: undefined },
   ];
+
+  const handleStepClick = (step: typeof steps[0]) => {
+    if (step.action && (step.completed || step.active || step.id <= 3)) {
+      step.action();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -487,13 +493,18 @@ const Checkout = () => {
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div className="flex flex-col items-center">
-                  <div 
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
+                  <button
+                    type="button"
+                    onClick={() => handleStepClick(step)}
+                    disabled={!step.action || step.id === 4}
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-all ${
                       step.completed 
-                        ? "bg-primary border-primary text-primary-foreground" 
+                        ? "bg-primary border-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" 
                         : step.active 
-                          ? "border-primary text-primary bg-primary/10"
-                          : "border-muted-foreground/30 text-muted-foreground"
+                          ? "border-primary text-primary bg-primary/10 cursor-pointer hover:bg-primary/20"
+                          : step.id <= 3
+                            ? "border-muted-foreground/30 text-muted-foreground hover:border-primary/50 cursor-pointer"
+                            : "border-muted-foreground/30 text-muted-foreground cursor-not-allowed"
                     }`}
                   >
                     {step.completed ? (
@@ -501,10 +512,13 @@ const Checkout = () => {
                     ) : (
                       <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     )}
-                  </div>
-                  <span className={`text-xs mt-1 hidden sm:block ${
-                    step.completed || step.active ? "text-primary font-medium" : "text-muted-foreground"
-                  }`}>
+                  </button>
+                  <span 
+                    onClick={() => handleStepClick(step)}
+                    className={`text-xs mt-1 hidden sm:block cursor-pointer ${
+                      step.completed || step.active ? "text-primary font-medium" : "text-muted-foreground"
+                    } ${step.action && step.id <= 3 ? "hover:text-primary" : ""}`}
+                  >
                     {step.label}
                   </span>
                 </div>
@@ -642,7 +656,7 @@ const Checkout = () => {
               </div>
 
               {/* Shipping */}
-              <div className="bg-card rounded p-4">
+              <div id="shipping-section" className="bg-card rounded p-4 scroll-mt-24">
                 <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Truck className="h-4 w-4 text-primary" />
                   Delivery Option
@@ -715,7 +729,7 @@ const Checkout = () => {
               </div>
 
               {/* Payment */}
-              <div className="bg-card rounded p-4">
+              <div id="payment-section" className="bg-card rounded p-4 scroll-mt-24">
                 <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-primary" />
                   Payment Method
