@@ -2,9 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smooth scrolling for all elements */
+/* Base HTML and body setup for proper scrolling */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-y: auto;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100%;
 }
 
 /* Enhanced touch scrolling for mobile */
@@ -26,6 +41,16 @@ html {
   overscroll-behavior: contain;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* GPU-accelerated scrolling */
 .will-change-scroll {
   will-change: scroll-position;
@@ -33,13 +58,17 @@ html {
   backface-visibility: hidden;
 }
 
-/* Optimize mobile scroll performance - reduce paint areas */
+/* Optimize mobile scroll performance */
 @media (max-width: 768px) {
+  html {
+    scroll-behavior: auto;
+  }
+  
   [data-radix-scroll-area-viewport] {
     scroll-behavior: auto !important;
   }
   
-  /* Hide scrollbar on mobile for performance */
+  /* Hide scrollbar on mobile for cleaner look */
   [data-radix-scroll-area-scrollbar] {
     display: none !important;
   }
