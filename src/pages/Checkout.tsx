@@ -603,14 +603,14 @@ const Checkout = () => {
                     {shippingOptions.map((option) => {
                       const isFree = option.free_shipping_threshold && subtotal >= option.free_shipping_threshold;
                       return (
-                        <div
+                        <label
                           key={option.id}
+                          htmlFor={option.id}
                           className={`flex items-center justify-between p-3 rounded border cursor-pointer transition-colors ${
                             selectedShipping === option.id 
                               ? "border-primary bg-primary/5" 
                               : "border-border hover:border-primary/50"
                           }`}
-                          onClick={() => setSelectedShipping(option.id)}
                         >
                           <div className="flex items-center gap-2">
                             <RadioGroupItem value={option.id} id={option.id} className="h-4 w-4" />
@@ -624,7 +624,7 @@ const Checkout = () => {
                           <span className={`text-sm font-semibold ${isFree ? 'text-accent' : ''}`}>
                             {isFree ? "FREE" : `Rs.${Number(option.price).toLocaleString()}`}
                           </span>
-                        </div>
+                        </label>
                       );
                     })}
                   </RadioGroup>
