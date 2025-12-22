@@ -52,6 +52,7 @@ const About = lazy(() => import("./pages/About"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Returns = lazy(() => import("./pages/Returns"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const Warranty = lazy(() => import("./pages/Warranty"));
 const Shipping = lazy(() => import("./pages/Shipping"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -129,6 +130,7 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/returns" element={<Returns />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
               <Route path="/warranty" element={<Warranty />} />
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/contact" element={<Contact />} />
