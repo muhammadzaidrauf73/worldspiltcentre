@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import DOMPurify from "dompurify";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -52,9 +53,11 @@ const RefundPolicy = () => {
                 <div 
                   className="text-muted-foreground whitespace-pre-line"
                   dangerouslySetInnerHTML={{ 
-                    __html: refundContent
-                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/\n/g, '<br />') 
+                    __html: DOMPurify.sanitize(
+                      refundContent
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br />')
+                    )
                   }}
                 />
               </div>
