@@ -104,6 +104,39 @@ const Checkout = () => {
     enabled: !!user,
   });
 
+  // Fetch active flash deals to apply deal prices
+  const { data: activeFlashDeals = [] } = useQuery({
+    queryKey: ["flash-deals-active-checkout"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flash_deals")
+        .select("product_id, deal_price, original_price, name")
+        .eq("is_active", true)
+        .gte("ends_at", new Date().toISOString());
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Helper function to get effective price (flash deal price if applicable)
+  const getEffectivePrice = (item: any) => {
+    const flashDeal = activeFlashDeals.find(d => d.product_id === item.product_id);
+    if (flashDeal) {
+      return Number(flashDeal.deal_price);
+    }
+    return Number(item.products?.price) || 0;
+  };
+
+  // Helper to check if item has flash deal
+  const hasFlashDeal = (item: any) => {
+    return activeFlashDeals.some(d => d.product_id === item.product_id);
+  };
+
+  // Get flash deal info for an item
+  const getFlashDealInfo = (item: any) => {
+    return activeFlashDeals.find(d => d.product_id === item.product_id);
+  };
+
   // Fetch shipping options
   const { data: shippingOptions = [] } = useQuery({
     queryKey: ["shipping-options"],
@@ -250,7 +283,7 @@ const Checkout = () => {
   }, [storeLocations, locationChecked, requestLocation]);
 
   const subtotal = cartItems.reduce((sum, item) => {
-    return sum + (Number(item.products?.price) || 0) * item.quantity;
+    return sum + getEffectivePrice(item) * item.quantity;
   }, 0);
 
   // Check if cart has Gree or Pearl brand products
@@ -396,14 +429,19 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // Create standardized order items format
-      const orderItems = cartItems.map(item => ({
-        product_id: item.product_id,
-        name: item.products?.name || 'Product',
-        quantity: item.quantity,
-        price: Number(item.products?.price) || 0,
-        image_url: item.products?.image_url || null,
-      }));
+      // Create standardized order items format with flash deal prices
+      const orderItems = cartItems.map(item => {
+        const flashDeal = getFlashDealInfo(item);
+        return {
+          product_id: item.product_id,
+          name: item.products?.name || 'Product',
+          quantity: item.quantity,
+          price: getEffectivePrice(item),
+          original_price: flashDeal ? Number(flashDeal.original_price) : (item.products?.original_price ? Number(item.products.original_price) : null),
+          image_url: item.products?.image_url || null,
+          is_flash_deal: !!flashDeal,
+        };
+      });
 
       // Build order data with consistent structure
       const orderData: any = {
@@ -419,6 +457,10 @@ const Checkout = () => {
             discount_type: appliedCoupon.discount_type,
             discount_value: appliedCoupon.discount_value,
             discount_amount: discount,
+          } : null,
+          shipping: selectedShippingOption ? {
+            name: selectedShippingOption.name,
+            price: shippingCost,
           } : null,
         },
         total: total,
@@ -504,7 +546,7 @@ const Checkout = () => {
         const emailItems = cartItems.map(item => ({
           name: item.products?.name || 'Product',
           quantity: item.quantity,
-          price: Number(item.products?.price) || 0,
+          price: getEffectivePrice(item),
         }));
 
         await supabase.functions.invoke('send-order-confirmation', {
@@ -1115,10 +1157,15 @@ const Checkout = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm line-clamp-2 mb-1">{item.products?.name}</p>
-                            <div className="flex items-center justify-between">
+                            {hasFlashDeal(item) && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-deal/10 text-deal font-medium">
+                                ⚡ Flash Deal
+                              </span>
+                            )}
+                            <div className="flex items-center justify-between mt-1">
                               <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
                               <span className="text-sm font-semibold text-primary">
-                                Rs.{(Number(item.products?.price) * item.quantity).toLocaleString()}
+                                Rs.{(getEffectivePrice(item) * item.quantity).toLocaleString()}
                               </span>
                             </div>
                           </div>

@@ -77,6 +77,43 @@ const Cart = () => {
     enabled: !!user,
   });
 
+  // Fetch active flash deals to apply deal prices
+  const { data: activeFlashDeals = [] } = useQuery({
+    queryKey: ["flash-deals-active-cart"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flash_deals")
+        .select("product_id, deal_price, original_price")
+        .eq("is_active", true)
+        .gte("ends_at", new Date().toISOString());
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Helper function to get effective price (flash deal price if applicable)
+  const getEffectivePrice = (item: any) => {
+    const flashDeal = activeFlashDeals.find(d => d.product_id === item.product_id);
+    if (flashDeal) {
+      return Number(flashDeal.deal_price);
+    }
+    return Number(item.products?.price) || 0;
+  };
+
+  // Helper to check if item has flash deal
+  const hasFlashDeal = (item: any) => {
+    return activeFlashDeals.some(d => d.product_id === item.product_id);
+  };
+
+  // Get original price for flash deal display
+  const getOriginalPrice = (item: any) => {
+    const flashDeal = activeFlashDeals.find(d => d.product_id === item.product_id);
+    if (flashDeal) {
+      return Number(flashDeal.original_price);
+    }
+    return Number(item.products?.original_price) || null;
+  };
+
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
       if (quantity <= 0) {
@@ -118,7 +155,7 @@ const Cart = () => {
   });
 
   const subtotal = cartItems.reduce((sum, item) => {
-    return sum + (Number(item.products?.price) || 0) * item.quantity;
+    return sum + getEffectivePrice(item) * item.quantity;
   }, 0);
 
   // Check if any product qualifies for free delivery
@@ -230,6 +267,11 @@ const Cart = () => {
                           </Link>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs text-muted-foreground">{item.products?.brand}</span>
+                            {hasFlashDeal(item) && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-deal/10 text-deal font-medium">
+                                ⚡ Flash Deal
+                              </span>
+                            )}
                             {item.products?.is_free_delivery && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium">
                                 Free Delivery
@@ -238,9 +280,16 @@ const Cart = () => {
                           </div>
                           
                           <div className="flex items-center justify-between mt-2">
-                            <p className="text-sm font-bold text-primary">
-                              Rs.{Number(item.products?.price).toLocaleString()}
-                            </p>
+                            <div>
+                              <p className="text-sm font-bold text-primary">
+                                Rs.{getEffectivePrice(item).toLocaleString()}
+                              </p>
+                              {(hasFlashDeal(item) || getOriginalPrice(item)) && (
+                                <p className="text-xs text-muted-foreground line-through">
+                                  Rs.{(getOriginalPrice(item) || Number(item.products?.price)).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
                             
                             <div className="flex items-center gap-3">
                               <div className="flex items-center border border-border rounded">
