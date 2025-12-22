@@ -8,7 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 const FAQ = memo(() => {
@@ -27,17 +27,13 @@ const FAQ = memo(() => {
 
   if (isLoading) {
     return (
-      <section className="py-10 sm:py-14" id="faq">
+      <section className="py-4 sm:py-6 bg-card" id="faq">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <div className="flex flex-col items-center mb-6">
-              <Skeleton className="h-10 w-10 rounded-lg mb-3" />
-              <Skeleton className="h-7 w-56 mb-2" />
-              <Skeleton className="h-4 w-36" />
-            </div>
+            <Skeleton className="h-6 w-48 mb-4" />
             <div className="space-y-2">
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-xl" />
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
               ))}
             </div>
           </div>
@@ -49,40 +45,24 @@ const FAQ = memo(() => {
   if (faqs.length === 0) return null;
 
   return (
-    <section className="py-10 sm:py-14" id="faq">
+    <section className="py-4 sm:py-6 bg-card" id="faq">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
-          {/* Header */}
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-3">
-              <HelpCircle className="h-5 w-5 text-primary-foreground" />
-            </div>
-            
-            <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Find answers to common questions
-            </p>
-          </div>
+          <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">
+            Frequently Asked Questions
+          </h2>
 
-          {/* FAQ Accordion */}
           <Accordion type="single" collapsible className="space-y-2">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={faq.id}
                 value={`item-${index}`}
-                className="bg-card rounded-xl border border-border px-4 hover:border-primary/20 transition-colors"
+                className="bg-white rounded-lg border border-border px-4"
               >
-                <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-3.5 text-sm gap-3 [&[data-state=open]]:text-primary">
-                  <div className="flex items-center gap-2.5">
-                    <span className="shrink-0 w-6 h-6 rounded-md bg-secondary flex items-center justify-center text-xs font-semibold text-primary">
-                      {index + 1}
-                    </span>
-                    <span>{faq.question}</span>
-                  </div>
+                <AccordionTrigger className="text-left font-medium text-foreground hover:text-primary py-3 text-sm [&[data-state=open]]:text-primary">
+                  {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-3.5 text-sm prose prose-sm dark:prose-invert max-w-none pl-8.5">
+                <AccordionContent className="text-muted-foreground pb-3 text-sm prose prose-sm dark:prose-invert max-w-none">
                   <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(faq.answer) }} />
                 </AccordionContent>
               </AccordionItem>

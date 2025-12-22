@@ -1,4 +1,4 @@
-import { Star, MessageCircle } from "lucide-react";
+import { Star } from "lucide-react";
 
 const reviews = [
   {
@@ -32,36 +32,18 @@ const reviews = [
 
 const CustomerReviews = () => {
   return (
-    <section className="py-10 sm:py-14">
+    <section className="py-4 sm:py-6 bg-card">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-3">
-            <MessageCircle className="h-5 w-5 text-primary-foreground" />
-          </div>
-          
-          <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground">
-            Customer Reviews
-          </h2>
-          
-          {/* Rating summary */}
-          <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-              ))}
-            </div>
-            <span className="font-semibold text-foreground text-sm">4.8/5</span>
-            <span className="text-muted-foreground text-xs">(2,453 reviews)</span>
-          </div>
-        </div>
+        <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">
+          Customer Reviews
+        </h2>
 
-        {/* Reviews Grid */}
-        <div className="grid md:grid-cols-3 gap-4">
+        {/* Reviews scroll */}
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
           {reviews.map((review) => (
             <div
               key={review.id}
-              className="bg-card rounded-xl p-4 border border-border hover:border-primary/20 shadow-sm hover:shadow-md transition-all duration-200"
+              className="shrink-0 w-72 bg-white rounded-lg p-4 border border-border"
             >
               {/* Stars */}
               <div className="flex items-center gap-0.5 mb-2">
@@ -78,12 +60,12 @@ const CustomerReviews = () => {
               </div>
 
               {/* Review text */}
-              <p className="text-foreground text-sm mb-3 line-clamp-3 leading-relaxed">
-                "{review.review}"
+              <p className="text-foreground text-sm mb-3 line-clamp-2">
+                {review.review}
               </p>
 
               {/* Author info */}
-              <div className="flex items-center gap-2.5 pt-3 border-t border-border">
+              <div className="flex items-center gap-2">
                 <img
                   src={review.avatar}
                   alt={review.name}
