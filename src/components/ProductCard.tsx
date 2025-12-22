@@ -29,7 +29,7 @@ interface ProductCardProps {
   searchHighlight?: string;
 }
 
-const ProductCard = memo(forwardRef<HTMLDivElement, ProductCardProps>(({
+const ProductCardInner = ({
   id,
   name,
   brand,
@@ -45,7 +45,7 @@ const ProductCard = memo(forwardRef<HTMLDivElement, ProductCardProps>(({
   hideQuickActions = false,
   buttonText = "Add to Cart",
   searchHighlight = "",
-}, ref) => {
+}: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -177,7 +177,6 @@ const ProductCard = memo(forwardRef<HTMLDivElement, ProductCardProps>(({
 
   return (
     <div
-      ref={ref}
       className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
       style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
@@ -372,7 +371,9 @@ const ProductCard = memo(forwardRef<HTMLDivElement, ProductCardProps>(({
       </div>
     </div>
   );
-}));
+};
+
+const ProductCard = memo(ProductCardInner);
 
 ProductCard.displayName = "ProductCard";
 
