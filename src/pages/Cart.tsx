@@ -9,7 +9,7 @@ import SEO from "@/components/SEO";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Truck, Sparkles } from "lucide-react";
 
 const Cart = () => {
   const { user, loading: authLoading } = useAuth();
@@ -83,7 +83,17 @@ const Cart = () => {
     return sum + (Number(item.products?.price) || 0) * item.quantity;
   }, 0);
 
-  const shipping = subtotal > 10000 ? 0 : 500;
+  // Check if any product qualifies for free delivery
+  const anyProductQualifiesForFreeDelivery = cartItems.some(
+    item => item.products?.is_free_delivery === true
+  );
+  
+  // Get the free delivery product names for display
+  const freeDeliveryProducts = cartItems
+    .filter(item => item.products?.is_free_delivery === true)
+    .map(item => item.products?.name);
+
+  const shipping = anyProductQualifiesForFreeDelivery ? 0 : (subtotal > 10000 ? 0 : 500);
   const total = subtotal + shipping;
 
   const handleRefresh = async () => {
@@ -131,6 +141,31 @@ const Cart = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
+              {/* Free Delivery Banner */}
+              {anyProductQualifiesForFreeDelivery && (
+                <div className="bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-teal-500/10 border border-green-500/30 rounded-xl p-4 flex items-start gap-4 animate-fade-in">
+                  <div className="shrink-0 w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <Truck className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-green-700 dark:text-green-400">
+                        🎉 Free Delivery Unlocked!
+                      </h3>
+                      <Sparkles className="h-4 w-4 text-yellow-500" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Your cart includes{" "}
+                      <span className="font-medium text-foreground">
+                        {freeDeliveryProducts.length === 1 
+                          ? freeDeliveryProducts[0] 
+                          : `${freeDeliveryProducts.length} products`}
+                      </span>{" "}
+                      with free delivery – enjoy <span className="font-semibold text-green-600 dark:text-green-400">FREE shipping</span> on your entire order!
+                    </p>
+                  </div>
+                </div>
+              )}
               {cartItems.map((item) => (
                 <div
                   key={item.id}
