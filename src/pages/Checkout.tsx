@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin } from "lucide-react";
+import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin, ShoppingCart, Package, Check } from "lucide-react";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
+import { addDays, format } from "date-fns";
 
 interface ShippingOption {
   id: string;
@@ -448,11 +449,77 @@ const Checkout = () => {
     );
   }
 
+  // Calculate estimated delivery date based on shipping option
+  const getEstimatedDeliveryDate = () => {
+    if (!selectedShippingOption?.estimated_days) return null;
+    // Parse "3-5 days" or "2-3 business days" format
+    const match = selectedShippingOption.estimated_days.match(/(\d+)(?:-(\d+))?/);
+    if (!match) return null;
+    const minDays = parseInt(match[1], 10);
+    const maxDays = match[2] ? parseInt(match[2], 10) : minDays;
+    const startDate = addDays(new Date(), minDays);
+    const endDate = addDays(new Date(), maxDays);
+    return {
+      start: format(startDate, "MMM d"),
+      end: format(endDate, "MMM d"),
+      isSameDay: minDays === maxDays
+    };
+  };
+
+  const estimatedDelivery = getEstimatedDeliveryDate();
+
+  // Progress steps
+  const steps = [
+    { id: 1, label: "Cart", icon: ShoppingCart, completed: true },
+    { id: 2, label: "Shipping", icon: Truck, completed: false, active: true },
+    { id: 3, label: "Payment", icon: CreditCard, completed: false },
+    { id: 4, label: "Confirmation", icon: Check, completed: false },
+  ];
+
   return (
     <div className="min-h-screen bg-secondary/30">
       <Navbar />
       
       <div className="container mx-auto px-4 py-4 sm:py-6">
+        {/* Progress Stepper */}
+        <div className="mb-6">
+          <div className="flex items-center justify-center">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div 
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
+                      step.completed 
+                        ? "bg-primary border-primary text-primary-foreground" 
+                        : step.active 
+                          ? "border-primary text-primary bg-primary/10"
+                          : "border-muted-foreground/30 text-muted-foreground"
+                    }`}
+                  >
+                    {step.completed ? (
+                      <Check className="h-4 w-4 sm:h-5 sm:w-5" />
+                    ) : (
+                      <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    )}
+                  </div>
+                  <span className={`text-xs mt-1 hidden sm:block ${
+                    step.completed || step.active ? "text-primary font-medium" : "text-muted-foreground"
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div 
+                    className={`w-8 sm:w-16 h-0.5 mx-1 sm:mx-2 ${
+                      step.completed ? "bg-primary" : "bg-muted-foreground/30"
+                    }`} 
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <Button 
@@ -628,6 +695,22 @@ const Checkout = () => {
                       );
                     })}
                   </RadioGroup>
+                )}
+                
+                {/* Estimated Delivery Date */}
+                {estimatedDelivery && (
+                  <div className="mt-3 flex items-center gap-2 p-2 rounded bg-secondary/50">
+                    <Package className="h-4 w-4 text-primary shrink-0" />
+                    <p className="text-xs text-muted-foreground">
+                      Estimated delivery:{" "}
+                      <span className="font-medium text-foreground">
+                        {estimatedDelivery.isSameDay 
+                          ? estimatedDelivery.start
+                          : `${estimatedDelivery.start} - ${estimatedDelivery.end}`
+                        }
+                      </span>
+                    </p>
+                  </div>
                 )}
               </div>
 
