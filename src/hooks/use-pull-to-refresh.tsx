@@ -6,6 +6,8 @@ interface UsePullToRefreshOptions {
   maxPull?: number;
 }
 
+// Fixed pull-to-refresh with better sensitivity and horizontal scroll detection
+
 export function usePullToRefresh({
   onRefresh,
   threshold = 100,
