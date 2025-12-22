@@ -77,6 +77,7 @@ const AdminCancellationRequests = lazy(() => import("./pages/admin/CancellationR
 const AdminProductImport = lazy(() => import("./pages/admin/ProductImport"));
 const AdminHomepageSections = lazy(() => import("./pages/admin/HomepageSections"));
 const AdminFreeDelivery = lazy(() => import("./pages/admin/FreeDelivery"));
+const AdminStoreLocations = lazy(() => import("./pages/admin/StoreLocations"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -147,6 +148,7 @@ const App = () => (
               <Route path="/admin/product-import" element={<AdminProductImport />} />
               <Route path="/admin/homepage-sections" element={<AdminHomepageSections />} />
               <Route path="/admin/free-delivery" element={<AdminFreeDelivery />} />
+              <Route path="/admin/store-locations" element={<AdminStoreLocations />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

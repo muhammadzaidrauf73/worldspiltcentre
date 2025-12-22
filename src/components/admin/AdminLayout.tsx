@@ -23,7 +23,8 @@ import {
   Ticket,
   BarChart3,
   XCircle,
-  LayoutGrid
+  LayoutGrid,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ const navItems = [
   { href: "/admin/coupon-analytics", label: "Coupon Analytics", icon: BarChart3 },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/free-delivery", label: "Free Delivery", icon: Truck },
+  { href: "/admin/store-locations", label: "Store Locations", icon: MapPin },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
   { href: "/admin/company-settings", label: "Company Settings", icon: Settings },
