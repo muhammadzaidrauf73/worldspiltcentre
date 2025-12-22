@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { memo, useState } from "react";
 
-// Brand circle component - no label for cleaner orbit
+// Brand circle component with name label
 const BrandCircle = memo(({ brand }: { brand: any }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -12,10 +12,9 @@ const BrandCircle = memo(({ brand }: { brand: any }) => {
   return (
     <Link
       to={`/products?brand=${encodeURIComponent(brand.name)}`}
-      className="group block"
-      title={brand.name}
+      className="group flex flex-col items-center gap-1"
     >
-      <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex items-center justify-center p-2 rounded-full bg-card border-2 border-border shadow-md hover:border-primary hover:shadow-xl transition-all duration-300 hover:scale-110">
+      <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center p-2 rounded-full bg-card border-2 border-border shadow-md hover:border-primary hover:shadow-xl transition-all duration-300 hover:scale-110">
         {brand.logo_url && !imageError ? (
           <>
             {!imageLoaded && (
@@ -34,11 +33,14 @@ const BrandCircle = memo(({ brand }: { brand: any }) => {
             />
           </>
         ) : (
-          <span className="font-bold text-foreground text-[10px] sm:text-xs text-center leading-tight">
+          <span className="font-bold text-foreground text-[8px] sm:text-[10px] text-center leading-tight">
             {brand.name}
           </span>
         )}
       </div>
+      <span className="text-[10px] sm:text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+        {brand.name}
+      </span>
     </Link>
   );
 });
@@ -101,22 +103,22 @@ const FeaturedBrands = memo(() => {
 
         {/* Orbital Container */}
         <div className="flex justify-center items-center">
-          <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96">
+          <div className="relative w-80 h-80 sm:w-[400px] sm:h-[400px] md:w-[480px] md:h-[480px]">
             
             {/* Orbit Ring - rotating dashed circle */}
             <div 
-              className="absolute inset-[12%] rounded-full border-2 border-dashed border-primary/30"
+              className="absolute inset-[15%] rounded-full border-2 border-dashed border-primary/30"
               style={{ animation: 'spin 40s linear infinite' }}
             />
             
             {/* Center Circle */}
-            <div className="absolute inset-[35%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10 shadow-lg">
+            <div className="absolute inset-[40%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 flex items-center justify-center z-10 shadow-lg">
               <span className="text-base sm:text-lg md:text-xl font-bold text-primary">Brands</span>
             </div>
 
             {/* Rotating brands container */}
             <div 
-              className="absolute inset-0 brands-orbit"
+              className="absolute inset-0"
               style={{ 
                 animation: 'spin 30s linear infinite',
                 transformOrigin: 'center center'
@@ -124,7 +126,7 @@ const FeaturedBrands = memo(() => {
             >
               {orbitBrands.map((brand: any, index: number) => {
                 const angle = (index / orbitBrands.length) * 360 - 90;
-                const radius = 38; // percentage from center
+                const radius = 35; // percentage from center - same distance for all
                 const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
                 const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
                 
