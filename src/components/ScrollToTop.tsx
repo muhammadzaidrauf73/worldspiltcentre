@@ -1,38 +1,50 @@
 import { useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 
+const scrollAllToTop = (behavior: ScrollBehavior) => {
+  // Window scroll (most pages)
+  window.scrollTo({ top: 0, left: 0, behavior });
+
+  // Document scrolling element fallbacks
+  const se = document.scrollingElement as HTMLElement | null;
+  if (se) se.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+};
+
 const ScrollToTop = () => {
-  const { pathname } = useLocation();
+  const location = useLocation();
 
-  // Use useLayoutEffect for synchronous scroll before browser paint
+  // Trigger on every navigation (including search/query changes)
+  const key = `${location.key}|${location.pathname}|${location.search}|${location.hash}`;
+
   useLayoutEffect(() => {
-    // Immediate scroll using multiple methods for maximum compatibility
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  }, [pathname]);
+    // If there's an anchor hash, scroll to it; otherwise go to top.
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    }
 
-  // Backup scroll with useEffect after render
+    // Smooth scroll + hard fallback to guarantee we end at top
+    scrollAllToTop("smooth");
+  }, [key]);
+
   useEffect(() => {
-    // Immediate scroll
-    window.scrollTo(0, 0);
-    
-    // Use requestAnimationFrame for after layout
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    });
+    // After route content finishes rendering/lazy loading, enforce top again.
+    const raf = requestAnimationFrame(() => scrollAllToTop("smooth"));
+    const t1 = setTimeout(() => scrollAllToTop("smooth"), 150);
+    const t2 = setTimeout(() => scrollAllToTop("auto"), 700);
 
-    // Additional delayed fallback for lazy-loaded content
-    const timeoutId = setTimeout(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [pathname]);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [key]);
 
   return null;
 };
