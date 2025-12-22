@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, Percent } from "lucide-react";
+import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, Percent, MapPin } from "lucide-react";
+import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 
 interface ShippingOption {
   id: string;
@@ -30,10 +31,22 @@ interface AppliedCoupon {
   min_order_amount: number | null;
 }
 
+interface StoreLocation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+// Brands eligible for location-based free delivery
+const FREE_DELIVERY_BRANDS = ["gree", "pearl"];
+const FREE_DELIVERY_RADIUS_KM = 5;
+
 const Checkout = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { latitude, longitude, loading: locationLoading, error: locationError, requestLocation } = useGeolocation();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -47,6 +60,8 @@ const Checkout = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [nearestStoreDistance, setNearestStoreDistance] = useState<number | null>(null);
+  const [locationChecked, setLocationChecked] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,6 +95,19 @@ const Checkout = () => {
         .order("price", { ascending: true });
       if (error) throw error;
       return data as ShippingOption[];
+    },
+  });
+
+  // Fetch store locations for distance calculation
+  const { data: storeLocations = [] } = useQuery({
+    queryKey: ["store-locations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_locations")
+        .select("id, name, latitude, longitude")
+        .eq("is_active", true);
+      if (error) throw error;
+      return data as StoreLocation[];
     },
   });
 
@@ -120,13 +148,42 @@ const Checkout = () => {
     }
   }, [shippingOptions, selectedShipping]);
 
+  // Auto-fetch customer location on mount
+  useEffect(() => {
+    if (!locationChecked && storeLocations.length > 0) {
+      requestLocation().then((coords) => {
+        if (coords && storeLocations.length > 0) {
+          // Calculate distance to nearest store
+          const distances = storeLocations.map(store => 
+            calculateDistance(coords.latitude, coords.longitude, Number(store.latitude), Number(store.longitude))
+          );
+          const minDistance = Math.min(...distances);
+          setNearestStoreDistance(minDistance);
+        }
+        setLocationChecked(true);
+      });
+    }
+  }, [storeLocations, locationChecked, requestLocation]);
+
   const subtotal = cartItems.reduce((sum, item) => {
     return sum + (Number(item.products?.price) || 0) * item.quantity;
   }, 0);
 
+  // Check if cart has Gree or Pearl brand products
+  const hasEligibleBrandProducts = cartItems.some(item => {
+    const brand = item.products?.brand?.toLowerCase() || "";
+    return FREE_DELIVERY_BRANDS.includes(brand);
+  });
+
+  // Check if customer is within 5km of any store
+  const isWithinDeliveryRadius = nearestStoreDistance !== null && nearestStoreDistance <= FREE_DELIVERY_RADIUS_KM;
+
+  // Location-based free delivery for Gree/Pearl brands within 5km
+  const locationBasedFreeDelivery = hasEligibleBrandProducts && isWithinDeliveryRadius;
+
   // Check if ANY product in cart qualifies for free delivery (then all products get free delivery)
-  const anyProductQualifiesForFreeDelivery = cartItems.length > 0 && cartItems.some(
-    item => item.products?.is_free_delivery === true
+  const anyProductQualifiesForFreeDelivery = cartItems.length > 0 && (
+    cartItems.some(item => item.products?.is_free_delivery === true) || locationBasedFreeDelivery
   );
 
   const selectedShippingOption = shippingOptions.find(s => s.id === selectedShipping);
@@ -459,16 +516,60 @@ const Checkout = () => {
                   <Truck className="h-5 w-5 text-primary" />
                   Shipping Address
                 </h2>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Full Address *</Label>
-                  <Textarea
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Enter your complete address including city and postal code"
-                    rows={3}
-                    required
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Full Address *</Label>
+                    <Textarea
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Enter your complete address including city and postal code"
+                      rows={3}
+                      required
+                    />
+                  </div>
+                  
+                  {/* Location Status for Free Delivery */}
+                  {hasEligibleBrandProducts && (
+                    <div className="p-3 rounded-lg bg-secondary/50 border border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">Location for Free Delivery</span>
+                        </div>
+                        {locationLoading ? (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Detecting...
+                          </span>
+                        ) : nearestStoreDistance !== null ? (
+                          <span className={`text-xs font-medium ${isWithinDeliveryRadius ? 'text-accent' : 'text-muted-foreground'}`}>
+                            {nearestStoreDistance.toFixed(1)}km from store
+                          </span>
+                        ) : locationError ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setLocationChecked(false);
+                            }}
+                            className="h-7 text-xs"
+                          >
+                            Enable Location
+                          </Button>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {hasEligibleBrandProducts && !isWithinDeliveryRadius && !locationLoading && (
+                          <>Your cart has Gree/Pearl products. Enable location to check if you qualify for free delivery within {FREE_DELIVERY_RADIUS_KM}km.</>
+                        )}
+                        {isWithinDeliveryRadius && (
+                          <span className="text-accent">You qualify for free delivery!</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -480,14 +581,25 @@ const Checkout = () => {
                 </h2>
                 
                 {anyProductQualifiesForFreeDelivery ? (
-                  <div className="flex items-center gap-3 p-4 rounded-lg border border-accent bg-accent/10">
-                    <CheckCircle className="h-5 w-5 text-accent" />
-                    <div>
-                      <p className="font-medium text-accent">Free Delivery</p>
-                      <p className="text-sm text-muted-foreground">
-                        Your cart includes a product with free delivery – enjoy free shipping on your entire order!
-                      </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-4 rounded-lg border border-accent bg-accent/10">
+                      <CheckCircle className="h-5 w-5 text-accent" />
+                      <div>
+                        <p className="font-medium text-accent">Free Delivery</p>
+                        <p className="text-sm text-muted-foreground">
+                          {locationBasedFreeDelivery 
+                            ? `Your cart includes Gree/Pearl products and you're within ${FREE_DELIVERY_RADIUS_KM}km of our store – enjoy free delivery!`
+                            : "Your cart includes a product with free delivery – enjoy free shipping on your entire order!"
+                          }
+                        </p>
+                      </div>
                     </div>
+                    {locationBasedFreeDelivery && nearestStoreDistance !== null && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>Distance to nearest store: {nearestStoreDistance.toFixed(1)}km</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <RadioGroup 
