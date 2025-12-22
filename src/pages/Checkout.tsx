@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin, ShoppingCart, Package, Check } from "lucide-react";
+import { ArrowLeft, Truck, CreditCard, CheckCircle, Loader2, Tag, X, MapPin, ShoppingCart, Package, Check, Star, Home, Building2 } from "lucide-react";
 import { useGeolocation, calculateDistance } from "@/hooks/useGeolocation";
 import { addDays, format } from "date-fns";
 
@@ -38,6 +38,19 @@ interface StoreLocation {
   longitude: number;
 }
 
+interface SavedAddress {
+  id: string;
+  label: string;
+  full_name: string;
+  phone: string | null;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  state: string | null;
+  postal_code: string | null;
+  is_default: boolean;
+}
+
 // Brands eligible for location-based free delivery
 const FREE_DELIVERY_BRANDS = ["gree", "pearl"];
 const FREE_DELIVERY_RADIUS_KM = 5;
@@ -63,6 +76,8 @@ const Checkout = () => {
   const [nearestStoreDistance, setNearestStoreDistance] = useState<number | null>(null);
   const [locationChecked, setLocationChecked] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: Shipping, 2: Payment, 3: Review
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -128,19 +143,83 @@ const Checkout = () => {
     enabled: !!user,
   });
 
-  // Pre-fill form with profile data
+  // Fetch saved addresses
+  const { data: savedAddresses = [] } = useQuery({
+    queryKey: ["addresses", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as SavedAddress[];
+    },
+    enabled: !!user,
+  });
+
+  // Pre-fill form with default address or profile data
   useEffect(() => {
-    if (profile) {
+    // If we have saved addresses and haven't selected one yet
+    if (savedAddresses.length > 0 && !selectedAddressId && !useNewAddress) {
+      const defaultAddress = savedAddresses.find(a => a.is_default) || savedAddresses[0];
+      if (defaultAddress) {
+        setSelectedAddressId(defaultAddress.id);
+        applyAddressToForm(defaultAddress);
+      }
+    } else if (savedAddresses.length === 0 && profile) {
+      // No saved addresses, use profile data
+      setUseNewAddress(true);
       setFormData({
         name: profile.full_name || "",
         email: user?.email || "",
         phone: profile.phone || "",
         address: profile.address || "",
       });
-    } else if (user?.email) {
+    } else if (savedAddresses.length === 0 && user?.email) {
+      setUseNewAddress(true);
       setFormData(prev => ({ ...prev, email: user.email || "" }));
     }
-  }, [profile, user]);
+  }, [savedAddresses, profile, user]);
+
+  const applyAddressToForm = (address: SavedAddress) => {
+    const fullAddress = [
+      address.address_line1,
+      address.address_line2,
+      address.city,
+      address.state,
+      address.postal_code,
+    ].filter(Boolean).join(", ");
+    
+    setFormData({
+      name: address.full_name,
+      email: user?.email || "",
+      phone: address.phone || "",
+      address: fullAddress,
+    });
+  };
+
+  const handleSelectAddress = (addressId: string) => {
+    const address = savedAddresses.find(a => a.id === addressId);
+    if (address) {
+      setSelectedAddressId(addressId);
+      setUseNewAddress(false);
+      applyAddressToForm(address);
+    }
+  };
+
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setUseNewAddress(true);
+    setFormData({
+      name: profile?.full_name || "",
+      email: user?.email || "",
+      phone: profile?.phone || "",
+      address: "",
+    });
+  };
 
   // Set default shipping option
   useEffect(() => {
@@ -598,69 +677,160 @@ const Checkout = () => {
                         Delivery Address
                       </h2>
                     </div>
-                    <div className="space-y-3">
-                      <div className="grid sm:grid-cols-2 gap-3">
+
+                    {/* Saved Addresses */}
+                    {savedAddresses.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs text-muted-foreground mb-2">Select a saved address:</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {savedAddresses.map((address) => (
+                            <button
+                              key={address.id}
+                              type="button"
+                              onClick={() => handleSelectAddress(address.id)}
+                              className={`text-left p-3 rounded-lg border transition-all ${
+                                selectedAddressId === address.id && !useNewAddress
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                  : "border-border hover:border-primary/50 bg-secondary/30"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  {address.label.toLowerCase() === "home" ? (
+                                    <Home className="h-4 w-4 text-primary shrink-0" />
+                                  ) : address.label.toLowerCase() === "office" ? (
+                                    <Building2 className="h-4 w-4 text-primary shrink-0" />
+                                  ) : (
+                                    <MapPin className="h-4 w-4 text-primary shrink-0" />
+                                  )}
+                                  <span className="text-sm font-medium">{address.label}</span>
+                                </div>
+                                {address.is_default && (
+                                  <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
+                                    <Star className="h-3 w-3 fill-primary" />
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-foreground mt-1.5">{address.full_name}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {address.address_line1}
+                                {address.address_line2 && `, ${address.address_line2}`}
+                                {address.city && `, ${address.city}`}
+                              </p>
+                              {selectedAddressId === address.id && !useNewAddress && (
+                                <div className="mt-2 flex items-center gap-1 text-xs text-primary font-medium">
+                                  <Check className="h-3 w-3" />
+                                  Selected
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                          
+                          {/* Add new address option */}
+                          <button
+                            type="button"
+                            onClick={handleUseNewAddress}
+                            className={`text-left p-3 rounded-lg border transition-all ${
+                              useNewAddress
+                                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                : "border-dashed border-border hover:border-primary/50 bg-secondary/20"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium">New Address</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1.5">
+                              Enter a different delivery address
+                            </p>
+                            {useNewAddress && (
+                              <div className="mt-2 flex items-center gap-1 text-xs text-primary font-medium">
+                                <Check className="h-3 w-3" />
+                                Selected
+                              </div>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Address Form - shown if no saved addresses or using new address */}
+                    {(savedAddresses.length === 0 || useNewAddress) && (
+                      <div className="space-y-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <Input
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="Full Name *"
+                            required
+                            className="h-9 text-sm"
+                          />
+                          <Input
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="Phone Number *"
+                            required
+                            className="h-9 text-sm"
+                          />
+                        </div>
                         <Input
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Full Name *"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="Email Address *"
                           required
                           className="h-9 text-sm"
                         />
-                        <Input
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="Phone Number *"
+                        <Textarea
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          placeholder="Complete Address (House No, Street, City, Postal Code) *"
+                          rows={2}
                           required
-                          className="h-9 text-sm"
+                          className="text-sm resize-none"
                         />
                       </div>
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="Email Address *"
-                        required
-                        className="h-9 text-sm"
-                      />
-                      <Textarea
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="Complete Address (House No, Street, City, Postal Code) *"
-                        rows={2}
-                        required
-                        className="text-sm resize-none"
-                      />
+                    )}
+
+                    {/* Show selected address details if using saved address */}
+                    {selectedAddressId && !useNewAddress && (
+                      <div className="mt-3 p-3 rounded-lg bg-secondary/50 border border-border">
+                        <p className="text-xs text-muted-foreground mb-1">Delivering to:</p>
+                        <p className="text-sm font-medium">{formData.name}</p>
+                        <p className="text-sm text-muted-foreground">{formData.phone}</p>
+                        <p className="text-sm text-muted-foreground">{formData.address}</p>
+                      </div>
+                    )}
                       
-                      {/* Location-based Free Delivery */}
-                      {hasEligibleBrandProducts && (
-                        <div className="flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/20">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-3.5 w-3.5 text-primary" />
-                            <span className="text-xs">
-                              {locationLoading ? (
-                                <span className="flex items-center gap-1">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Checking location...
-                                </span>
-                              ) : isWithinDeliveryRadius ? (
-                                <span className="text-accent font-medium">Free delivery eligible! ({nearestStoreDistance?.toFixed(1)}km from store)</span>
-                              ) : nearestStoreDistance !== null ? (
-                                <span className="text-muted-foreground">{nearestStoreDistance.toFixed(1)}km from store (5km needed for free delivery)</span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => setLocationChecked(false)}
-                                  className="text-primary hover:underline"
-                                >
-                                  Enable location for free delivery
-                                </button>
-                              )}
-                            </span>
-                          </div>
+                    {/* Location-based Free Delivery */}
+                    {hasEligibleBrandProducts && (
+                      <div className="mt-3 flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/20">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-xs">
+                            {locationLoading ? (
+                              <span className="flex items-center gap-1">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Checking location...
+                              </span>
+                            ) : isWithinDeliveryRadius ? (
+                              <span className="text-accent font-medium">Free delivery eligible! ({nearestStoreDistance?.toFixed(1)}km from store)</span>
+                            ) : nearestStoreDistance !== null ? (
+                              <span className="text-muted-foreground">{nearestStoreDistance.toFixed(1)}km from store (5km needed for free delivery)</span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setLocationChecked(false)}
+                                className="text-primary hover:underline"
+                              >
+                                Enable location for free delivery
+                              </button>
+                            )}
+                          </span>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Shipping Options */}
