@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, SlidersHorizontal, X, Truck } from "lucide-react";
 import SEO from "@/components/SEO";
 
+const PRODUCTS_PER_PAGE = 24;
+
 const Products = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -32,6 +34,7 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [isPriceFiltered, setIsPriceFiltered] = useState(false);
   const [freeDeliveryOnly, setFreeDeliveryOnly] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
   const showDealsOnly = dealsParam === "true";
   
   // Update search query when URL param changes
@@ -180,7 +183,24 @@ const Products = () => {
     setIsPriceFiltered(false);
     setFreeDeliveryOnly(false);
     setFiltersOpen(false);
+    setVisibleCount(PRODUCTS_PER_PAGE);
   };
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(PRODUCTS_PER_PAGE);
+  }, [selectedCategory, selectedBrands, searchQuery, sortBy, priceRange, isPriceFiltered, freeDeliveryOnly]);
+
+  // Visible products (paginated)
+  const visibleProducts = useMemo(() => {
+    return products.slice(0, visibleCount);
+  }, [products, visibleCount]);
+
+  const hasMoreProducts = visibleCount < products.length;
+
+  const loadMoreProducts = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + PRODUCTS_PER_PAGE, products.length));
+  }, [products.length]);
 
   const activeFiltersCount = [
     selectedCategory, 
@@ -559,34 +579,50 @@ const Products = () => {
                 <Button onClick={clearFilters}>Clear Filters</Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {products.map((product, index) => {
-                  // Find deal price if this is a flash deal product
-                  const dealInfo = showDealsOnly 
-                    ? flashDeals.find(d => d.product_id === product.id)
-                    : null;
-                  
-                  return (
-                    <Link key={product.id} to={`/product/${product.id}`}>
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        brand={product.brand}
-                        price={dealInfo ? Number(dealInfo.deal_price) : Number(product.price)}
-                        originalPrice={dealInfo ? Number(dealInfo.original_price) : (product.original_price ? Number(product.original_price) : undefined)}
-                        image={product.image_url || ""}
-                        rating={Number(product.rating) || 0}
-                        reviews={product.reviews_count || 0}
-                        isOnSale={product.is_on_sale || false}
-                        isFreeDelivery={product.is_free_delivery || false}
-                        badge={showDealsOnly ? "⚡ Flash Deal" : undefined}
-                        index={index}
-                        searchHighlight={searchQuery}
-                      />
-                    </Link>
-                  );
-                })}
-              </div>
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {visibleProducts.map((product, index) => {
+                    // Find deal price if this is a flash deal product
+                    const dealInfo = showDealsOnly 
+                      ? flashDeals.find(d => d.product_id === product.id)
+                      : null;
+                    
+                    return (
+                      <Link key={product.id} to={`/product/${product.id}`}>
+                        <ProductCard
+                          id={product.id}
+                          name={product.name}
+                          brand={product.brand}
+                          price={dealInfo ? Number(dealInfo.deal_price) : Number(product.price)}
+                          originalPrice={dealInfo ? Number(dealInfo.original_price) : (product.original_price ? Number(product.original_price) : undefined)}
+                          image={product.image_url || ""}
+                          rating={Number(product.rating) || 0}
+                          reviews={product.reviews_count || 0}
+                          isOnSale={product.is_on_sale || false}
+                          isFreeDelivery={product.is_free_delivery || false}
+                          badge={showDealsOnly ? "⚡ Flash Deal" : undefined}
+                          index={index}
+                          searchHighlight={searchQuery}
+                        />
+                      </Link>
+                    );
+                  })}
+                </div>
+                
+                {/* Load More Button */}
+                {hasMoreProducts && (
+                  <div className="flex justify-center mt-8">
+                    <Button 
+                      onClick={loadMoreProducts}
+                      variant="outline"
+                      size="lg"
+                      className="px-8"
+                    >
+                      Load More ({products.length - visibleCount} remaining)
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>
