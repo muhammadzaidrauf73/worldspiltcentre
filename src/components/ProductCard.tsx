@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/utils";
 import { HighlightText } from "@/lib/highlight-text";
-import { memo, useState } from "react";
+import { memo, useState, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +29,7 @@ interface ProductCardProps {
   searchHighlight?: string;
 }
 
-const ProductCard = memo(({
+const ProductCard = memo(forwardRef<HTMLDivElement, ProductCardProps>(({
   id,
   name,
   brand,
@@ -45,7 +45,7 @@ const ProductCard = memo(({
   hideQuickActions = false,
   buttonText = "Add to Cart",
   searchHighlight = "",
-}: ProductCardProps) => {
+}, ref) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -177,6 +177,7 @@ const ProductCard = memo(({
 
   return (
     <div
+      ref={ref}
       className="group relative bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-lg transition-smooth animate-fade-in"
       style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
@@ -371,7 +372,7 @@ const ProductCard = memo(({
       </div>
     </div>
   );
-});
+}));
 
 ProductCard.displayName = "ProductCard";
 
