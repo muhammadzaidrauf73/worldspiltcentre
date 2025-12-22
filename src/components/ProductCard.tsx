@@ -321,31 +321,33 @@ const ProductCard = memo(({
 
         {/* Action Buttons - Add to Cart + Shop Now */}
         {price > 0 ? (
-          <div className="grid grid-cols-2 gap-2 mt-2 sm:mt-3">
+          <div className="grid grid-cols-2 gap-1.5 mt-2 sm:mt-3">
             <Button 
               variant="outline"
+              size="sm"
               onClick={handleAddToCart}
               disabled={isAddingOnly || isAddingToCart}
-              className="h-10 sm:h-9 text-xs sm:text-sm font-semibold rounded-lg touch-manipulation transition-all duration-200"
+              className="h-9 text-[10px] sm:text-xs font-medium rounded-md touch-manipulation transition-all duration-200 px-2"
             >
               {isAddingOnly ? (
-                <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <div className="h-3 w-3 mr-1 border-2 border-primary/30 border-t-primary rounded-full animate-spin flex-shrink-0" />
               ) : (
-                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                <ShoppingCart className="h-3 w-3 mr-1 flex-shrink-0" />
               )}
-              {isAddingOnly ? "Adding..." : "Add to Cart"}
+              <span className="truncate">{isAddingOnly ? "Adding" : "Add to Cart"}</span>
             </Button>
             <Button 
+              size="sm"
               onClick={handleShopNow}
               disabled={isAddingToCart || isAddingOnly}
-              className="h-10 sm:h-9 text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-lg touch-manipulation transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25"
+              className="h-9 text-[10px] sm:text-xs font-medium bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground rounded-md touch-manipulation transition-all duration-200 px-2"
             >
               {isAddingToCart ? (
-                <div className="h-3.5 w-3.5 mr-1.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                <div className="h-3 w-3 mr-1 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin flex-shrink-0" />
               ) : (
-                <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+                <ShoppingBag className="h-3 w-3 mr-1 flex-shrink-0" />
               )}
-              {isAddingToCart ? "..." : "Shop Now"}
+              <span className="truncate">{isAddingToCart ? "..." : "Shop Now"}</span>
             </Button>
           </div>
         ) : (
