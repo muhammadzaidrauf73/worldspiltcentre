@@ -114,82 +114,91 @@ const FeaturedBrands = memo(() => {
 
         {/* Orbital Container */}
         <div className="flex justify-center items-center">
-          <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-[400px] md:h-[400px]">
+          <div className="relative w-72 h-72 sm:w-96 sm:h-96 md:w-[450px] md:h-[450px]">
             
-            {/* Outer Ring Background */}
-            <div className="absolute inset-0 rounded-full border-2 border-dashed border-border/30 animate-[spin_60s_linear_infinite]" />
+            {/* Outer Ring Track */}
+            <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/20" />
             
-            {/* Middle Ring Background */}
-            <div className="absolute inset-[15%] rounded-full border-2 border-dashed border-border/40 animate-[spin_45s_linear_infinite_reverse]" />
+            {/* Inner Ring Track */}
+            <div className="absolute inset-[22%] rounded-full border-2 border-dashed border-primary/30" />
             
-            {/* Inner Ring Background */}
-            <div className="absolute inset-[35%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20" />
-
-            {/* Decorative Glow */}
-            <div className="absolute inset-[38%] rounded-full bg-primary/10 blur-xl" />
+            {/* Center Glow */}
+            <div className="absolute inset-[40%] rounded-full bg-primary/10 blur-2xl" />
 
             {/* Center Logo/Text */}
-            <div className="absolute inset-[40%] rounded-full bg-card border-2 border-primary/30 shadow-lg flex items-center justify-center">
-              <span className="text-xs sm:text-sm md:text-base font-bold text-primary">Brands</span>
+            <div className="absolute inset-[42%] rounded-full bg-card border-2 border-primary/30 shadow-xl flex items-center justify-center z-10">
+              <span className="text-sm sm:text-base md:text-lg font-bold text-primary">Brands</span>
             </div>
 
-            {/* Outer Ring Brands */}
+            {/* Outer Ring Brands - Rotating Container */}
             {outerRingBrands.length > 0 && (
               <div 
                 className="absolute inset-0 rounded-full"
-                style={{ 
-                  width: '100%', 
-                  height: '100%',
+                style={{
+                  animation: 'spin 40s linear infinite',
                 }}
               >
                 {outerRingBrands.map((brand: any, index: number) => {
                   const angle = (index / outerRingBrands.length) * 360 - 90;
-                  const radius = 50; // percentage
+                  const radius = 46; // percentage from center
                   const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
                   const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
                   
                   return (
-                    <Link
+                    <div
                       key={brand.id}
-                      to={`/products?brand=${encodeURIComponent(brand.name)}`}
-                      className="absolute animate-fade-in group"
+                      className="absolute"
                       style={{
                         left: `${x}%`,
                         top: `${y}%`,
                         transform: 'translate(-50%, -50%)',
-                        animationDelay: `${index * 0.1}s`,
+                        animation: 'counter-spin 40s linear infinite',
                       }}
                     >
-                      <BrandCircle brand={brand} size="md" />
-                    </Link>
+                      <Link
+                        to={`/products?brand=${encodeURIComponent(brand.name)}`}
+                        className="block group"
+                      >
+                        <BrandCircle brand={brand} size="md" />
+                      </Link>
+                    </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Inner Ring Brands */}
+            {/* Inner Ring Brands - Rotating Container (opposite direction) */}
             {innerRingBrands.length > 0 && (
-              <div className="absolute inset-[15%]">
+              <div 
+                className="absolute inset-[22%] rounded-full"
+                style={{
+                  animation: 'spin 30s linear infinite reverse',
+                }}
+              >
                 {innerRingBrands.map((brand: any, index: number) => {
-                  const angle = (index / innerRingBrands.length) * 360 - 90 + 45; // Offset by 45 degrees
-                  const radius = 50;
+                  const angle = (index / innerRingBrands.length) * 360 - 90 + 45;
+                  const radius = 46;
                   const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
                   const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
                   
                   return (
-                    <Link
+                    <div
                       key={brand.id}
-                      to={`/products?brand=${encodeURIComponent(brand.name)}`}
-                      className="absolute animate-fade-in group"
+                      className="absolute"
                       style={{
                         left: `${x}%`,
                         top: `${y}%`,
                         transform: 'translate(-50%, -50%)',
-                        animationDelay: `${(index + outerRingBrands.length) * 0.1}s`,
+                        animation: 'counter-spin-reverse 30s linear infinite',
                       }}
                     >
-                      <BrandCircle brand={brand} size="sm" />
-                    </Link>
+                      <Link
+                        to={`/products?brand=${encodeURIComponent(brand.name)}`}
+                        className="block group"
+                      >
+                        <BrandCircle brand={brand} size="sm" />
+                      </Link>
+                    </div>
                   );
                 })}
               </div>

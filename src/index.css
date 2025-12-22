@@ -773,4 +773,23 @@ section, footer, header, nav, main {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Brand orbit counter-spin animations */
+  @keyframes counter-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
+  @keyframes counter-spin-reverse {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
