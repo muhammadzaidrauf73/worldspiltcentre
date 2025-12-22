@@ -1,4 +1,4 @@
-import { Star, Quote, MessageCircle } from "lucide-react";
+import { Star, MessageCircle } from "lucide-react";
 
 const reviews = [
   {
@@ -32,60 +32,43 @@ const reviews = [
 
 const CustomerReviews = () => {
   return (
-    <section className="py-8 sm:py-12 relative overflow-hidden">
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
-      
-      {/* Subtle orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 left-1/3 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 right-1/3 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
-      </div>
-      
-      <div className="container mx-auto px-4 relative z-10">
+    <section className="py-10 sm:py-14">
+      <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
-            </div>
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mb-3">
+            <MessageCircle className="h-5 w-5 text-primary-foreground" />
           </div>
           
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-foreground mb-1">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground">
             Customer Reviews
           </h2>
           
           {/* Rating summary */}
-          <div className="flex items-center gap-3 mt-2">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="h-4 w-4 fill-primary text-primary" />
               ))}
             </div>
-            <span className="font-bold text-foreground">4.8/5</span>
-            <span className="text-muted-foreground text-sm">(2,453 reviews)</span>
+            <span className="font-semibold text-foreground text-sm">4.8/5</span>
+            <span className="text-muted-foreground text-xs">(2,453 reviews)</span>
           </div>
         </div>
 
         {/* Reviews Grid */}
         <div className="grid md:grid-cols-3 gap-4">
-          {reviews.map((review, index) => (
+          {reviews.map((review) => (
             <div
               key={review.id}
-              className="group relative bg-card backdrop-blur-sm rounded-2xl p-5 border border-border hover:border-primary/30 shadow-md hover:shadow-lg transition-all duration-300 animate-fade-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className="bg-card rounded-xl p-4 border border-border hover:border-primary/20 shadow-sm hover:shadow-md transition-all duration-200"
             >
-              {/* Quote icon */}
-              <div className="absolute top-4 right-4">
-                <Quote className="h-6 w-6 text-primary/10" />
-              </div>
-              
               {/* Stars */}
-              <div className="flex items-center gap-1 mb-3">
+              <div className="flex items-center gap-0.5 mb-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
-                    className={`h-4 w-4 ${
+                    className={`h-3.5 w-3.5 ${
                       i < review.rating
                         ? "fill-primary text-primary"
                         : "fill-muted text-muted"
@@ -95,23 +78,23 @@ const CustomerReviews = () => {
               </div>
 
               {/* Review text */}
-              <p className="text-foreground text-sm mb-4 line-clamp-3 leading-relaxed">
+              <p className="text-foreground text-sm mb-3 line-clamp-3 leading-relaxed">
                 "{review.review}"
               </p>
 
               {/* Author info */}
-              <div className="flex items-center gap-3 pt-4 border-t border-border">
+              <div className="flex items-center gap-2.5 pt-3 border-t border-border">
                 <img
                   src={review.avatar}
                   alt={review.name}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-border"
+                  className="w-8 h-8 rounded-full object-cover"
                 />
                 <div>
-                  <p className="font-semibold text-foreground text-sm">
+                  <p className="font-medium text-foreground text-sm">
                     {review.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {review.product} • {review.date}
+                    {review.product}
                   </p>
                 </div>
               </div>
