@@ -1,4 +1,4 @@
-import { Star, Quote, MessageCircle, Users, ThumbsUp } from "lucide-react";
+import { Star, Quote, MessageCircle } from "lucide-react";
 
 const reviews = [
   {
@@ -32,7 +32,7 @@ const reviews = [
 
 const CustomerReviews = () => {
   return (
-    <section className="py-8 sm:py-14 relative overflow-hidden">
+    <section className="py-8 sm:py-12 relative overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
       
@@ -41,63 +41,43 @@ const CustomerReviews = () => {
         <div className="absolute -top-32 left-1/3 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute -bottom-32 right-1/3 w-[400px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
       </div>
-
-      {/* Floating decorations */}
-      <div className="absolute top-16 right-[15%] opacity-15">
-        <Star className="h-7 w-7 text-primary fill-primary animate-pulse" style={{ animationDuration: '2s' }} />
-      </div>
-      <div className="absolute bottom-20 left-[10%] opacity-15">
-        <ThumbsUp className="h-6 w-6 text-accent animate-bounce" style={{ animationDuration: '3s' }} />
-      </div>
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-6 sm:mb-10">
-          <div className="flex items-center gap-4 sm:gap-5 mb-4">
-            {/* Animated icon */}
-            <div className="relative group">
-              <div className="absolute -inset-3 bg-primary/20 rounded-2xl blur-lg group-hover:bg-primary/30 transition-all duration-500" />
-              <div className="absolute -inset-1 bg-primary rounded-2xl opacity-75 animate-spin" style={{ animationDuration: '8s' }} />
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/30">
-                <MessageCircle className="h-7 w-7 sm:h-8 sm:w-8 text-primary-foreground drop-shadow-lg" />
-              </div>
-              <Star className="absolute -top-2 -right-2 h-5 w-5 text-accent fill-accent drop-shadow-lg animate-pulse" style={{ animationDuration: '1.5s' }} />
+        <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
             </div>
           </div>
           
-          <div className="flex items-center gap-2 flex-wrap justify-center mb-2">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-foreground">
-              Customer Reviews
-            </h2>
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] sm:text-xs font-bold border border-accent/30 backdrop-blur-sm">
-              <Users className="h-3 w-3" />
-              VERIFIED
-            </span>
-          </div>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-foreground mb-1">
+            Customer Reviews
+          </h2>
           
           {/* Rating summary */}
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-primary text-primary" />
+                <Star key={i} className="h-4 w-4 fill-primary text-primary" />
               ))}
             </div>
-            <span className="font-bold text-lg text-foreground">4.8/5</span>
+            <span className="font-bold text-foreground">4.8/5</span>
             <span className="text-muted-foreground text-sm">(2,453 reviews)</span>
           </div>
         </div>
 
         {/* Reviews Grid */}
-        <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid md:grid-cols-3 gap-4">
           {reviews.map((review, index) => (
             <div
               key={review.id}
-              className="group relative bg-card backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-border hover:border-primary/30 shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in"
+              className="group relative bg-card backdrop-blur-sm rounded-2xl p-5 border border-border hover:border-primary/30 shadow-md hover:shadow-lg transition-all duration-300 animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {/* Quote icon */}
               <div className="absolute top-4 right-4">
-                <Quote className="h-8 w-8 text-primary/10" />
+                <Quote className="h-6 w-6 text-primary/10" />
               </div>
               
               {/* Stars */}
@@ -115,66 +95,28 @@ const CustomerReviews = () => {
               </div>
 
               {/* Review text */}
-              <p className="text-foreground text-sm sm:text-base mb-4 line-clamp-3 leading-relaxed">
+              <p className="text-foreground text-sm mb-4 line-clamp-3 leading-relaxed">
                 "{review.review}"
               </p>
 
               {/* Author info */}
               <div className="flex items-center gap-3 pt-4 border-t border-border">
-                <div className="relative">
-                  <img
-                    src={review.avatar}
-                    alt={review.name}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-border"
-                  />
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
-                    <ThumbsUp className="h-2.5 w-2.5 text-accent-foreground" />
-                  </div>
-                </div>
+                <img
+                  src={review.avatar}
+                  alt={review.name}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-border"
+                />
                 <div>
-                  <p className="font-semibold text-foreground text-sm sm:text-base">
+                  <p className="font-semibold text-foreground text-sm">
                     {review.name}
                   </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {review.product} • {review.date}
                   </p>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Stats bar */}
-        <div className="mt-6 sm:mt-8">
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-card backdrop-blur-md border border-border shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <Users className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-xl font-bold text-primary">2,453</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Total Reviews</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-card backdrop-blur-md border border-border shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <Star className="h-5 w-5 text-primary-foreground fill-primary-foreground" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-xl font-bold text-foreground">4.8★</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Avg. Rating</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-card backdrop-blur-md border border-border shadow-lg">
-              <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-                <ThumbsUp className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-xl font-bold text-accent">98%</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Recommend</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
