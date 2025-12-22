@@ -12,7 +12,8 @@ const BrandCircle = memo(({ brand }: { brand: any }) => {
   return (
     <Link
       to={`/products?brand=${encodeURIComponent(brand.name)}`}
-      className="group flex flex-col items-center gap-1"
+      className="group block"
+      title={brand.name}
     >
       <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 flex items-center justify-center p-2 rounded-full bg-card border-2 border-border shadow-md hover:border-primary hover:shadow-xl transition-all duration-300 hover:scale-110">
         {brand.logo_url && !imageError ? (
@@ -38,9 +39,6 @@ const BrandCircle = memo(({ brand }: { brand: any }) => {
           </span>
         )}
       </div>
-      <span className="text-[10px] sm:text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap">
-        {brand.name}
-      </span>
     </Link>
   );
 });
