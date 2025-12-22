@@ -472,13 +472,15 @@ const Navbar = () => {
 
       {/* Mobile Menu Sheet */}
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <SheetContent side="right" className="w-[85%] max-w-sm p-0 flex flex-col">
-          <SheetHeader className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+        <SheetContent side="right" className="w-[85%] max-w-sm p-0 flex flex-col border-l-4 border-l-primary">
+          <SheetHeader className="p-4 border-b border-border bg-gradient-to-r from-primary/20 via-primary/10 to-transparent">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Logo" className="h-10 w-11 object-contain" />
+              <div className="p-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                <img src="/logo.png" alt="Logo" className="h-9 w-10 object-contain" />
+              </div>
               <div className="text-left">
                 <SheetTitle className="font-heading font-bold text-lg text-foreground">Menu</SheetTitle>
-                <SheetDescription className="text-xs text-muted-foreground">World Spilt Centre</SheetDescription>
+                <SheetDescription className="text-xs text-primary font-medium">World Spilt Centre</SheetDescription>
               </div>
             </div>
           </SheetHeader>
@@ -645,16 +647,16 @@ const Navbar = () => {
           </div>
           
           {/* Footer - Contact */}
-          <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="p-4 border-t-2 border-primary/20 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5">
             <a 
               href="tel:0300-4649141" 
-              className="py-4 px-4 text-foreground bg-background hover:bg-primary/5 rounded-xl flex items-center gap-4 border border-border/50 shadow-sm transition-colors"
+              className="py-4 px-4 text-foreground bg-background hover:bg-primary/5 rounded-xl flex items-center gap-4 border border-primary/20 shadow-md hover:shadow-lg transition-all"
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                <Phone className="h-5 w-5 text-primary" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md">
+                <Phone className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Need Help?</p>
+                <p className="text-xs text-primary font-semibold uppercase tracking-wide">Need Help?</p>
                 <p className="font-bold text-foreground text-lg">0300-4649141</p>
               </div>
             </a>
