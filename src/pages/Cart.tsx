@@ -319,11 +319,17 @@ const Cart = () => {
                         style={{ width: `${Math.min((subtotal / 10000) * 100, 100)}%` }}
                       />
                     </div>
-                    <p className="text-[10px] sm:text-xs text-emerald-600/80 dark:text-emerald-400/70">
+                    <p className="text-[10px] sm:text-xs text-emerald-600/80 dark:text-emerald-400/70 mb-2">
                       Add <span className="font-bold text-emerald-700 dark:text-emerald-300">Rs.{(10000 - subtotal).toLocaleString()}</span> more for free shipping
-                      <br />
-                      <span className="text-muted-foreground">or add a product with free delivery</span>
                     </p>
+                    <Link 
+                      to="/products?delivery=free"
+                      className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors group"
+                    >
+                      <Gift className="h-3 w-3" />
+                      Or browse Free Delivery products
+                      <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
                   </div>
                 )}
 
