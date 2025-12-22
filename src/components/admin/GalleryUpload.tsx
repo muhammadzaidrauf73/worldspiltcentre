@@ -525,7 +525,7 @@ const GalleryUpload = ({
         >
           <div className="flex items-center gap-2">
             <Globe className="h-4 w-4 text-primary" />
-            <span className="text-primary">Auto-fetch images from product URL (World Spilt Centre)</span>
+            <span className="text-primary">Auto-fetch images from product URL (lahorecentre.com)</span>
           </div>
           {showFetchUrl ? (
             <ChevronUp className="h-4 w-4" />
