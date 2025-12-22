@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useWishlist } from "@/hooks/useWishlist";
 import SearchAutocomplete from "@/components/SearchAutocomplete";
@@ -22,6 +23,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { cartCount } = useCart();
   const { isAdmin } = useAdmin();
   const { wishlistItems } = useWishlist();
   
@@ -92,22 +94,7 @@ const Navbar = () => {
   const announcementBgColor = settings?.announcement_bg_color || '#f97316';
   const announcementTextColor = settings?.announcement_text_color || '#ffffff';
 
-  // Fetch cart count
-  const { data: cartCount = 0 } = useQuery({
-    queryKey: ["cart-count", user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("quantity")
-        .eq("user_id", user.id);
-      if (error) return 0;
-      return data.reduce((sum, item) => sum + item.quantity, 0);
-    },
-    enabled: !!user,
-  });
-
-
+  // Cart count now comes from CartContext
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
