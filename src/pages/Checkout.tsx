@@ -84,12 +84,16 @@ const Checkout = () => {
   const [saveNewAddress, setSaveNewAddress] = useState(false);
   const [newAddressLabel, setNewAddressLabel] = useState("Home");
   const [isEditingReviewInfo, setIsEditingReviewInfo] = useState(false);
+  const [isGuestCheckout, setIsGuestCheckout] = useState(false);
+  const [expressCheckoutReady, setExpressCheckoutReady] = useState(false);
 
+  // Guest checkout allowed - no redirect
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      setIsGuestCheckout(true);
+      setUseNewAddress(true);
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
   // Fetch cart items
   const { data: cartItems = [], isLoading: cartLoading } = useQuery({
@@ -207,6 +211,8 @@ const Checkout = () => {
       if (defaultAddress) {
         setSelectedAddressId(defaultAddress.id);
         applyAddressToForm(defaultAddress);
+        // Enable express checkout for users with saved addresses
+        setExpressCheckoutReady(true);
       }
     } else if (savedAddresses.length === 0 && profile) {
       // No saved addresses, use profile data
@@ -429,10 +435,10 @@ const Checkout = () => {
     setCouponError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     
-    if (!user || cartItems.length === 0) return;
+    if (cartItems.length === 0) return;
     
     if (!formData.name || !formData.email || !formData.phone || !formData.address) {
       toast.error("Please fill in all fields");
@@ -458,7 +464,7 @@ const Checkout = () => {
 
       // Build order data with consistent structure
       const orderData: any = {
-        user_id: user.id,
+        user_id: user?.id || null, // Allow null for guest checkout
         customer_name: formData.name,
         customer_email: formData.email,
         customer_phone: formData.phone,
@@ -475,6 +481,7 @@ const Checkout = () => {
             name: selectedShippingOption.name,
             price: shippingCost,
           } : null,
+          is_guest_order: isGuestCheckout,
         },
         total: total,
         status: "pending",
@@ -516,8 +523,8 @@ const Checkout = () => {
           });
       }
 
-      // Save new address to address book if requested
-      if (useNewAddress && saveNewAddress && formData.address) {
+      // Save new address to address book if requested (only for logged in users)
+      if (user && useNewAddress && saveNewAddress && formData.address) {
         try {
           // Parse address - simple split by comma for city extraction
           const addressParts = formData.address.split(',').map(p => p.trim());
@@ -546,13 +553,15 @@ const Checkout = () => {
         }
       }
 
-      // Clear cart
-      const { error: cartError } = await supabase
-        .from("cart_items")
-        .delete()
-        .eq("user_id", user.id);
+      // Clear cart (only for logged in users)
+      if (user) {
+        const { error: cartError } = await supabase
+          .from("cart_items")
+          .delete()
+          .eq("user_id", user.id);
 
-      if (cartError) throw cartError;
+        if (cartError) throw cartError;
+      }
 
       // Send order confirmation email
       try {
@@ -588,13 +597,34 @@ const Checkout = () => {
       queryClient.invalidateQueries({ queryKey: ["coupon-analytics"] });
       
       toast.success("Order placed successfully! Check your email for confirmation.");
-      navigate("/account");
+      
+      // Redirect based on user status
+      if (user) {
+        navigate("/account");
+      } else {
+        navigate(`/order-tracking?orderId=${orderResult.id}`);
+      }
     } catch (error: any) {
       console.error("Order error:", error);
       toast.error("Failed to place order: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Express checkout handler - skips steps for returning users
+  const handleExpressCheckout = async () => {
+    if (!expressCheckoutReady || !formData.name || !formData.address) {
+      toast.error("Please select an address first");
+      return;
+    }
+    
+    // Set to default shipping if not selected
+    if (!selectedShipping && shippingOptions.length > 0) {
+      setSelectedShipping(shippingOptions[0].id);
+    }
+    
+    await handleSubmit();
   };
 
   if (authLoading || cartLoading) {
@@ -605,7 +635,7 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !isGuestCheckout) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -687,6 +717,61 @@ const Checkout = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-4 sm:py-6 max-w-4xl">
+        {/* Express Checkout Banner - for returning users with saved addresses */}
+        {expressCheckoutReady && user && savedAddresses.length > 0 && currentStep === 1 && (
+          <div className="mb-4 p-4 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Express Checkout Available</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Use your saved address to checkout instantly
+                  </p>
+                </div>
+              </div>
+              <Button 
+                type="button"
+                onClick={handleExpressCheckout}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    One-Click Checkout
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Guest Checkout Notice */}
+        {isGuestCheckout && (
+          <div className="mb-4 p-3 bg-muted/50 border border-border rounded-lg flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Checking out as guest</span>
+            </div>
+            <Button 
+              variant="link" 
+              size="sm" 
+              onClick={() => navigate("/auth?redirect=/checkout")}
+              className="text-primary p-0 h-auto"
+            >
+              Sign in for faster checkout
+            </Button>
+          </div>
+        )}
+
         {/* Progress Stepper */}
         <div className="mb-6">
           <div className="flex items-center justify-center">
