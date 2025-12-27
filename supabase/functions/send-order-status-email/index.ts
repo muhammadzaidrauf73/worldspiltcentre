@@ -87,100 +87,127 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email via Resend API...");
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "World Spilt Centre <support@worldspiltcentre.com>",
-        to: [customerEmail],
-        subject: `${info.subject} - World Spilt Centre`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-            
-            <div style="border-bottom: 2px solid ${info.color}; padding-bottom: 20px; margin-bottom: 30px;">
-              <h2 style="color: ${info.color}; margin: 0; font-size: 20px;">World Spilt Centre</h2>
-              <p style="margin: 5px 0 0 0; color: #666666; font-size: 13px;">Order Status Update</p>
-            </div>
-            
-            <p style="font-size: 15px; margin-bottom: 20px;">Dear ${customerName},</p>
-            
-            <p style="color: #333333; font-size: 15px; margin-bottom: 20px;">${info.message}</p>
-            
-            <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid ${info.color};">
-              <p style="margin: 0 0 5px 0; font-size: 13px; color: #666666;">Order Reference</p>
-              <p style="margin: 0; font-size: 18px; font-weight: bold; color: #333333;">#${orderIdShort}</p>
-              <p style="margin: 10px 0 0 0; font-size: 13px; color: #666666;">Status: <strong style="color: ${info.color};">${info.title}</strong></p>
-            </div>
-            
-            ${trackingSection}
-            
-            <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 25px 0;">
-              <p style="margin: 0 0 10px 0; font-weight: bold; color: #333333; font-size: 14px;">Order Status Timeline</p>
-              <div style="font-size: 13px; color: #555555;">
-                <div style="margin-bottom: 8px; display: flex; align-items: center;">
-                  <span style="width: 12px; height: 12px; border-radius: 50%; background-color: #22c55e; display: inline-block; margin-right: 10px;"></span>
-                  <span>Order Placed</span>
-                </div>
-                <div style="margin-bottom: 8px; display: flex; align-items: center;">
-                  <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${['processing', 'shipped', 'delivered'].includes(status) ? '#22c55e' : '#dddddd'}; display: inline-block; margin-right: 10px;"></span>
-                  <span style="color: ${['processing', 'shipped', 'delivered'].includes(status) ? '#333333' : '#999999'};">Processing</span>
-                </div>
-                <div style="margin-bottom: 8px; display: flex; align-items: center;">
-                  <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${['shipped', 'delivered'].includes(status) ? '#22c55e' : '#dddddd'}; display: inline-block; margin-right: 10px;"></span>
-                  <span style="color: ${['shipped', 'delivered'].includes(status) ? '#333333' : '#999999'};">Shipped</span>
-                </div>
-                <div style="display: flex; align-items: center;">
-                  <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${status === 'delivered' ? '#22c55e' : '#dddddd'}; display: inline-block; margin-right: 10px;"></span>
-                  <span style="color: ${status === 'delivered' ? '#333333' : '#999999'};">Delivered</span>
-                </div>
+    const emailPayload = {
+      from: "World Spilt Centre <support@worldspiltcentre.com>",
+      to: [customerEmail],
+      subject: `${info.subject} - World Spilt Centre`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+          
+          <div style="border-bottom: 2px solid ${info.color}; padding-bottom: 20px; margin-bottom: 30px;">
+            <h2 style="color: ${info.color}; margin: 0; font-size: 20px;">World Spilt Centre</h2>
+            <p style="margin: 5px 0 0 0; color: #666666; font-size: 13px;">Order Status Update</p>
+          </div>
+          
+          <p style="font-size: 15px; margin-bottom: 20px;">Dear ${customerName},</p>
+          
+          <p style="color: #333333; font-size: 15px; margin-bottom: 20px;">${info.message}</p>
+          
+          <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid ${info.color};">
+            <p style="margin: 0 0 5px 0; font-size: 13px; color: #666666;">Order Reference</p>
+            <p style="margin: 0; font-size: 18px; font-weight: bold; color: #333333;">#${orderIdShort}</p>
+            <p style="margin: 10px 0 0 0; font-size: 13px; color: #666666;">Status: <strong style="color: ${info.color};">${info.title}</strong></p>
+          </div>
+          
+          ${trackingSection}
+          
+          <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin: 25px 0;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #333333; font-size: 14px;">Order Status Timeline</p>
+            <div style="font-size: 13px; color: #555555;">
+              <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background-color: #22c55e; display: inline-block; margin-right: 10px;"></span>
+                <span>Order Placed</span>
+              </div>
+              <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${['processing', 'shipped', 'delivered'].includes(status) ? '#22c55e' : '#dddddd'}; display: inline-block; margin-right: 10px;"></span>
+                <span style="color: ${['processing', 'shipped', 'delivered'].includes(status) ? '#333333' : '#999999'};">Processing</span>
+              </div>
+              <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${['shipped', 'delivered'].includes(status) ? '#22c55e' : '#dddddd'}; display: inline-block; margin-right: 10px;"></span>
+                <span style="color: ${['shipped', 'delivered'].includes(status) ? '#333333' : '#999999'};">Shipped</span>
+              </div>
+              <div style="display: flex; align-items: center;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background-color: ${status === 'delivered' ? '#22c55e' : '#dddddd'}; display: inline-block; margin-right: 10px;"></span>
+                <span style="color: ${status === 'delivered' ? '#333333' : '#999999'};">Delivered</span>
               </div>
             </div>
-            
-            <div style="border-top: 1px solid #eeeeee; padding-top: 20px; margin-top: 30px;">
-              <p style="margin: 0 0 10px 0; font-size: 14px; color: #333333;"><strong>Need help?</strong></p>
-              <p style="margin: 0 0 5px 0; font-size: 14px; color: #555555;">
-                Phone: 0300-4649141 (Mon-Sat, 10 AM - 8 PM)
-              </p>
-              <p style="margin: 0; font-size: 14px; color: #555555;">
-                Email: support@worldspiltcentre.com
-              </p>
-            </div>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 12px; color: #888888;">
-              <p style="margin: 0 0 5px 0;">World Spilt Centre</p>
-              <p style="margin: 0 0 5px 0;">Shop # 30 Saleem Complex, Q Block (Ext), Model Town, Lahore</p>
-              <p style="margin: 0;">© ${new Date().getFullYear()} World Spilt Centre. All rights reserved.</p>
-            </div>
-          </body>
-          </html>
-        `,
-      }),
-    });
+          </div>
+          
+          <div style="border-top: 1px solid #eeeeee; padding-top: 20px; margin-top: 30px;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; color: #333333;"><strong>Need help?</strong></p>
+            <p style="margin: 0 0 5px 0; font-size: 14px; color: #555555;">
+              Phone: 0300-4649141 (Mon-Sat, 10 AM - 8 PM)
+            </p>
+            <p style="margin: 0; font-size: 14px; color: #555555;">
+              Email: support@worldspiltcentre.com
+            </p>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 12px; color: #888888;">
+            <p style="margin: 0 0 5px 0;">World Spilt Centre</p>
+            <p style="margin: 0 0 5px 0;">Shop # 30 Saleem Complex, Q Block (Ext), Model Town, Lahore</p>
+            <p style="margin: 0;">© ${new Date().getFullYear()} World Spilt Centre. All rights reserved.</p>
+          </div>
+        </body>
+        </html>
+      `,
+    };
 
-    console.log("Resend API response status:", res.status);
+    // Retry logic with exponential backoff for rate limiting
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (attempt > 0) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempt) * 500;
+        console.log(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
 
-    if (!res.ok) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      console.log(`Resend API response status (attempt ${attempt + 1}):`, res.status);
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Status update email sent successfully:", JSON.stringify(data));
+        return new Response(JSON.stringify({ success: true, data }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      // Check if it's a rate limit error (429)
+      if (res.status === 429) {
+        const errorText = await res.text();
+        console.warn(`Rate limit hit (attempt ${attempt + 1}):`, errorText);
+        lastError = new Error(errorText);
+        continue; // Retry
+      }
+
+      // For other errors, don't retry
       const error = await res.text();
       console.error("Resend API error:", error);
       throw new Error(error);
     }
 
-    const data = await res.json();
-    console.log("Status update email sent successfully:", JSON.stringify(data));
-
-    return new Response(JSON.stringify({ success: true, data }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    // All retries exhausted
+    console.error("All retry attempts failed due to rate limiting");
+    throw lastError || new Error("Rate limit exceeded after all retries");
   } catch (error: any) {
     console.error("Error sending status update email:", error.message);
     return new Response(
