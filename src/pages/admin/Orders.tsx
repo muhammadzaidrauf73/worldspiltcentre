@@ -430,10 +430,10 @@ const AdminOrders = () => {
   });
 
   const openEditSpecsDialog = (order: any, itemIndex: number) => {
-    const items = order.items as OrderItem[];
+    const items = getOrderItems(order.items);
     setSelectedOrder(order);
     setSelectedItemIndex(itemIndex);
-    setEditingSpecs(items[itemIndex].specifications || {});
+    setEditingSpecs(items[itemIndex]?.specifications || {});
     setEditSpecsDialogOpen(true);
   };
 
@@ -479,7 +479,7 @@ const AdminOrders = () => {
       }
     });
 
-    const items = [...(selectedOrder.items as OrderItem[])];
+    const items = [...getOrderItems(selectedOrder.items)];
     items[selectedItemIndex] = {
       ...items[selectedItemIndex],
       specifications: cleanedSpecs,
@@ -489,7 +489,7 @@ const AdminOrders = () => {
   };
 
   const handlePrintOrder = (order: any) => {
-    const items = order.items as OrderItem[];
+    const items = getOrderItems(order.items);
     const printContent = `
       <html>
         <head>
@@ -577,10 +577,26 @@ const AdminOrders = () => {
     setShipDialogOpen(true);
   };
 
+  // Helper to extract items array from different order formats
+  const getOrderItems = (items: any): OrderItem[] => {
+    if (!items) return [];
+    // Handle new format: items is an object with products array
+    if (items.products && Array.isArray(items.products)) {
+      return items.products;
+    }
+    // Handle old format: items is directly an array
+    if (Array.isArray(items)) {
+      return items.filter(item => item && item.name);
+    }
+    return [];
+  };
+
   const getItemsSummary = (items: OrderItem[]) => {
     if (!items || items.length === 0) return "No items";
-    if (items.length === 1) return items[0].name;
-    return `${items[0].name} +${items.length - 1} more`;
+    const firstItem = items[0];
+    if (!firstItem || !firstItem.name) return "No items";
+    if (items.length === 1) return firstItem.name;
+    return `${firstItem.name} +${items.length - 1} more`;
   };
 
   // Export orders to PNG image with full details
@@ -608,7 +624,7 @@ const AdminOrders = () => {
     // Calculate total height needed
     let totalContentHeight = 80; // Title
     ordersToExport.forEach((order: any) => {
-      const items = order.items as OrderItem[];
+      const items = getOrderItems(order.items);
       totalContentHeight += 120; // Order header info
       totalContentHeight += (items?.length || 0) * 80; // Each product
       totalContentHeight += orderSpacing;
@@ -636,7 +652,7 @@ const AdminOrders = () => {
     let currentY = padding + 90;
 
     ordersToExport.forEach((order: any, orderIndex) => {
-      const items = order.items as OrderItem[];
+      const items = getOrderItems(order.items);
       const orderIdShort = order.id.slice(0, 8).toUpperCase();
 
       // Order card background
@@ -791,7 +807,7 @@ const AdminOrders = () => {
     ];
 
     const rows = orders.map((order: any) => {
-      const items = order.items as OrderItem[];
+      const items = getOrderItems(order.items);
       const productNames = items?.map(item => item.name).join("; ") || "";
       const productDetails = items?.map(item => {
         const specs = item.specifications 
@@ -841,7 +857,7 @@ const AdminOrders = () => {
 
   // Export single order to detailed format
   const exportSingleOrder = (order: any) => {
-    const items = order.items as OrderItem[];
+    const items = getOrderItems(order.items);
     const orderIdShort = order.id.slice(0, 8).toUpperCase();
     
     const headers = [
@@ -1205,7 +1221,7 @@ const AdminOrders = () => {
                 </TableRow>
               ) : (
                 getDisplayFilteredOrders().map((order: any) => {
-                  const items = order.items as OrderItem[];
+                  const items = getOrderItems(order.items);
                   return (
                     <TableRow key={order.id} className="hover:bg-muted/30">
                       <TableCell className="font-mono text-sm">
@@ -1346,7 +1362,7 @@ const AdminOrders = () => {
                                             <div className="w-14 h-14 rounded-lg bg-background overflow-hidden flex-shrink-0">
                                               <img 
                                                 src={item.image_url || '/placeholder.svg'} 
-                                                alt={item.name}
+                                                alt={item.name || 'Product'}
                                                 className="w-full h-full object-contain"
                                               />
                                             </div>
@@ -1575,7 +1591,7 @@ const AdminOrders = () => {
             <DialogDescription>
               {selectedOrder && selectedItemIndex !== null && (
                 <span>
-                  Editing specs for: {(selectedOrder.items as OrderItem[])[selectedItemIndex]?.name}
+                  Editing specs for: {getOrderItems(selectedOrder.items)[selectedItemIndex]?.name}
                 </span>
               )}
             </DialogDescription>
