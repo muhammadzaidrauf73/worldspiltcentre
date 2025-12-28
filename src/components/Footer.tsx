@@ -119,24 +119,16 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 gap-8 pb-10 border-b border-card/10">
           {/* Logo & Description */}
           <div>
-            <Link to="/" className="flex items-center gap-3 mb-4 group">
+            <Link to="/" className="inline-block mb-4 group">
               <div className="relative">
-                <div className="absolute -inset-1 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute -inset-2 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
                 <img 
                   src="/logo.png" 
                   alt={getSetting('company_name', 'World Spilt Centre')} 
-                  className="h-12 w-[52px] object-contain relative"
-                  width={52}
-                  height={48}
+                  className="h-14 w-auto object-contain relative"
+                  width={140}
+                  height={56}
                 />
-              </div>
-              <div>
-                <h3 className="font-heading font-bold text-xl text-card">
-                  World <span className="text-primary">Spilt</span> Centre
-                </h3>
-                <p className="text-xs text-card/50 uppercase tracking-[0.15em] font-medium">
-                  {getSetting('company_tagline', 'Premium Electronics')}
-                </p>
               </div>
             </Link>
             <p className="text-sm text-card/60 max-w-md leading-relaxed">
