@@ -1,14 +1,12 @@
-import { Heart, ShoppingCart, Star, Eye, ShoppingBag, MessageCircle, Truck } from "lucide-react";
+import { Heart, ShoppingCart, Star, ShoppingBag, MessageCircle, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/utils";
 import { HighlightText } from "@/lib/highlight-text";
-import { memo, useState, forwardRef } from "react";
+import { memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
@@ -47,9 +45,8 @@ const ProductCardInner = ({
   searchHighlight = "",
 }: ProductCardProps) => {
   const { toggleWishlist, isInWishlist, isToggling } = useWishlist();
-  const { user } = useAuth();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const inWishlist = isInWishlist(id);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -77,40 +74,10 @@ const ProductCardInner = ({
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to sign in to add items to cart",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
 
     setIsAddingOnly(true);
     try {
-      const { data: existingItem } = await supabase
-        .from("cart_items")
-        .select("id, quantity")
-        .eq("user_id", user.id)
-        .eq("product_id", id)
-        .maybeSingle();
-
-      if (existingItem) {
-        await supabase
-          .from("cart_items")
-          .update({ quantity: existingItem.quantity + 1 })
-          .eq("id", existingItem.id);
-      } else {
-        await supabase
-          .from("cart_items")
-          .insert({ user_id: user.id, product_id: id, quantity: 1 });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      
+      await addToCart(id, 1);
       toast({
         title: "Added to cart",
         description: `${name} has been added to your cart`,
@@ -129,40 +96,10 @@ const ProductCardInner = ({
   const handleShopNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to sign in to add items to cart",
-        variant: "destructive",
-      });
-      navigate("/auth");
-      return;
-    }
 
     setIsAddingToCart(true);
     try {
-      const { data: existingItem } = await supabase
-        .from("cart_items")
-        .select("id, quantity")
-        .eq("user_id", user.id)
-        .eq("product_id", id)
-        .maybeSingle();
-
-      if (existingItem) {
-        await supabase
-          .from("cart_items")
-          .update({ quantity: existingItem.quantity + 1 })
-          .eq("id", existingItem.id);
-      } else {
-        await supabase
-          .from("cart_items")
-          .insert({ user_id: user.id, product_id: id, quantity: 1 });
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["cart-count"] });
-      
+      await addToCart(id, 1);
       navigate("/checkout");
     } catch (error) {
       toast({

@@ -107,7 +107,7 @@ const Hero = memo(() => {
   }
 
   return (
-    <section className="relative overflow-hidden w-full sm:bg-secondary/30">
+    <section className="relative overflow-hidden w-full sm:bg-secondary/30 group/hero">
       <div 
         className="relative w-full aspect-[2/1] sm:aspect-[21/9] lg:aspect-[3/1]"
         onTouchStart={onTouchStart}
@@ -163,41 +163,37 @@ const Hero = memo(() => {
           </Link>
         ))}
 
-        {/* Navigation Arrows - Hidden on mobile, visible on tablet/desktop */}
+        {/* Navigation Arrows - Show only on hover (desktop) */}
         {banners.length > 1 && (
           <>
             <button
               onClick={(e) => { e.preventDefault(); prevSlide(); }}
               aria-label="Previous slide"
-              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur hidden sm:flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm hidden sm:flex items-center justify-center hover:bg-card active:bg-card/90 transition-all duration-300 z-20 opacity-0 group-hover/hero:opacity-100 -translate-x-4 group-hover/hero:translate-x-0 shadow-lg"
             >
               <ChevronLeft className="h-5 w-5 text-foreground" />
             </button>
             <button
               onClick={(e) => { e.preventDefault(); nextSlide(); }}
               aria-label="Next slide"
-              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur hidden sm:flex items-center justify-center hover:bg-card active:bg-card/90 transition-smooth z-20"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm hidden sm:flex items-center justify-center hover:bg-card active:bg-card/90 transition-all duration-300 z-20 opacity-0 group-hover/hero:opacity-100 translate-x-4 group-hover/hero:translate-x-0 shadow-lg"
             >
               <ChevronRight className="h-5 w-5 text-foreground" />
             </button>
 
-            {/* Dots - Smaller on mobile, larger on desktop */}
-            <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-3 z-20">
+            {/* Unique Dots Design - Line indicator style */}
+            <div className="absolute bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 bg-foreground/20 backdrop-blur-sm rounded-full px-3 py-2">
               {banners.map((_, index) => (
                 <button
                   key={index}
                   onClick={(e) => { e.preventDefault(); goToSlide(index); }}
                   aria-label={`Go to slide ${index + 1}`}
-                  className={`rounded-full transition-all duration-300 w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center ${
-                    index === currentSlide
-                      ? "bg-primary/80"
-                      : "bg-card/40 hover:bg-card/60"
-                  }`}
+                  className="relative group/dot"
                 >
-                  <span className={`rounded-full transition-all duration-300 ${
+                  <span className={`block rounded-full transition-all duration-500 ease-out ${
                     index === currentSlide
-                      ? "bg-primary w-4 sm:w-6 md:w-8 h-1.5 sm:h-2"
-                      : "bg-card/60 w-1.5 h-1.5 sm:w-2 sm:h-2"
+                      ? "w-6 sm:w-8 h-2 bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]"
+                      : "w-2 h-2 bg-card/60 hover:bg-card/80"
                   }`} />
                 </button>
               ))}
