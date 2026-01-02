@@ -13,7 +13,7 @@ interface SEOProps {
 const SEO = ({
   title = "World Spilt Centre - Best Electronics Store in Lahore, Pakistan",
   description = "Shop quality electronics at World Spilt Centre. Air conditioners, LED TVs, refrigerators, washing machines, microwaves & home appliances. Free delivery in Lahore. Best prices guaranteed!",
-  keywords = "electronics store lahore, air conditioner pakistan, LED TV lahore, refrigerator pakistan, washing machine, home appliances, world spilt centre, world split centre, model town lahore, buy electronics online pakistan",
+  keywords = "electronics store lahore, air conditioner pakistan, LED TV lahore, refrigerator pakistan, washing machine, home appliances, world spilt centre, world split centre, model town lahore, buy electronics online pakistan, AC price in pakistan, inverter AC lahore, split AC, haier AC, dawlance, orient, samsung TV, TCL TV, LG refrigerator, deep freezer, microwave oven, water dispenser, geyser pakistan, kitchen appliances, cheap electronics lahore, best electronics shop lahore, buy AC online pakistan, LED TV price pakistan, 1 ton AC, 1.5 ton AC, inverter technology, energy saving appliances, branded electronics pakistan",
   image = "https://worldspiltcentre.com/logo.png",
   url = "https://worldspiltcentre.com",
   type = "website",
