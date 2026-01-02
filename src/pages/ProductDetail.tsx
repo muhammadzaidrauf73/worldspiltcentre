@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/collapsible";
 
 const ProductDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -142,30 +142,31 @@ const ProductDetail = () => {
     }
   };
   
-  const inWishlist = id ? isInWishlist(id) : false;
-
   const { data: product, isLoading } = useQuery({
-    queryKey: ["product", id],
+    queryKey: ["product", slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
         .select("*, categories(name, slug)")
-        .eq("id", id)
+        .eq("slug", slug)
         .maybeSingle();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!slug,
   });
 
+  const productId = product?.id;
+  const inWishlist = productId ? isInWishlist(productId) : false;
+
   const { data: reviews = [] } = useQuery({
-    queryKey: ["product-reviews", id],
+    queryKey: ["product-reviews", productId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_reviews")
         .select("*")
-        .eq("product_id", id)
+        .eq("product_id", productId!)
         .eq("is_approved", true)
         .order("is_featured", { ascending: false })
         .order("created_at", { ascending: false });
@@ -173,7 +174,7 @@ const ProductDetail = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!productId,
   });
 
   const galleryImages = (product?.gallery_images ?? []).filter(
@@ -189,12 +190,12 @@ const ProductDetail = () => {
   const specifications = product?.specifications as Record<string, string> || {};
 
   const handleAddToCart = async () => {
-    if (!id) return;
+    if (!productId) return;
     
     setAddingToCart(true);
 
     try {
-      await addToCart(id, quantity);
+      await addToCart(productId, quantity);
       toast({
         title: "Added to cart",
         description: `${product?.name} has been added to your cart.`,
@@ -256,6 +257,7 @@ const ProductDetail = () => {
         description={product.description || `Buy ${product.name} by ${product.brand} at best price. ${product.categories?.name || 'Electronics'} available at World Spilt Centre Lahore.`}
         keywords={`${product.name}, ${product.brand}, ${product.categories?.name || ''}, buy ${product.brand} pakistan, electronics lahore`}
         image={product.image_url || undefined}
+        url={`/product/${product.slug}`}
         type="product"
       />
       <Navbar />
@@ -277,7 +279,7 @@ const ProductDetail = () => {
           {/* Top right buttons - Wishlist and Zoom */}
           <div className="absolute top-3 right-3 z-10 flex gap-2">
             <button
-              onClick={() => id && toggleWishlist(id)}
+              onClick={() => productId && toggleWishlist(productId)}
               disabled={isToggling}
               className={cn(
                 "w-8 h-8 rounded-full bg-card/80 flex items-center justify-center",
@@ -473,7 +475,7 @@ const ProductDetail = () => {
               
               {/* Wishlist button - Desktop */}
               <button
-                onClick={() => id && toggleWishlist(id)}
+                onClick={() => productId && toggleWishlist(productId)}
                 disabled={isToggling}
                 className={cn(
                   "absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-card/80 flex items-center justify-center hover:bg-card transition-colors",
@@ -754,7 +756,7 @@ const ProductDetail = () => {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Review Form */}
             <div className="lg:col-span-1">
-              <ReviewForm productId={id!} />
+              <ReviewForm productId={productId!} />
             </div>
             
             {/* Reviews List */}

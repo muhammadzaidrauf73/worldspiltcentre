@@ -588,7 +588,7 @@ const Products = () => {
                       : null;
                     
                     return (
-                      <Link key={product.id} to={`/product/${product.id}`}>
+                      <Link key={product.id} to={`/product/${product.slug}`}>
                         <ProductCard
                           id={product.id}
                           name={product.name}

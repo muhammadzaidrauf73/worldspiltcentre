@@ -337,7 +337,7 @@ const WishlistTab = () => {
                   </div>
                 )}
 
-                <Link to={`/product/${product.id}`}>
+                <Link to={`/product/${product.slug}`}>
                   <div className="relative aspect-square bg-secondary/30">
                     <img
                       src={product.image_url || "/placeholder.svg"}
@@ -359,7 +359,7 @@ const WishlistTab = () => {
                   <p className="text-xs text-muted-foreground uppercase">
                     {product.brand}
                   </p>
-                  <Link to={`/product/${product.id}`}>
+                  <Link to={`/product/${product.slug}`}>
                     <h3 className="font-medium text-foreground line-clamp-2 hover:text-primary transition-colors">
                       {product.name}
                     </h3>

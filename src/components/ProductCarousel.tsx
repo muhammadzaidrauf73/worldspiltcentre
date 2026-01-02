@@ -7,6 +7,7 @@ import ProductCard from "./ProductCard";
 
 interface Product {
   id: string;
+  slug: string;
   name: string;
   brand: string;
   price: number;
@@ -96,7 +97,7 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
         {products.map((product, index) => (
           <Link
             key={product.id}
-            to={`/product/${product.id}`}
+            to={`/product/${product.slug}`}
             className="shrink-0 w-[45%] sm:w-[32%] md:w-[24%] lg:w-[19%]"
           >
             <ProductCard

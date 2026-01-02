@@ -249,7 +249,7 @@ const Cart = () => {
                   <div className="divide-y divide-border">
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                        <Link to={`/product/${item.product_id}`} className="shrink-0">
+                        <Link to={`/product/${item.products?.slug}`} className="shrink-0">
                           <div className="w-16 h-16 rounded border border-border bg-white overflow-hidden">
                             <img
                               src={item.products?.image_url || "/placeholder.svg"}
@@ -260,7 +260,7 @@ const Cart = () => {
                         </Link>
                         
                         <div className="flex-1 min-w-0">
-                          <Link to={`/product/${item.product_id}`}>
+                          <Link to={`/product/${item.products?.slug}`}>
                             <p className="text-sm line-clamp-2 hover:text-primary">
                               {item.products?.name}
                             </p>
