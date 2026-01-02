@@ -9,6 +9,7 @@ interface CartItem {
   quantity: number;
   products?: {
     id: string;
+    slug: string;
     name: string;
     price: number;
     original_price: number | null;

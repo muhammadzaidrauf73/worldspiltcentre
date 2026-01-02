@@ -68,7 +68,7 @@ const SearchAutocomplete = ({
       
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, brand, image_url, price")
+        .select("id, slug, name, brand, image_url, price")
         .eq("is_active", true)
         .or(`name.ilike.%${debouncedQuery}%,brand.ilike.%${debouncedQuery}%`)
         .limit(6);
@@ -85,7 +85,7 @@ const SearchAutocomplete = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, brand, image_url, price")
+        .select("id, slug, name, brand, image_url, price")
         .eq("is_active", true)
         .eq("is_top_seller", true)
         .limit(4);
@@ -114,11 +114,11 @@ const SearchAutocomplete = ({
     }
   };
 
-  const handleSuggestionClick = (productId: string, productName: string) => {
+  const handleSuggestionClick = (productSlug: string, productName: string) => {
     saveRecentSearch(productName);
     setIsOpen(false);
     setSearchQuery("");
-    navigate(`/product/${productId}`);
+    navigate(`/product/${productSlug}`);
   };
 
   const handleRecentClick = (query: string) => {
@@ -180,7 +180,7 @@ const SearchAutocomplete = ({
               {suggestions.map((product) => (
                 <button
                   key={product.id}
-                  onClick={() => handleSuggestionClick(product.id, product.name)}
+                  onClick={() => handleSuggestionClick(product.slug, product.name)}
                   className="w-full flex items-center gap-3 p-2 hover:bg-secondary/50 rounded-lg transition-colors text-left"
                 >
                   <div className="w-10 h-10 rounded-lg bg-secondary/30 overflow-hidden flex-shrink-0">

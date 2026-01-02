@@ -14,6 +14,7 @@ interface FlashDealItem {
   sold_percentage: number;
   ends_at: string;
   product_id: string | null;
+  products?: { slug: string } | null;
 }
 
 const FlashDeal = () => {
@@ -28,7 +29,7 @@ const FlashDeal = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("flash_deals")
-        .select("*")
+        .select("*, products(slug)")
         .eq("is_active", true)
         .gte("ends_at", new Date().toISOString())
         .order("display_order", { ascending: true })
@@ -110,7 +111,7 @@ const FlashDeal = () => {
             {deals?.map((deal) => (
               <Link
                 key={deal.id}
-                to={deal.product_id ? `/product/${deal.product_id}` : `/products?deals=true`}
+                to={deal.products?.slug ? `/product/${deal.products.slug}` : `/products?deals=true`}
                 className="shrink-0 w-36 bg-white rounded-lg overflow-hidden"
               >
                 <div className="relative aspect-square bg-secondary">

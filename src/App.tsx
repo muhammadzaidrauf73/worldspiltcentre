@@ -140,7 +140,7 @@ const App = () => (
               <Route path="/orders" element={<Orders />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/products" element={<Products />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/product/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/about" element={<About />} />
