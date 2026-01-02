@@ -1,17 +1,74 @@
+# World Spilt Centre - Robots.txt
+# https://worldspiltcentre.com
+
+# Allow all crawlers for main content
+User-agent: *
+Allow: /
+Allow: /products
+Allow: /about
+Allow: /contact
+Allow: /blog
+Allow: /store-locations
+Allow: /shipping
+Allow: /returns
+Allow: /warranty
+Allow: /refund-policy
+Allow: /careers
+Allow: /order-tracking
+Allow: /privacy
+Allow: /terms
+
+# Block admin and private pages
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /account
+Disallow: /profile
+Disallow: /orders
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-confirmation
+
+# Block API and internal paths
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*?*
+
+# Crawl delay for politeness
+Crawl-delay: 1
+
+# Googlebot specific rules
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /cart
+Disallow: /checkout
 
+# Googlebot-Image
+User-agent: Googlebot-Image
+Allow: /logo.png
+Allow: /banners/
+Allow: /brands/
+
+# Bingbot
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /cart
 
+# Social media bots
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+User-agent: LinkedInBot
 Allow: /
 
-# Sitemap
+# Sitemap location
 Sitemap: https://worldspiltcentre.com/sitemap.xml
