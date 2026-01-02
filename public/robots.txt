@@ -5,6 +5,7 @@
 User-agent: *
 Allow: /
 Allow: /products
+Allow: /product/
 Allow: /about
 Allow: /contact
 Allow: /blog
@@ -42,6 +43,7 @@ Crawl-delay: 1
 # Googlebot specific rules
 User-agent: Googlebot
 Allow: /
+Allow: /product/
 Disallow: /admin
 Disallow: /auth
 Disallow: /cart
@@ -56,6 +58,7 @@ Allow: /brands/
 # Bingbot
 User-agent: Bingbot
 Allow: /
+Allow: /product/
 Disallow: /admin
 Disallow: /auth
 Disallow: /cart
@@ -70,5 +73,8 @@ Allow: /
 User-agent: LinkedInBot
 Allow: /
 
-# Sitemap location
+# Dynamic Sitemap (includes all products)
+Sitemap: https://eyjyknyeknlpfgkiccyk.supabase.co/functions/v1/generate-sitemap
+
+# Fallback static sitemap
 Sitemap: https://worldspiltcentre.com/sitemap.xml
