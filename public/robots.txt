@@ -35,7 +35,6 @@ Disallow: /order-confirmation
 # Block API and internal paths
 Disallow: /api/
 Disallow: /*.json$
-Disallow: /*?*
 
 # Crawl delay for politeness
 Crawl-delay: 1
@@ -73,8 +72,5 @@ Allow: /
 User-agent: LinkedInBot
 Allow: /
 
-# Dynamic Sitemap (includes all products)
-Sitemap: https://eyjyknyeknlpfgkiccyk.supabase.co/functions/v1/generate-sitemap
-
-# Fallback static sitemap
+# Sitemap location
 Sitemap: https://worldspiltcentre.com/sitemap.xml
