@@ -119,18 +119,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 gap-8 pb-10 border-b border-card/10">
           {/* Logo & Description */}
           <div>
-            <Link to="/" className="inline-block mb-4 group">
-              <div className="relative">
-                <div className="absolute -inset-2 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
-                <img 
-                  src="/logo.png" 
-                  alt={getSetting('company_name', 'World Spilt Centre')} 
-                  className="h-14 w-auto object-contain relative"
-                  width={140}
-                  height={56}
-                />
-              </div>
-            </Link>
+            <h3 className="text-xl font-bold text-card mb-4">{getSetting('company_name', 'World Spilt Centre')}</h3>
             <p className="text-sm text-card/60 max-w-md leading-relaxed">
               Your trusted destination for premium electronics. We offer the best brands at competitive prices with exceptional customer service.
             </p>
