@@ -224,6 +224,30 @@ const Contact = () => {
         </div>
       </section>
 
+      {/* Google Map */}
+      <section className="pb-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6 text-center">Find Us on the Map</h2>
+            <div className="rounded-lg overflow-hidden border h-[400px]">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3401.5!2d74.3234!3d31.4834!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sSaleem+Complex+Q+Block+Model+Town+Lahore!5e0!3m2!1sen!2spk!4v1700000000000"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="World Spilt Centre Location - Model Town, Lahore"
+              />
+            </div>
+            <p className="text-center text-muted-foreground text-sm mt-3">
+              Shop # 30 Saleem Complex, Q Block (Ext) Near Kashmir Bakers, Model Town, Lahore
+            </p>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
