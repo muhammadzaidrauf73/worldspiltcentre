@@ -231,7 +231,7 @@ const Contact = () => {
             <h2 className="text-2xl font-bold mb-6 text-center">Find Us on the Map</h2>
             <div className="rounded-lg overflow-hidden border h-[400px]">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3401.5!2d74.3234!3d31.4834!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sSaleem+Complex+Q+Block+Model+Town+Lahore!5e0!3m2!1sen!2spk!4v1700000000000"
+                src="https://maps.google.com/maps?q=Saleem+Complex+Q+Block+Model+Town+Lahore&t=&z=17&ie=UTF8&iwloc=&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
