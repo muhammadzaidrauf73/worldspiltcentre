@@ -48,6 +48,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [scale, setScale] = useState(1);
@@ -209,6 +210,23 @@ const ProductDetail = () => {
     }
 
     setAddingToCart(false);
+  };
+
+
+  const handleBuyNow = async () => {
+    if (!productId) return;
+    setBuyingNow(true);
+    try {
+      await addToCart(productId, quantity);
+      window.location.href = '/checkout';
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process. Please try again.",
+        variant: "destructive",
+      });
+      setBuyingNow(false);
+    }
   };
 
   const discount = product?.original_price 
@@ -674,15 +692,10 @@ const ProductDetail = () => {
                 size="lg"
                 variant="buyNow"
                 className="flex-1"
-                onClick={async () => {
-                  await handleAddToCart();
-                  if (user) {
-                    window.location.href = '/checkout';
-                  }
-                }}
-                disabled={addingToCart || product.stock_quantity === 0}
+                onClick={handleBuyNow}
+                disabled={buyingNow || addingToCart || product.stock_quantity === 0}
               >
-                Buy Now
+                {buyingNow ? "Processing..." : "Buy Now"}
               </Button>
             </div>
 
