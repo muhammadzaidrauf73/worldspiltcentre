@@ -477,13 +477,12 @@ const Checkout = () => {
         status: "pending",
       };
 
-      const { data: orderResult, error: orderError } = await supabase
-        .from("orders")
-        .insert(orderData)
-        .select("id")
-        .single();
+      const { data: orderResponse, error: fnError } = await supabase.functions.invoke('create-order', {
+        body: orderData,
+      });
 
-      if (orderError) throw orderError;
+      if (fnError) throw new Error(fnError.message || "Failed to place order");
+      const orderResult = orderResponse;
 
       // Update coupon usage count and record per-user usage
       if (appliedCoupon && orderResult) {
