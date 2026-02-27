@@ -88,6 +88,7 @@ const Checkout = () => {
   const [isEditingReviewInfo, setIsEditingReviewInfo] = useState(false);
   const [isGuestCheckout, setIsGuestCheckout] = useState(false);
   const [expressCheckoutReady, setExpressCheckoutReady] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   // Use cart items from context
   const cartItems = contextCartItems;
@@ -472,6 +473,7 @@ const Checkout = () => {
             price: shippingCost,
           } : null,
           is_guest_order: isGuestCheckout,
+          payment_method: paymentMethod,
         },
         total: total,
         status: "pending",
@@ -1131,13 +1133,42 @@ const Checkout = () => {
                     <CreditCard className="h-4 w-4 text-primary" />
                     Payment Method
                   </h2>
-                  <div className="flex items-center gap-2 p-3 rounded border border-primary bg-primary/5">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">Cash on Delivery</p>
-                      <p className="text-xs text-muted-foreground">Pay when you receive your order</p>
+                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-2">
+                    {[
+                      { value: "cod", label: "Cash on Delivery", desc: "Pay when you receive your order", icon: "💵" },
+                      { value: "jazzcash", label: "JazzCash", desc: "Pay via JazzCash mobile wallet", icon: "📱" },
+                      { value: "easypaisa", label: "EasyPaisa", desc: "Pay via EasyPaisa mobile wallet", icon: "📱" },
+                      { value: "meezan", label: "Meezan Bank", desc: "Pay via Meezan Bank transfer", icon: "🏦" },
+                    ].map((method) => (
+                      <label
+                        key={method.value}
+                        htmlFor={`payment-${method.value}`}
+                        className={`flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors ${
+                          paymentMethod === method.value
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <RadioGroupItem value={method.value} id={`payment-${method.value}`} />
+                        <span className="text-lg">{method.icon}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{method.label}</p>
+                          <p className="text-xs text-muted-foreground">{method.desc}</p>
+                        </div>
+                        {paymentMethod === method.value && (
+                          <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                        )}
+                      </label>
+                    ))}
+                  </RadioGroup>
+
+                  {paymentMethod !== "cod" && (
+                    <div className="mt-3 p-3 rounded bg-secondary border border-border">
+                      <p className="text-xs text-muted-foreground font-medium">
+                        📌 After placing your order, you'll receive payment details via email/SMS to complete the payment.
+                      </p>
                     </div>
-                  </div>
+                  )}
 
                   {/* Coupon Section */}
                   <div className="mt-4 pt-4 border-t border-border">
@@ -1329,7 +1360,11 @@ const Checkout = () => {
                         Edit
                       </Button>
                     </div>
-                    <p className="text-sm">Cash on Delivery</p>
+                    <p className="text-sm">
+                      {paymentMethod === "cod" ? "Cash on Delivery" : 
+                       paymentMethod === "jazzcash" ? "JazzCash" :
+                       paymentMethod === "easypaisa" ? "EasyPaisa" : "Meezan Bank"}
+                    </p>
                     {appliedCoupon && (
                       <div className="mt-2 flex items-center gap-2 text-accent">
                         <Tag className="h-3.5 w-3.5" />
