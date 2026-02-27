@@ -582,6 +582,11 @@ const Checkout = () => {
       
       toast.success("Order placed successfully! Check your email for confirmation.");
       
+      // Scroll to top before navigating to confirmation
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
       // Redirect to order confirmation page
       const confirmationUrl = user 
         ? `/order-confirmation?orderId=${orderResult.id}`
