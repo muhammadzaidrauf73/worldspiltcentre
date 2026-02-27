@@ -553,7 +553,8 @@ const Checkout = () => {
           price: getEffectivePrice(item),
         }));
 
-        await supabase.functions.invoke('send-order-confirmation', {
+        // Fire-and-forget: don't await email so it never blocks checkout
+        supabase.functions.invoke('send-order-confirmation', {
           body: {
             customerEmail: formData.email,
             customerName: formData.name,
@@ -569,7 +570,7 @@ const Checkout = () => {
             isGuestOrder: isGuestCheckout,
             siteUrl: window.location.origin,
           },
-        });
+        }).then(() => console.log("Order confirmation email sent")).catch(() => {});
         console.log("Order confirmation email sent");
       } catch (emailError) {
         console.error("Failed to send order confirmation email:", emailError);

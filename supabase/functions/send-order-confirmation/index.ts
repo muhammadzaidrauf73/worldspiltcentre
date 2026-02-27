@@ -337,9 +337,13 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Resend API response status:", res.status);
 
     if (!res.ok) {
-      const error = await res.text();
-      console.error("Resend API error response:", error);
-      throw new Error(error);
+      const errorText = await res.text();
+      console.error("Resend API error response:", errorText);
+      // Return 200 with warning so checkout flow isn't blocked
+      return new Response(JSON.stringify({ success: false, warning: "Email delivery failed", detail: errorText }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const data = await res.json();
