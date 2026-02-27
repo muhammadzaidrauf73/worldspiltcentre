@@ -1162,11 +1162,31 @@ const Checkout = () => {
                     ))}
                   </RadioGroup>
 
-                  {paymentMethod !== "cod" && (
-                    <div className="mt-3 p-3 rounded bg-secondary border border-border">
-                      <p className="text-xs text-muted-foreground font-medium">
-                        📌 After placing your order, you'll receive payment details via email/SMS to complete the payment.
-                      </p>
+                  {paymentMethod === "jazzcash" && (
+                    <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
+                      <p className="text-xs font-semibold text-foreground">JazzCash Account Details</p>
+                      <p className="text-xs text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
+                      <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
+                      <p className="text-xs text-muted-foreground mt-1">📌 Send payment to this number and place your order. We'll confirm after verification.</p>
+                    </div>
+                  )}
+
+                  {paymentMethod === "easypaisa" && (
+                    <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
+                      <p className="text-xs font-semibold text-foreground">EasyPaisa Account Details</p>
+                      <p className="text-xs text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
+                      <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
+                      <p className="text-xs text-muted-foreground mt-1">📌 Send payment to this number and place your order. We'll confirm after verification.</p>
+                    </div>
+                  )}
+
+                  {paymentMethod === "meezan" && (
+                    <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
+                      <p className="text-xs font-semibold text-foreground">Meezan Bank Account Details</p>
+                      <p className="text-xs text-muted-foreground">Account #: <span className="font-medium text-foreground">02810110983695</span></p>
+                      <p className="text-xs text-muted-foreground">IBAN: <span className="font-medium text-foreground">PK19MEZN0002810110983695</span></p>
+                      <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
+                      <p className="text-xs text-muted-foreground mt-1">📌 Transfer the amount and place your order. We'll confirm after verification.</p>
                     </div>
                   )}
 
