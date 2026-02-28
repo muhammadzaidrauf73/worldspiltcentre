@@ -1195,6 +1195,7 @@ const AdminOrders = () => {
                 <TableHead>Customer</TableHead>
                 <TableHead>Products</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -1208,6 +1209,7 @@ const AdminOrders = () => {
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
@@ -1215,7 +1217,7 @@ const AdminOrders = () => {
                 ))
               ) : getDisplayFilteredOrders().length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     {hasActiveFilters ? "No orders match the current filters" : "No orders yet"}
                   </TableCell>
                 </TableRow>
@@ -1254,6 +1256,19 @@ const AdminOrders = () => {
                       </TableCell>
                       <TableCell className="text-sm">
                         {format(new Date(order.created_at), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const pm = order.items?.payment_method || "cod";
+                          const labels: Record<string, string> = { cod: "COD", jazzcash: "JazzCash", easypaisa: "EasyPaisa", meezan: "Meezan Bank" };
+                          return (
+                            <span className={`px-2 py-0.5 rounded-full text-xs border ${
+                              pm === "cod" ? "bg-muted text-muted-foreground border-border" : "bg-primary/10 text-primary border-primary/30"
+                            }`}>
+                              {labels[pm] || pm}
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="font-semibold text-primary">
                         Rs.{Number(order.total).toLocaleString()}
@@ -1315,6 +1330,10 @@ const AdminOrders = () => {
                                   <div>
                                     <p className="text-muted-foreground">Phone</p>
                                     <p>{order.customer_phone || "-"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Payment Method</p>
+                                    <p className="font-medium capitalize">{order.items?.payment_method || "COD"}</p>
                                   </div>
                                 </div>
 

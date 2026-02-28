@@ -670,6 +670,57 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          account_number: string | null
+          account_title: string | null
+          bank_name: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          iban: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          logo_url: string | null
+          method_key: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_title?: string | null
+          bank_name?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          iban?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          logo_url?: string | null
+          method_key: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          account_title?: string | null
+          bank_name?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          iban?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          logo_url?: string | null
+          method_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           comment: string | null

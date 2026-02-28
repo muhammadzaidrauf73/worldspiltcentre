@@ -26,7 +26,8 @@ import {
   LayoutGrid,
   MapPin,
   FileText,
-  Bell
+  Bell,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ const navItems = [
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/blog", label: "Blog Posts", icon: FileText },
+  { href: "/admin/payment-methods", label: "Payment Methods", icon: CreditCard },
   { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
   { href: "/admin/company-settings", label: "Company Settings", icon: Settings },
 ];
