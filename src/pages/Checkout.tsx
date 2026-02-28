@@ -695,10 +695,16 @@ const Checkout = () => {
 
   const estimatedDelivery = getEstimatedDeliveryDate();
 
+  // Pakistani phone validation: 03XX-XXXXXXX or 03XXXXXXXXX
+  const isValidPakistaniPhone = (phone: string) => {
+    const cleaned = phone.replace(/[\s-]/g, '');
+    return /^03\d{9}$/.test(cleaned);
+  };
+
   // Validate current step
   const canProceedToNextStep = () => {
     if (currentStep === 1) {
-      return formData.name && formData.email && formData.phone && formData.address && selectedShipping;
+      return formData.name && formData.email && formData.phone && isValidPakistaniPhone(formData.phone) && formData.address && selectedShipping;
     }
     if (currentStep === 2) {
       return true; // Payment is always valid (COD)
@@ -980,13 +986,20 @@ const Checkout = () => {
                           <div>
                             <Input
                               value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              placeholder="Phone Number *"
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9-]/g, '');
+                                setFormData({ ...formData, phone: val });
+                              }}
+                              placeholder="03XX-XXXXXXX *"
                               required
-                              className={`h-9 text-sm ${shippingTouched && !formData.phone.trim() ? 'border-destructive ring-1 ring-destructive' : ''}`}
+                              maxLength={12}
+                              className={`h-9 text-sm ${shippingTouched && (!formData.phone.trim() || !isValidPakistaniPhone(formData.phone)) ? 'border-destructive ring-1 ring-destructive' : ''}`}
                             />
                             {shippingTouched && !formData.phone.trim() && (
                               <p className="text-xs text-destructive mt-1">Phone number is required</p>
+                            )}
+                            {shippingTouched && formData.phone.trim() && !isValidPakistaniPhone(formData.phone) && (
+                              <p className="text-xs text-destructive mt-1">Enter valid Pakistani number (03XX-XXXXXXX)</p>
                             )}
                           </div>
                         </div>
