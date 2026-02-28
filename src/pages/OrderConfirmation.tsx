@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Package, Truck, MapPin, Mail, Phone, Copy, ExternalLink } from "lucide-react";
+import { CheckCircle, Package, Truck, MapPin, Mail, Phone, Copy, ExternalLink, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -38,6 +38,7 @@ interface OrderData {
       name: string;
       price: number;
     };
+    payment_method?: string;
   };
 }
 
@@ -109,6 +110,7 @@ const OrderConfirmation = () => {
   const items = order?.items?.products || [];
   const coupon = order?.items?.coupon;
   const shipping = order?.items?.shipping;
+  const paymentMethod = order?.items?.payment_method || "cod";
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (loading) {
@@ -283,6 +285,48 @@ const OrderConfirmation = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Payment Details Card - show for non-COD methods */}
+            {paymentMethod !== "cod" && (
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Please send payment to complete your order:
+                  </p>
+                  {paymentMethod === "jazzcash" && (
+                    <div className="space-y-2 p-3 rounded bg-secondary border border-border">
+                      <p className="text-sm font-semibold text-foreground">📱 JazzCash</p>
+                      <p className="text-sm text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
+                      <p className="text-sm text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
+                    </div>
+                  )}
+                  {paymentMethod === "easypaisa" && (
+                    <div className="space-y-2 p-3 rounded bg-secondary border border-border">
+                      <p className="text-sm font-semibold text-foreground">📱 EasyPaisa</p>
+                      <p className="text-sm text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
+                      <p className="text-sm text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
+                    </div>
+                  )}
+                  {paymentMethod === "meezan" && (
+                    <div className="space-y-2 p-3 rounded bg-secondary border border-border">
+                      <p className="text-sm font-semibold text-foreground">🏦 Meezan Bank</p>
+                      <p className="text-sm text-muted-foreground">Account #: <span className="font-medium text-foreground">02810110983695</span></p>
+                      <p className="text-sm text-muted-foreground">IBAN: <span className="font-medium text-foreground">PK19MEZN0002810110983695</span></p>
+                      <p className="text-sm text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-3">
+                    After sending payment, your order will be confirmed once we verify the transaction.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
