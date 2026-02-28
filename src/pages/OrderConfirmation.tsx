@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
@@ -100,6 +101,20 @@ const OrderConfirmation = () => {
     fetchOrder();
   }, [orderId, email, user]);
 
+  // Fetch payment methods from database
+  const { data: paymentMethodsData = [] } = useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const copyOrderId = () => {
     if (orderId) {
       navigator.clipboard.writeText(orderId);
@@ -111,6 +126,7 @@ const OrderConfirmation = () => {
   const coupon = order?.items?.coupon;
   const shipping = order?.items?.shipping;
   const paymentMethod = order?.items?.payment_method || "cod";
+  const selectedPaymentMethod = paymentMethodsData.find(m => m.method_key === paymentMethod);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (loading) {
@@ -287,7 +303,7 @@ const OrderConfirmation = () => {
             </Card>
 
             {/* Payment Details Card - show for non-COD methods */}
-            {paymentMethod !== "cod" && (
+            {selectedPaymentMethod && selectedPaymentMethod.method_key !== "cod" && (selectedPaymentMethod.account_number || selectedPaymentMethod.iban) && (
               <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -299,28 +315,26 @@ const OrderConfirmation = () => {
                   <p className="text-sm text-muted-foreground mb-3">
                     Please send payment to complete your order:
                   </p>
-                  {paymentMethod === "jazzcash" && (
-                    <div className="space-y-2 p-3 rounded bg-secondary border border-border">
-                      <p className="text-sm font-semibold text-foreground">📱 JazzCash</p>
-                      <p className="text-sm text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
-                      <p className="text-sm text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
-                    </div>
-                  )}
-                  {paymentMethod === "easypaisa" && (
-                    <div className="space-y-2 p-3 rounded bg-secondary border border-border">
-                      <p className="text-sm font-semibold text-foreground">📱 EasyPaisa</p>
-                      <p className="text-sm text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
-                      <p className="text-sm text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
-                    </div>
-                  )}
-                  {paymentMethod === "meezan" && (
-                    <div className="space-y-2 p-3 rounded bg-secondary border border-border">
-                      <p className="text-sm font-semibold text-foreground">🏦 Meezan Bank</p>
-                      <p className="text-sm text-muted-foreground">Account #: <span className="font-medium text-foreground">02810110983695</span></p>
-                      <p className="text-sm text-muted-foreground">IBAN: <span className="font-medium text-foreground">PK19MEZN0002810110983695</span></p>
-                      <p className="text-sm text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
-                    </div>
-                  )}
+                  <div className="space-y-2 p-3 rounded bg-secondary border border-border">
+                    <p className="text-sm font-semibold text-foreground">
+                      {selectedPaymentMethod.icon} {selectedPaymentMethod.bank_name || selectedPaymentMethod.label}
+                    </p>
+                    {selectedPaymentMethod.account_number && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedPaymentMethod.iban ? "Account #" : "Number"}: <span className="font-medium text-foreground">{selectedPaymentMethod.account_number}</span>
+                      </p>
+                    )}
+                    {selectedPaymentMethod.iban && (
+                      <p className="text-sm text-muted-foreground">
+                        IBAN: <span className="font-medium text-foreground">{selectedPaymentMethod.iban}</span>
+                      </p>
+                    )}
+                    {selectedPaymentMethod.account_title && (
+                      <p className="text-sm text-muted-foreground">
+                        Account Title: <span className="font-medium text-foreground">{selectedPaymentMethod.account_title}</span>
+                      </p>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-3">
                     After sending payment, your order will be confirmed once we verify the transaction.
                   </p>

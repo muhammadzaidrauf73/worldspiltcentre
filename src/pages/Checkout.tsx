@@ -115,6 +115,20 @@ const Checkout = () => {
     },
   });
 
+  // Fetch payment methods from database
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Helper function to get effective price (flash deal price if applicable)
   const getEffectivePrice = (item: any) => {
     const flashDeal = activeFlashDeals.find(d => d.product_id === item.product_id);
@@ -1134,61 +1148,55 @@ const Checkout = () => {
                     Payment Method
                   </h2>
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-2">
-                    {[
-                      { value: "cod", label: "Cash on Delivery", desc: "Pay when you receive your order", icon: "💵" },
-                      { value: "jazzcash", label: "JazzCash", desc: "Pay via JazzCash mobile wallet", icon: "📱" },
-                      { value: "easypaisa", label: "EasyPaisa", desc: "Pay via EasyPaisa mobile wallet", icon: "📱" },
-                      { value: "meezan", label: "Meezan Bank", desc: "Pay via Meezan Bank transfer", icon: "🏦" },
-                    ].map((method) => (
+                    {paymentMethods.map((method) => (
                       <label
-                        key={method.value}
-                        htmlFor={`payment-${method.value}`}
+                        key={method.method_key}
+                        htmlFor={`payment-${method.method_key}`}
                         className={`flex items-center gap-3 p-3 rounded border cursor-pointer transition-colors ${
-                          paymentMethod === method.value
+                          paymentMethod === method.method_key
                             ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
                         }`}
                       >
-                        <RadioGroupItem value={method.value} id={`payment-${method.value}`} />
-                        <span className="text-lg">{method.icon}</span>
+                        <RadioGroupItem value={method.method_key} id={`payment-${method.method_key}`} />
+                        {method.logo_url ? (
+                          <img src={method.logo_url} alt={method.label} className="h-6 w-auto object-contain" />
+                        ) : (
+                          <span className="text-lg">{method.icon}</span>
+                        )}
                         <div className="flex-1">
                           <p className="text-sm font-medium">{method.label}</p>
-                          <p className="text-xs text-muted-foreground">{method.desc}</p>
+                          <p className="text-xs text-muted-foreground">{method.description}</p>
                         </div>
-                        {paymentMethod === method.value && (
+                        {paymentMethod === method.method_key && (
                           <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                         )}
                       </label>
                     ))}
                   </RadioGroup>
 
-                  {paymentMethod === "jazzcash" && (
-                    <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
-                      <p className="text-xs font-semibold text-foreground">JazzCash Account Details</p>
-                      <p className="text-xs text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
-                      <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
-                      <p className="text-xs text-muted-foreground mt-1">📌 Send payment to this number and place your order. We'll confirm after verification.</p>
-                    </div>
-                  )}
-
-                  {paymentMethod === "easypaisa" && (
-                    <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
-                      <p className="text-xs font-semibold text-foreground">EasyPaisa Account Details</p>
-                      <p className="text-xs text-muted-foreground">Number: <span className="font-medium text-foreground">03004649141</span></p>
-                      <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
-                      <p className="text-xs text-muted-foreground mt-1">📌 Send payment to this number and place your order. We'll confirm after verification.</p>
-                    </div>
-                  )}
-
-                  {paymentMethod === "meezan" && (
-                    <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
-                      <p className="text-xs font-semibold text-foreground">Meezan Bank Account Details</p>
-                      <p className="text-xs text-muted-foreground">Account #: <span className="font-medium text-foreground">02810110983695</span></p>
-                      <p className="text-xs text-muted-foreground">IBAN: <span className="font-medium text-foreground">PK19MEZN0002810110983695</span></p>
-                      <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">Khalil Ahmad</span></p>
-                      <p className="text-xs text-muted-foreground mt-1">📌 Transfer the amount and place your order. We'll confirm after verification.</p>
-                    </div>
-                  )}
+                  {/* Dynamic account details for selected method */}
+                  {(() => {
+                    const selected = paymentMethods.find(m => m.method_key === paymentMethod);
+                    if (!selected || selected.method_key === "cod" || (!selected.account_number && !selected.iban)) return null;
+                    return (
+                      <div className="mt-3 p-3 rounded bg-secondary border border-border space-y-1">
+                        <p className="text-xs font-semibold text-foreground">{selected.bank_name || selected.label} Account Details</p>
+                        {selected.account_number && (
+                          <p className="text-xs text-muted-foreground">
+                            {selected.iban ? "Account #" : "Number"}: <span className="font-medium text-foreground">{selected.account_number}</span>
+                          </p>
+                        )}
+                        {selected.iban && (
+                          <p className="text-xs text-muted-foreground">IBAN: <span className="font-medium text-foreground">{selected.iban}</span></p>
+                        )}
+                        {selected.account_title && (
+                          <p className="text-xs text-muted-foreground">Account Title: <span className="font-medium text-foreground">{selected.account_title}</span></p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">📌 Send payment and place your order. We'll confirm after verification.</p>
+                      </div>
+                    );
+                  })()}
 
                   {/* Coupon Section */}
                   <div className="mt-4 pt-4 border-t border-border">
