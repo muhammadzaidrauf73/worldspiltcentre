@@ -89,6 +89,7 @@ const Checkout = () => {
   const [isGuestCheckout, setIsGuestCheckout] = useState(false);
   const [expressCheckoutReady, setExpressCheckoutReady] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [shippingTouched, setShippingTouched] = useState(false);
 
   // Use cart items from context
   const cartItems = contextCartItems;
@@ -706,7 +707,11 @@ const Checkout = () => {
   };
 
   const goToNextStep = () => {
+    if (currentStep === 1) {
+      setShippingTouched(true);
+    }
     if (canProceedToNextStep() && currentStep < 3) {
+      setShippingTouched(false);
       setCurrentStep(currentStep + 1);
     } else if (currentStep === 1 && !canProceedToNextStep()) {
       toast.error("Please fill in all required fields");
@@ -960,37 +965,57 @@ const Checkout = () => {
                     {(savedAddresses.length === 0 || useNewAddress) && (
                       <div className="space-y-3">
                         <div className="grid sm:grid-cols-2 gap-3">
-                          <Input
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            placeholder="Full Name *"
-                            required
-                            className="h-9 text-sm"
-                          />
-                          <Input
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="Phone Number *"
-                            required
-                            className="h-9 text-sm"
-                          />
+                          <div>
+                            <Input
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              placeholder="Full Name *"
+                              required
+                              className={`h-9 text-sm ${shippingTouched && !formData.name.trim() ? 'border-destructive ring-1 ring-destructive' : ''}`}
+                            />
+                            {shippingTouched && !formData.name.trim() && (
+                              <p className="text-xs text-destructive mt-1">Full name is required</p>
+                            )}
+                          </div>
+                          <div>
+                            <Input
+                              value={formData.phone}
+                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              placeholder="Phone Number *"
+                              required
+                              className={`h-9 text-sm ${shippingTouched && !formData.phone.trim() ? 'border-destructive ring-1 ring-destructive' : ''}`}
+                            />
+                            {shippingTouched && !formData.phone.trim() && (
+                              <p className="text-xs text-destructive mt-1">Phone number is required</p>
+                            )}
+                          </div>
                         </div>
-                        <Input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          placeholder="Email Address *"
-                          required
-                          className="h-9 text-sm"
-                        />
-                        <Textarea
-                          value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                          placeholder="Complete Address (House No, Street, City, Postal Code) *"
-                          rows={2}
-                          required
-                          className="text-sm resize-none"
-                        />
+                        <div>
+                          <Input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            placeholder="Email Address *"
+                            required
+                            className={`h-9 text-sm ${shippingTouched && !formData.email.trim() ? 'border-destructive ring-1 ring-destructive' : ''}`}
+                          />
+                          {shippingTouched && !formData.email.trim() && (
+                            <p className="text-xs text-destructive mt-1">Email address is required</p>
+                          )}
+                        </div>
+                        <div>
+                          <Textarea
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            placeholder="Complete Address (House No, Street, City, Postal Code) *"
+                            rows={2}
+                            required
+                            className={`text-sm resize-none ${shippingTouched && !formData.address.trim() ? 'border-destructive ring-1 ring-destructive' : ''}`}
+                          />
+                          {shippingTouched && !formData.address.trim() && (
+                            <p className="text-xs text-destructive mt-1">Address is required</p>
+                          )}
+                        </div>
 
                         {/* Save address option */}
                         <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
