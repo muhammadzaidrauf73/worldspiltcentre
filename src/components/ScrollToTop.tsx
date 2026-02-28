@@ -15,29 +15,27 @@ const scrollAllToTop = (behavior: ScrollBehavior) => {
 const ScrollToTop = () => {
   const location = useLocation();
 
-  // Trigger on every navigation (including search/query changes)
   const key = `${location.key}|${location.pathname}|${location.search}|${location.hash}`;
 
   useLayoutEffect(() => {
-    // If there's an anchor hash, scroll to it; otherwise go to top.
     if (location.hash) {
       const id = location.hash.replace("#", "");
       const el = document.getElementById(id);
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        el.scrollIntoView({ behavior: "instant", block: "start" });
         return;
       }
     }
 
-    // Smooth scroll + hard fallback to guarantee we end at top
-    scrollAllToTop("smooth");
+    // Instant scroll to guarantee top position immediately
+    scrollAllToTop("instant" as ScrollBehavior);
   }, [key]);
 
   useEffect(() => {
-    // After route content finishes rendering/lazy loading, enforce top again.
-    const raf = requestAnimationFrame(() => scrollAllToTop("smooth"));
-    const t1 = setTimeout(() => scrollAllToTop("smooth"), 150);
-    const t2 = setTimeout(() => scrollAllToTop("auto"), 700);
+    // Enforce top after lazy content renders
+    const raf = requestAnimationFrame(() => scrollAllToTop("instant" as ScrollBehavior));
+    const t1 = setTimeout(() => scrollAllToTop("instant" as ScrollBehavior), 100);
+    const t2 = setTimeout(() => scrollAllToTop("instant" as ScrollBehavior), 300);
 
     return () => {
       cancelAnimationFrame(raf);
