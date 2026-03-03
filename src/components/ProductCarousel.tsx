@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, forwardRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ interface ProductCarouselProps {
   buttonText?: string;
 }
 
-const ProductCarousel = forwardRef<HTMLDivElement, ProductCarouselProps>(({ products, badge, hideQuickActions = true, buttonText = "Order Now" }, ref) => {
+const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText = "Order Now" }: ProductCarouselProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -60,7 +60,7 @@ const ProductCarousel = forwardRef<HTMLDivElement, ProductCarouselProps>(({ prod
   };
 
   return (
-    <div ref={ref} className="relative group/carousel">
+    <div className="relative group/carousel">
       {/* Navigation Arrows - Hidden on mobile */}
       <Button
         variant="ghost"
@@ -120,8 +120,6 @@ const ProductCarousel = forwardRef<HTMLDivElement, ProductCarouselProps>(({ prod
       </div>
     </div>
   );
-});
-
-ProductCarousel.displayName = "ProductCarousel";
+};
 
 export default ProductCarousel;
