@@ -152,7 +152,7 @@ const Navbar = () => {
                 <h1 className="font-heading font-bold text-xl text-foreground leading-tight tracking-tight">
                   World <span className="text-primary">Spilt</span> Centre
                 </h1>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-medium">Premium Electronics</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-medium">Electronics</p>
               </div>
             </Link>
 
