@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, forwardRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ interface ProductCarouselProps {
   buttonText?: string;
 }
 
-const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText = "Order Now" }: ProductCarouselProps) => {
+const ProductCarousel = forwardRef<HTMLDivElement, ProductCarouselProps>(({ products, badge, hideQuickActions = true, buttonText = "Order Now" }, ref) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -41,10 +41,10 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
 
   useEffect(() => {
     checkScroll();
-    const ref = scrollRef.current;
-    if (ref) {
-      ref.addEventListener("scroll", checkScroll);
-      return () => ref.removeEventListener("scroll", checkScroll);
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener("scroll", checkScroll);
+      return () => el.removeEventListener("scroll", checkScroll);
     }
   }, [products]);
 
@@ -60,7 +60,7 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
   };
 
   return (
-    <div className="relative group/carousel">
+    <div ref={ref} className="relative group/carousel">
       {/* Navigation Arrows - Hidden on mobile */}
       <Button
         variant="ghost"
@@ -120,6 +120,8 @@ const ProductCarousel = ({ products, badge, hideQuickActions = true, buttonText 
       </div>
     </div>
   );
-};
+});
+
+ProductCarousel.displayName = "ProductCarousel";
 
 export default ProductCarousel;
