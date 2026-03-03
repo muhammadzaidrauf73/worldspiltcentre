@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,14 +17,14 @@ interface SectionHeaderProps {
   className?: string;
 }
 
-export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(({
+export function SectionHeader({
   title,
   linkTo,
   linkText = "View All",
   className,
-}, ref) => {
+}: SectionHeaderProps) {
   return (
-    <div ref={ref} className={cn("flex justify-between items-center mb-4", className)}>
+    <div className={cn("flex justify-between items-center mb-4", className)}>
       <h2 className="text-lg sm:text-xl font-bold text-foreground">
         {title}
       </h2>
@@ -41,8 +40,6 @@ export const SectionHeader = forwardRef<HTMLDivElement, SectionHeaderProps>(({
       )}
     </div>
   );
-});
-
-SectionHeader.displayName = "SectionHeader";
+}
 
 export default SectionHeader;
