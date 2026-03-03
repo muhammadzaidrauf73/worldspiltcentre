@@ -117,7 +117,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <h3 className="font-bold text-card text-base mb-2">{getSetting('company_name', 'World Spilt Centre')}</h3>
-            <p className="text-xs text-card/50 mb-3 max-w-sm">Your trusted destination for premium electronics at competitive prices.</p>
+            <p className="text-xs text-card/50 mb-3 max-w-sm">Your trusted destination for electronics at competitive prices.</p>
             <div className="flex items-center gap-3 mb-3">
               <a href={`tel:${getSetting('phone', '0300-4649141')}`} className="flex items-center gap-1.5 text-card/60 hover:text-primary transition-colors text-xs">
                 <Phone className="h-3.5 w-3.5 text-primary" />

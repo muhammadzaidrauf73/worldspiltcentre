@@ -40,7 +40,7 @@ const About = () => {
             About {companyName}
           </h1>
           <p className="text-primary-foreground/80 max-w-2xl mx-auto">
-            Your trusted destination for premium electronics and home appliances
+            Your trusted destination for electronics and home appliances
           </p>
         </div>
       </section>

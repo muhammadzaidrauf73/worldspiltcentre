@@ -426,13 +426,13 @@ const Auth = () => {
         <div className="hidden lg:block relative w-0 flex-1 overflow-hidden">
           <img 
             src="/banners/led-tv.jpg" 
-            alt="Premium Electronics" 
+            alt="Electronics" 
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-12">
             <div className="text-white max-w-md">
-              <h2 className="text-3xl font-heading font-bold mb-4">Shop Premium Electronics</h2>
+              <h2 className="text-3xl font-heading font-bold mb-4">Shop Electronics</h2>
               <p className="text-white/80 mb-6">
                 Discover the latest in home appliances, TVs, smartphones, and more. Quality guaranteed with the best
                 after-sales service.
