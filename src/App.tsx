@@ -12,6 +12,7 @@ import BackToTop from "@/components/BackToTop";
 import PageLoader from "@/components/PageLoader";
 import RouteLoadingBar from "@/components/RouteLoadingBar";
 import WelcomePopup from "@/components/WelcomePopup";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Index from "./pages/Index";
 
 // Critical pages - preloaded for instant navigation
@@ -131,6 +132,7 @@ const App = () => (
           <ConditionalWelcomePopup />
           <BackToTop />
           <ScrollToTop />
+          <SpeedInsights />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Index />} />
