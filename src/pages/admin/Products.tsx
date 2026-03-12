@@ -594,7 +594,7 @@ const AdminProducts = () => {
     toast.success("Products exported to CSV");
   };
 
-  const isDeleting = deleteMutation.isPending || bulkDeleteMutation.isPending || deleteByCategoryMutation.isPending;
+  const isDeleting = deleteMutation.isPending || bulkDeleteMutation.isPending || deleteByCategoryMutation.isPending || deleteAllMutation.isPending;
 
   return (
     <AdminLayout>
