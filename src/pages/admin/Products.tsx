@@ -246,7 +246,26 @@ const AdminProducts = () => {
     },
   });
 
-  const bulkUploadMutation = useMutation({
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const allIds = products.map((p: any) => p.id);
+      // Delete in batches of 100
+      for (let i = 0; i < allIds.length; i += 100) {
+        const batch = allIds.slice(i, i + 100);
+        const { error } = await supabase.from("products").delete().in("id", batch);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success("All products deleted successfully");
+      setSelectedProducts([]);
+    },
+    onError: (error) => {
+      toast.error("Error deleting all products: " + error.message);
+    },
+  });
+
     mutationFn: async (productsData: any[]) => {
       const { error } = await supabase.from("products").insert(productsData);
       if (error) throw error;
