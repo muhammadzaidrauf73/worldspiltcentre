@@ -266,6 +266,7 @@ const AdminProducts = () => {
     },
   });
 
+  const bulkUploadMutation = useMutation({
     mutationFn: async (productsData: any[]) => {
       const { error } = await supabase.from("products").insert(productsData);
       if (error) throw error;
