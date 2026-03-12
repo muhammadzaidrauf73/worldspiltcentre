@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag, BadgePercent } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag, BadgePercent, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -243,6 +243,26 @@ const AdminProducts = () => {
     },
     onError: (error) => {
       toast.error("Error deleting products: " + error.message);
+    },
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const allIds = products.map((p: any) => p.id);
+      // Delete in batches of 100
+      for (let i = 0; i < allIds.length; i += 100) {
+        const batch = allIds.slice(i, i + 100);
+        const { error } = await supabase.from("products").delete().in("id", batch);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success("All products deleted successfully");
+      setSelectedProducts([]);
+    },
+    onError: (error) => {
+      toast.error("Error deleting all products: " + error.message);
     },
   });
 
@@ -574,8 +594,22 @@ const AdminProducts = () => {
     toast.success("Products exported to CSV");
   };
 
+  const isDeleting = deleteMutation.isPending || bulkDeleteMutation.isPending || deleteByCategoryMutation.isPending || deleteAllMutation.isPending;
+
   return (
     <AdminLayout>
+      {/* Deleting overlay */}
+      {isDeleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 shadow-lg">
+            <Loader2 className="h-10 w-10 animate-spin text-destructive" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground">Deleting Products...</h3>
+              <p className="text-sm text-muted-foreground mt-1">Please wait while products are being removed.</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -585,6 +619,20 @@ const AdminProducts = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {products.length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete ALL ${products.length} products? This cannot be undone.`)) {
+                    deleteAllMutation.mutate();
+                  }
+                }}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete All ({products.length})
+              </Button>
+            )}
             <Button variant="outline" onClick={exportToCSV}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
