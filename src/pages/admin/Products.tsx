@@ -574,8 +574,22 @@ const AdminProducts = () => {
     toast.success("Products exported to CSV");
   };
 
+  const isDeleting = deleteMutation.isPending || bulkDeleteMutation.isPending || deleteByCategoryMutation.isPending;
+
   return (
     <AdminLayout>
+      {/* Deleting overlay */}
+      {isDeleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-8 shadow-lg">
+            <Loader2 className="h-10 w-10 animate-spin text-destructive" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground">Deleting Products...</h3>
+              <p className="text-sm text-muted-foreground mt-1">Please wait while products are being removed.</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
