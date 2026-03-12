@@ -33,7 +33,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag, BadgePercent } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, Download, Search, Filter, Percent, Tag, BadgePercent, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
