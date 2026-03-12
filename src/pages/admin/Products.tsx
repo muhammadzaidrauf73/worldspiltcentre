@@ -619,6 +619,20 @@ const AdminProducts = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {products.length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete ALL ${products.length} products? This cannot be undone.`)) {
+                    deleteAllMutation.mutate();
+                  }
+                }}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete All ({products.length})
+              </Button>
+            )}
             <Button variant="outline" onClick={exportToCSV}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
