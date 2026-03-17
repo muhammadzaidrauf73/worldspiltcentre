@@ -64,7 +64,17 @@ const ImageCropper = ({
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      setCrop(centerAspectCrop(width, height, aspectRatio));
+      const initialCrop = centerAspectCrop(width, height, aspectRatio);
+      setCrop(initialCrop);
+      // Set completedCrop immediately so Apply works on first click
+      const pixelCrop: PixelCrop = {
+        unit: "px",
+        x: (initialCrop.x / 100) * width,
+        y: (initialCrop.y / 100) * height,
+        width: (initialCrop.width / 100) * width,
+        height: (initialCrop.height / 100) * height,
+      };
+      setCompletedCrop(pixelCrop);
     },
     [aspectRatio]
   );
