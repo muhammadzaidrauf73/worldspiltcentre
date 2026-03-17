@@ -421,9 +421,9 @@ const GalleryUpload = ({
           imageFile={currentCropFile}
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
-          aspectRatio={1}
-          maxWidth={800}
-          maxHeight={800}
+          aspectRatio={16 / 9}
+          maxWidth={1920}
+          maxHeight={1080}
         />
       )}
 

@@ -40,9 +40,9 @@ const ImageCropper = ({
   imageFile,
   onCropComplete,
   onCancel,
-  aspectRatio = 1,
-  maxWidth = 800,
-  maxHeight = 800,
+  aspectRatio = 16 / 9,
+  maxWidth = 1920,
+  maxHeight = 1080,
 }: ImageCropperProps) => {
   const [imgSrc, setImgSrc] = useState<string>("");
   const [crop, setCrop] = useState<Crop>();
