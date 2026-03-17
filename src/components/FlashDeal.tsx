@@ -19,6 +19,7 @@ interface FlashDealItem {
 
 const FlashDeal = () => {
   const [timeLeft, setTimeLeft] = useState({
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
@@ -52,11 +53,12 @@ const FlashDeal = () => {
       const now = Date.now();
       const diff = Math.max(0, nearestEnd - now);
       
-      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
       
-      setTimeLeft({ hours, minutes, seconds });
+      setTimeLeft({ days, hours, minutes, seconds });
     };
 
     updateTimer();
@@ -84,16 +86,24 @@ const FlashDeal = () => {
           <div className="flex items-center gap-1">
             <span className="text-xs text-primary-foreground/80 mr-2 hidden sm:inline">Ends in</span>
             <div className="flex items-center gap-1">
+              {timeLeft.days > 0 && (
+                <>
+                  <span className="bg-foreground text-background text-sm font-bold px-2 py-1 rounded">
+                    {String(timeLeft.days).padStart(2, '0')}d
+                  </span>
+                  <span className="text-primary-foreground font-bold">:</span>
+                </>
+              )}
               <span className="bg-foreground text-background text-sm font-bold px-2 py-1 rounded">
-                {String(timeLeft.hours).padStart(2, '0')}
+                {String(timeLeft.hours).padStart(2, '0')}h
               </span>
               <span className="text-primary-foreground font-bold">:</span>
               <span className="bg-foreground text-background text-sm font-bold px-2 py-1 rounded">
-                {String(timeLeft.minutes).padStart(2, '0')}
+                {String(timeLeft.minutes).padStart(2, '0')}m
               </span>
               <span className="text-primary-foreground font-bold">:</span>
               <span className="bg-foreground text-background text-sm font-bold px-2 py-1 rounded">
-                {String(timeLeft.seconds).padStart(2, '0')}
+                {String(timeLeft.seconds).padStart(2, '0')}s
               </span>
             </div>
           </div>
