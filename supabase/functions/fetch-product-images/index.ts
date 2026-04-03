@@ -37,54 +37,36 @@ serve(async (req) => {
     console.log('Page fetched, length:', html.length);
 
     const images: string[] = [];
-
-    // Pattern 1: WooCommerce product gallery - data-large_image
-    const wooGalleryPattern = /data-large_image="([^"]+)"/g;
     let match;
+
+    // Pattern 1: WooCommerce product gallery - data-large_image (highest quality)
+    const wooGalleryPattern = /data-large_image="([^"]+)"/g;
     while ((match = wooGalleryPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        images.push(match[1]);
-      }
+      if (match[1]) images.push(match[1]);
     }
 
-    // Pattern 2: data-src attributes (lazy loaded images)
-    const dataSrcPattern = /data-src="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi;
+    // Pattern 2: data-src attributes (lazy loaded images) - single URL only
+    const dataSrcPattern = /data-src="(https?:\/\/[^"\s]+\.(jpg|jpeg|png|webp))"/gi;
     while ((match = dataSrcPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        images.push(match[1]);
-      }
+      if (match[1]) images.push(match[1]);
     }
 
-    // Pattern 3: srcset first entry (high-res images)
-    const srcsetPattern = /srcset="([^"]+\.(jpg|jpeg|png|webp)[^,\s]*)[\s,]/gi;
-    while ((match = srcsetPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        images.push(match[1]);
-      }
+    // Pattern 3: data-zoom-image or data-full attributes
+    const dataZoomPattern = /data-(?:zoom-image|full|image)="(https?:\/\/[^"\s]+\.(jpg|jpeg|png|webp))"/gi;
+    while ((match = dataZoomPattern.exec(html)) !== null) {
+      if (match[1]) images.push(match[1]);
     }
 
-    // Pattern 4: Standard img src with product-like paths
-    const imgSrcPattern = /<img[^>]+src="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi;
+    // Pattern 4: Standard img src - only from product content areas
+    const imgSrcPattern = /<img[^>]+src="(https?:\/\/[^"\s]+\.(jpg|jpeg|png|webp))"/gi;
     while ((match = imgSrcPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        images.push(match[1]);
-      }
+      if (match[1]) images.push(match[1]);
     }
 
-    // Pattern 5: Gallery href links to images
-    const hrefImagePattern = /<a[^>]+href="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi;
+    // Pattern 5: Gallery href links to full-size images
+    const hrefImagePattern = /<a[^>]+href="(https?:\/\/[^"\s]+\.(jpg|jpeg|png|webp))"/gi;
     while ((match = hrefImagePattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        images.push(match[1]);
-      }
-    }
-
-    // Pattern 6: data-thumb or data-image attributes
-    const dataThumbPattern = /data-(?:thumb|image|zoom-image|full)="([^"]+\.(jpg|jpeg|png|webp)[^"]*)"/gi;
-    while ((match = dataThumbPattern.exec(html)) !== null) {
-      if (match[1] && !images.includes(match[1])) {
-        images.push(match[1]);
-      }
+      if (match[1]) images.push(match[1]);
     }
 
     // Make relative URLs absolute
@@ -96,20 +78,27 @@ serve(async (req) => {
       return img;
     });
 
-    // Filter out non-product images
-    const excludeTerms = ['placeholder', 'logo', 'icon', 'favicon', 'avatar', 'payment', 'badge', 'sprite', 'blank', 'pixel', 'tracking', 'analytics', 'ad-', 'banner-small', 'social'];
-    
+    // Filter: keep only product-relevant images
+    const excludeTerms = [
+      'placeholder', 'logo', 'icon', 'favicon', 'avatar', 'payment',
+      'badge', 'sprite', 'blank', 'pixel', 'tracking', 'analytics',
+      'social', 'mastercard', 'visa', 'cod-', 'bank-transfer',
+      'whatsapp', 'facebook', 'twitter', 'instagram', 'youtube',
+      'calculator', 'our-branches', 'home-page-small', 'footer',
+      'header', 'menu', 'widget', 'sidebar', 'woocommerce-placeholder'
+    ];
+
     const uniqueImages = [...new Set(absoluteImages)].filter(img => {
       if (!img.startsWith('http')) return false;
       const lower = img.toLowerCase();
-      // Exclude tiny images (likely icons/tracking pixels) by checking for common tiny image indicators
-      if (lower.includes('1x1') || lower.includes('pixel')) return false;
-      // Exclude common non-product paths
+      // Exclude tiny images (50x50, 46x46 etc - likely thumbnails/icons)
+      if (/[-_]\d{1,2}x\d{1,2}\./i.test(img)) return false;
+      // Exclude non-product paths
       for (const term of excludeTerms) {
         if (lower.includes(term)) return false;
       }
-      // Must have image extension
-      if (!/\.(jpg|jpeg|png|webp)/i.test(img)) return false;
+      // Must have valid image extension
+      if (!/\.(jpg|jpeg|png|webp)$/i.test(img)) return false;
       return true;
     });
 
