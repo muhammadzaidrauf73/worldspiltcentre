@@ -696,6 +696,7 @@ async function processProductForBatchFast(
       specifications: productData.specifications,
       is_active: true,
       is_new_arrival: true,
+      stock_quantity: stockQuantity ?? 10,
       discount_percentage: finalOriginalPrice 
         ? Math.round((1 - finalPrice / finalOriginalPrice) * 100) 
         : null,
