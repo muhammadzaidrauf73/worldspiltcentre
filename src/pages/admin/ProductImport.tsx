@@ -463,6 +463,22 @@ export default function ProductImport() {
                   <span className="text-sm text-muted-foreground">
                     {priceMarkup > 0 ? `+${priceMarkup}%` : priceMarkup < 0 ? `${priceMarkup}%` : 'No markup'}
                   </span>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Bulk Stock Quantity</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={bulkStock}
+                    onChange={(e) => setBulkStock(Number(e.target.value))}
+                    placeholder="10"
+                    min={0}
+                    max={99999}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    units per product
+                  </span>
                 </div>
               </div>
               <div>
