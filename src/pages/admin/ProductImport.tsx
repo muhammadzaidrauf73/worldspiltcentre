@@ -77,6 +77,7 @@ export default function ProductImport() {
   const [currentAction, setCurrentAction] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceMarkup, setPriceMarkup] = useState<number>(0);
+  const [bulkStock, setBulkStock] = useState<number>(10);
   const [turboMode, setTurboMode] = useState(true);
   
   // Pause/Resume state
