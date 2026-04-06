@@ -648,7 +648,8 @@ async function processProductForBatchFast(
   categoryOverride?: string,
   priceMarkup?: number,
   skipGallery = false,
-  stockQuantity?: number
+  stockQuantity?: number,
+  descriptionOverride?: string
 ): Promise<{ success: boolean; name?: string; error?: string }> {
   try {
     const html = await fetchPageFast(url);
