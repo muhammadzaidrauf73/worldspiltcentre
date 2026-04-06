@@ -228,11 +228,12 @@ export default function ProductImport() {
         const { data, error } = await supabase.functions.invoke('scrape-product', {
           body: { 
             action: 'batch-import', 
-            urls: batchUrls,
-            categoryOverride: selectedCategory || undefined,
-            priceMarkup: priceMarkup || 0,
-            concurrency: BATCH_SIZE,
-            turboMode: turboMode,
+             urls: batchUrls,
+              categoryOverride: selectedCategory || undefined,
+              priceMarkup: priceMarkup || 0,
+              stockQuantity: bulkStock || 10,
+              concurrency: BATCH_SIZE,
+              turboMode: turboMode,
           },
         });
 
