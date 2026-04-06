@@ -725,9 +725,10 @@ async function processProductForBatch(
   url: string,
   supabase: any,
   categoryOverride?: string,
-  priceMarkup?: number
+  priceMarkup?: number,
+  stockQuantity?: number
 ): Promise<{ success: boolean; name?: string; error?: string }> {
-  return processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, false);
+  return processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, false, stockQuantity);
 }
 
 serve(async (req) => {
