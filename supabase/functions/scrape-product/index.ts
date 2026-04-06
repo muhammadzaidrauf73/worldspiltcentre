@@ -689,7 +689,7 @@ async function processProductForBatchFast(
       slug: productData.slug,
       price: finalPrice,
       original_price: finalOriginalPrice,
-      description: productData.description,
+      description: descriptionOverride || productData.description,
       brand: productData.brand,
       category_id: categoryId,
       image_url: productData.images[0] || null,
