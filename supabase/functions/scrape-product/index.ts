@@ -735,7 +735,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, url, product, categoryOverride, priceMarkup } = body;
+    const { action, url, product, categoryOverride, priceMarkup, stockQuantity } = body;
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
