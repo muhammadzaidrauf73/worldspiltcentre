@@ -233,6 +233,7 @@ export default function ProductImport() {
               categoryOverride: selectedCategory || undefined,
               priceMarkup: priceMarkup || 0,
               stockQuantity: bulkStock || 10,
+              descriptionOverride: bulkDescription || undefined,
               concurrency: BATCH_SIZE,
               turboMode: turboMode,
           },
