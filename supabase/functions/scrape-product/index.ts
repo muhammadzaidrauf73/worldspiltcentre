@@ -981,7 +981,7 @@ serve(async (req) => {
       for (let i = 0; i < urls.length; i += effectiveConcurrency) {
         const batch = urls.slice(i, i + effectiveConcurrency);
         const batchPromises = batch.map((url: string) => 
-          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode)
+          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode, stockQuantity)
             .then(result => ({ url, ...result }))
             .catch(error => ({ url, success: false, error: error.message }))
         );
