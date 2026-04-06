@@ -835,6 +835,7 @@ serve(async (req) => {
         specifications: product.specifications,
         is_active: true,
         is_new_arrival: true,
+        stock_quantity: stockQuantity ?? 10,
         discount_percentage: product.original_price 
           ? Math.round((1 - product.price / product.original_price) * 100) 
           : null,
