@@ -482,6 +482,7 @@ export default function ProductImport() {
                   <span className="text-sm text-muted-foreground">
                     units per product
                   </span>
+                </div>
               </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium mb-1 block">Bulk Product Description</label>
