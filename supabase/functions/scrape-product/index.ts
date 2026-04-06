@@ -647,7 +647,8 @@ async function processProductForBatchFast(
   supabase: any,
   categoryOverride?: string,
   priceMarkup?: number,
-  skipGallery = false
+  skipGallery = false,
+  stockQuantity?: number
 ): Promise<{ success: boolean; name?: string; error?: string }> {
   try {
     const html = await fetchPageFast(url);
@@ -695,6 +696,7 @@ async function processProductForBatchFast(
       specifications: productData.specifications,
       is_active: true,
       is_new_arrival: true,
+      stock_quantity: stockQuantity ?? 10,
       discount_percentage: finalOriginalPrice 
         ? Math.round((1 - finalPrice / finalOriginalPrice) * 100) 
         : null,
@@ -723,9 +725,10 @@ async function processProductForBatch(
   url: string,
   supabase: any,
   categoryOverride?: string,
-  priceMarkup?: number
+  priceMarkup?: number,
+  stockQuantity?: number
 ): Promise<{ success: boolean; name?: string; error?: string }> {
-  return processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, false);
+  return processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, false, stockQuantity);
 }
 
 serve(async (req) => {
@@ -735,7 +738,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, url, product, categoryOverride, priceMarkup } = body;
+    const { action, url, product, categoryOverride, priceMarkup, stockQuantity } = body;
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -832,6 +835,7 @@ serve(async (req) => {
         specifications: product.specifications,
         is_active: true,
         is_new_arrival: true,
+        stock_quantity: stockQuantity ?? 10,
         discount_percentage: product.original_price 
           ? Math.round((1 - product.price / product.original_price) * 100) 
           : null,
@@ -930,6 +934,7 @@ serve(async (req) => {
         specifications: productData.specifications,
         is_active: true,
         is_new_arrival: true,
+        stock_quantity: stockQuantity ?? 10,
         discount_percentage: finalOriginalPrice 
           ? Math.round((1 - finalPrice / finalOriginalPrice) * 100) 
           : null,
@@ -954,7 +959,7 @@ serve(async (req) => {
 
     // Batch import - process multiple products in parallel for speed
     if (action === 'batch-import') {
-      const { urls, categoryOverride, priceMarkup, concurrency = 5, turboMode = false } = body;
+      const { urls, categoryOverride, priceMarkup, stockQuantity, concurrency = 5, turboMode = false } = body;
       
       if (!urls || !Array.isArray(urls) || urls.length === 0) {
         return new Response(
@@ -976,7 +981,7 @@ serve(async (req) => {
       for (let i = 0; i < urls.length; i += effectiveConcurrency) {
         const batch = urls.slice(i, i + effectiveConcurrency);
         const batchPromises = batch.map((url: string) => 
-          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode)
+          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode, stockQuantity)
             .then(result => ({ url, ...result }))
             .catch(error => ({ url, success: false, error: error.message }))
         );
