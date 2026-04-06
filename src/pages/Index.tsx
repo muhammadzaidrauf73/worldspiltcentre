@@ -153,69 +153,6 @@ const Index = () => {
             {/* 2. Features Bar - Above Categories */}
             {isSectionVisible("features") && <FeaturesBar />}
 
-            {/* 3. Top Categories */}
-            {isSectionVisible("categories") && (
-              <section className="py-6 sm:py-8 bg-secondary/30" id="categories">
-                <div className="container mx-auto px-4">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <div>
-                      <h2 className="text-lg sm:text-xl md:text-2xl font-heading font-bold gradient-text">
-                        Top Categories
-                      </h2>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Browse our wide range of electronics
-                      </p>
-                    </div>
-                    <Link
-                      to="/products"
-                      className="text-primary text-xs sm:text-sm font-semibold hover:underline transition-smooth hidden sm:block"
-                    >
-                      View All →
-                    </Link>
-                  </div>
-
-                  <div 
-                    ref={categoriesScrollRef}
-                    className="flex gap-2 sm:gap-3 md:gap-4 overflow-x-auto md:overflow-x-visible pb-4 scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0 md:grid md:grid-cols-12 md:gap-2 lg:gap-3 scrollbar-hide"
-                    style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
-                  >
-                    {categoriesLoading ? (
-                      Array.from({ length: 8 }).map((_, i) => (
-                        <div key={i} className="shrink-0 md:shrink">
-                          <Skeleton className="w-16 h-16 sm:w-24 sm:h-24 rounded-full" />
-                          <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 mt-2 mx-auto" />
-                        </div>
-                      ))
-                    ) : (
-                      categories.map((category) => {
-                        // Use calculated count if products loaded, otherwise use database stored count
-                        const calculatedCount = products.filter(p => p.category_id === category.id).length;
-                        const displayCount = productsLoading ? (category.product_count || 0) : calculatedCount;
-                        return (
-                          <div key={category.id} className="shrink-0 md:shrink-0">
-                            <CategoryCard
-                              name={category.name}
-                              icon={iconMap[category.icon || "Tv"] || Tv}
-                              count={displayCount}
-                              image={category.image_url || ""}
-                            />
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-center mt-2 sm:hidden">
-                    <Link
-                      to="/products"
-                      className="text-primary text-xs font-semibold hover:underline"
-                    >
-                      View All Categories →
-                    </Link>
-                  </div>
-                </div>
-              </section>
-            )}
 
             {/* 4. Flash Deals */}
             {isSectionVisible("flash_deals") && (
