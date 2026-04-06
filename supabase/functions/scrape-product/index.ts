@@ -960,7 +960,7 @@ serve(async (req) => {
 
     // Batch import - process multiple products in parallel for speed
     if (action === 'batch-import') {
-      const { urls, categoryOverride, priceMarkup, stockQuantity, concurrency = 5, turboMode = false } = body;
+      const { urls, categoryOverride, priceMarkup, stockQuantity, concurrency = 5, turboMode = false, descriptionOverride } = body;
       
       if (!urls || !Array.isArray(urls) || urls.length === 0) {
         return new Response(
