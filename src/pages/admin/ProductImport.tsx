@@ -78,6 +78,7 @@ export default function ProductImport() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [priceMarkup, setPriceMarkup] = useState<number>(0);
   const [bulkStock, setBulkStock] = useState<number>(10);
+  const [bulkDescription, setBulkDescription] = useState<string>('');
   const [turboMode, setTurboMode] = useState(true);
   
   // Pause/Resume state
@@ -232,6 +233,7 @@ export default function ProductImport() {
               categoryOverride: selectedCategory || undefined,
               priceMarkup: priceMarkup || 0,
               stockQuantity: bulkStock || 10,
+              descriptionOverride: bulkDescription || undefined,
               concurrency: BATCH_SIZE,
               turboMode: turboMode,
           },
@@ -481,6 +483,16 @@ export default function ProductImport() {
                     units per product
                   </span>
                 </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium mb-1 block">Bulk Product Description</label>
+                <textarea
+                  value={bulkDescription}
+                  onChange={(e) => setBulkDescription(e.target.value)}
+                  placeholder="Enter a custom description to apply to all imported products (leave empty to use scraped description)"
+                  rows={3}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Import Speed</label>

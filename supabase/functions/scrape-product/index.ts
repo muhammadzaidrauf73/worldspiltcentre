@@ -648,7 +648,8 @@ async function processProductForBatchFast(
   categoryOverride?: string,
   priceMarkup?: number,
   skipGallery = false,
-  stockQuantity?: number
+  stockQuantity?: number,
+  descriptionOverride?: string
 ): Promise<{ success: boolean; name?: string; error?: string }> {
   try {
     const html = await fetchPageFast(url);
@@ -688,7 +689,7 @@ async function processProductForBatchFast(
       slug: productData.slug,
       price: finalPrice,
       original_price: finalOriginalPrice,
-      description: productData.description,
+      description: descriptionOverride || productData.description,
       brand: productData.brand,
       category_id: categoryId,
       image_url: productData.images[0] || null,
@@ -959,7 +960,7 @@ serve(async (req) => {
 
     // Batch import - process multiple products in parallel for speed
     if (action === 'batch-import') {
-      const { urls, categoryOverride, priceMarkup, stockQuantity, concurrency = 5, turboMode = false } = body;
+      const { urls, categoryOverride, priceMarkup, stockQuantity, concurrency = 5, turboMode = false, descriptionOverride } = body;
       
       if (!urls || !Array.isArray(urls) || urls.length === 0) {
         return new Response(
@@ -981,7 +982,7 @@ serve(async (req) => {
       for (let i = 0; i < urls.length; i += effectiveConcurrency) {
         const batch = urls.slice(i, i + effectiveConcurrency);
         const batchPromises = batch.map((url: string) => 
-          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode, stockQuantity)
+          processProductForBatchFast(url, supabase, categoryOverride, priceMarkup, turboMode, stockQuantity, descriptionOverride)
             .then(result => ({ url, ...result }))
             .catch(error => ({ url, success: false, error: error.message }))
         );
