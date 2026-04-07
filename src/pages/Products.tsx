@@ -114,7 +114,8 @@ const Products = () => {
       }
       
       if (selectedBrands.length > 0) {
-        query = query.in("brand", selectedBrands);
+        const brandFilters = selectedBrands.map(b => `brand.ilike.${b}`).join(",");
+        query = query.or(brandFilters);
       }
       
       if (isPriceFiltered && (priceRange[0] > 0 || priceRange[1] < 1000000)) {
