@@ -113,7 +113,6 @@ const Index = () => {
   const categoryProducts = useMemo(() => 
     categories
       .filter(cat => products.some(p => p.category_id === cat.id))
-      .slice(0, 3)
       .map(category => ({
         category,
         products: products.filter(p => p.category_id === category.id).slice(0, 8)
