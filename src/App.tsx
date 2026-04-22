@@ -90,6 +90,7 @@ const AdminStoreLocations = lazy(() => import("./pages/admin/StoreLocations"));
 const AdminBlog = lazy(() => import("./pages/admin/Blog"));
 const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 const AdminPaymentMethods = lazy(() => import("./pages/admin/PaymentMethods"));
+const AdminOfflineReceipt = lazy(() => import("./pages/admin/OfflineReceipt"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -184,6 +185,7 @@ const App = () => (
               <Route path="/admin/blog" element={<AdminBlog />} />
               <Route path="/admin/notifications" element={<AdminNotifications />} />
               <Route path="/admin/payment-methods" element={<AdminPaymentMethods />} />
+              <Route path="/admin/offline-receipt" element={<AdminOfflineReceipt />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
