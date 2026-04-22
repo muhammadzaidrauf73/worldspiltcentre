@@ -27,7 +27,8 @@ import {
   MapPin,
   FileText,
   Bell,
-  CreditCard
+  CreditCard,
+  Receipt
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,7 @@ const navItems = [
   { href: "/admin/featured-sections", label: "Featured Sections", icon: Sparkles },
   { href: "/admin/homepage-sections", label: "Homepage Sections", icon: LayoutGrid },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/offline-receipt", label: "Offline Receipt", icon: Receipt },
   { href: "/admin/cancellation-requests", label: "Cancellations", icon: XCircle },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
