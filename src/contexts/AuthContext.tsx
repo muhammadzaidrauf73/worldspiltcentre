@@ -20,22 +20,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let currentUserId: string | null = null;
+    let initialized = false;
 
-    // Set up auth state listener FIRST
+    // Single source of truth: onAuthStateChange fires INITIAL_SESSION on mount,
+    // so we don't need a separate getSession() call (which was causing duplicate
+    // refresh attempts → 429 rate-limit → bad_jwt → auto-logout).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         const newUserId = newSession?.user?.id ?? null;
 
-        // Ignore TOKEN_REFRESHED events that don't change identity — these fire
-        // very frequently and would otherwise cause downstream re-renders /
-        // re-queries that can trigger refresh storms (HTTP 429) and auto-logout.
-        if (event === "TOKEN_REFRESHED" && newUserId === currentUserId) {
-          // Quietly update session reference without triggering user re-renders
+        // Ignore TOKEN_REFRESHED events that don't change identity to avoid
+        // cascading re-renders / re-queries that trigger refresh storms.
+        if (event === "TOKEN_REFRESHED" && newUserId === currentUserId && initialized) {
           setSession(newSession);
           return;
         }
 
-        // For SIGNED_OUT, USER_UPDATED, SIGNED_IN, INITIAL_SESSION etc.
         setSession(newSession);
 
         if (newUserId !== currentUserId) {
@@ -43,17 +43,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(newSession?.user ?? null);
         }
 
-        setLoading(false);
+        if (!initialized) {
+          initialized = true;
+          setLoading(false);
+        }
       }
     );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      currentUserId = session?.user?.id ?? null;
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
