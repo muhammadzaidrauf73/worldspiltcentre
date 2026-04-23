@@ -20,37 +20,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let currentUserId: string | null = null;
-    let initialized = false;
+    let bootstrapped = false;
+    let mounted = true;
 
-    // Single source of truth: onAuthStateChange fires INITIAL_SESSION on mount,
-    // so we don't need a separate getSession() call (which was causing duplicate
-    // refresh attempts → 429 rate-limit → bad_jwt → auto-logout).
+    const applySession = (newSession: Session | null) => {
+      const newUserId = newSession?.user?.id ?? null;
+      setSession(newSession);
+
+      if (newUserId !== currentUserId) {
+        currentUserId = newUserId;
+        setUser(newSession?.user ?? null);
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        // During bootstrap, rely on getSession() to restore persisted auth state.
+        // This avoids treating an early transient INITIAL_SESSION/null event as a
+        // real logout on desktop browsers.
+        if (!bootstrapped && event === "INITIAL_SESSION") {
+          return;
+        }
+
         const newUserId = newSession?.user?.id ?? null;
 
-        // Ignore TOKEN_REFRESHED events that don't change identity to avoid
-        // cascading re-renders / re-queries that trigger refresh storms.
-        if (event === "TOKEN_REFRESHED" && newUserId === currentUserId && initialized) {
+        // Ignore refresh events that do not change identity.
+        if (event === "TOKEN_REFRESHED" && newUserId === currentUserId && bootstrapped) {
           setSession(newSession);
           return;
         }
 
-        setSession(newSession);
+        applySession(newSession);
 
-        if (newUserId !== currentUserId) {
-          currentUserId = newUserId;
-          setUser(newSession?.user ?? null);
-        }
-
-        if (!initialized) {
-          initialized = true;
+        if (bootstrapped) {
           setLoading(false);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!mounted) return;
+        applySession(session);
+        bootstrapped = true;
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        applySession(null);
+        bootstrapped = true;
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
