@@ -42,9 +42,16 @@ async function verifyAdmin(userId: string): Promise<boolean> {
     const maxAttempts = 3;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        // Ensure we have a valid session before invoking
+        // Ensure we have a valid session before invoking. If session is missing
+        // or token is being refreshed, wait briefly rather than hitting the
+        // edge function (which would just return 401 and consume rate limit).
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session) {
+          // No session yet — wait and retry
+          if (attempt < maxAttempts - 1) {
+            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+            continue;
+          }
           return false;
         }
 
@@ -52,11 +59,12 @@ async function verifyAdmin(userId: string): Promise<boolean> {
         if (!error && data) {
           return data?.isAdmin === true;
         }
+        // On error, back off before retrying (handles 429 rate-limits)
       } catch {
         // silent retry
       }
       if (attempt < maxAttempts - 1) {
-        await new Promise((r) => setTimeout(r, 800 * Math.pow(2, attempt)));
+        await new Promise((r) => setTimeout(r, 1500 * Math.pow(2, attempt)));
       }
     }
     return false;
@@ -65,7 +73,11 @@ async function verifyAdmin(userId: string): Promise<boolean> {
   inFlight.set(userId, promise);
   try {
     const result = await promise;
-    setCached(userId, result);
+    // Only cache positive results — don't cache "false" because it could be
+    // due to transient network/rate-limit issues, not actual non-admin status
+    if (result) {
+      setCached(userId, result);
+    }
     return result;
   } finally {
     inFlight.delete(userId);
