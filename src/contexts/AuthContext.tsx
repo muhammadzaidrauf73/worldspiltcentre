@@ -26,11 +26,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (event, newSession) => {
         const newUserId = newSession?.user?.id ?? null;
 
-        // Always update session (token may have refreshed)
+        // Ignore TOKEN_REFRESHED events that don't change identity — these fire
+        // very frequently and would otherwise cause downstream re-renders /
+        // re-queries that can trigger refresh storms (HTTP 429) and auto-logout.
+        if (event === "TOKEN_REFRESHED" && newUserId === currentUserId) {
+          // Quietly update session reference without triggering user re-renders
+          setSession(newSession);
+          return;
+        }
+
+        // For SIGNED_OUT, USER_UPDATED, SIGNED_IN, INITIAL_SESSION etc.
         setSession(newSession);
 
-        // Only update user object reference when user identity actually changes
-        // This prevents downstream effects (like useAdmin) from re-running on every token refresh
         if (newUserId !== currentUserId) {
           currentUserId = newUserId;
           setUser(newSession?.user ?? null);
