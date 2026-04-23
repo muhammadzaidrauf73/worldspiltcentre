@@ -2,72 +2,120 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Cache admin status across hook instances to avoid duplicate edge function calls
-const adminCache = new Map<string, { isAdmin: boolean; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+// Cache admin status across hook instances and tabs (session-scoped) to avoid
+// repeated edge function calls when navigating between admin pages.
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const CACHE_KEY_PREFIX = "wsc_admin_check_";
+
+// Module-level in-flight promise so simultaneous mounts share one network call
+const inFlight = new Map<string, Promise<boolean>>();
+
+function getCached(userId: string): boolean | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY_PREFIX + userId);
+    if (!raw) return null;
+    const { isAdmin, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > CACHE_TTL) return null;
+    return isAdmin;
+  } catch {
+    return null;
+  }
+}
+
+function setCached(userId: string, isAdmin: boolean) {
+  try {
+    sessionStorage.setItem(
+      CACHE_KEY_PREFIX + userId,
+      JSON.stringify({ isAdmin, timestamp: Date.now() })
+    );
+  } catch {
+    // ignore quota errors
+  }
+}
+
+async function verifyAdmin(userId: string): Promise<boolean> {
+  // Deduplicate concurrent calls
+  const existing = inFlight.get(userId);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const maxAttempts = 3;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        // Ensure we have a valid session before invoking
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          return false;
+        }
+
+        const { data, error } = await supabase.functions.invoke("verify-admin");
+        if (!error && data) {
+          return data?.isAdmin === true;
+        }
+      } catch {
+        // silent retry
+      }
+      if (attempt < maxAttempts - 1) {
+        await new Promise((r) => setTimeout(r, 800 * Math.pow(2, attempt)));
+      }
+    }
+    return false;
+  })();
+
+  inFlight.set(userId, promise);
+  try {
+    const result = await promise;
+    setCached(userId, result);
+    return result;
+  } finally {
+    inFlight.delete(userId);
+  }
+}
 
 export const useAdmin = () => {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const lastCheckedUserId = useRef<string | null>(null);
+  const lastUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    const checkAdminStatus = async () => {
+    let cancelled = false;
+
+    const run = async () => {
       if (!user) {
         setIsAdmin(false);
         setLoading(false);
-        lastCheckedUserId.current = null;
+        lastUserId.current = null;
         return;
       }
 
-      // Skip if we already checked this user
-      if (lastCheckedUserId.current === user.id) {
-        return;
-      }
+      // Don't re-check the same user
+      if (lastUserId.current === user.id) return;
+      lastUserId.current = user.id;
 
-      // Check cache first
-      const cached = adminCache.get(user.id);
-      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        setIsAdmin(cached.isAdmin);
+      // Use cached value first if available
+      const cached = getCached(user.id);
+      if (cached !== null) {
+        setIsAdmin(cached);
         setLoading(false);
-        lastCheckedUserId.current = user.id;
         return;
       }
 
-      lastCheckedUserId.current = user.id;
       setLoading(true);
-
-      // Retry with exponential backoff for transient failures (e.g. 429 rate limits)
-      const maxAttempts = 3;
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-          const { data, error } = await supabase.functions.invoke("verify-admin");
-
-          if (!error && data) {
-            const result = data?.isAdmin === true;
-            adminCache.set(user.id, { isAdmin: result, timestamp: Date.now() });
-            setIsAdmin(result);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          // Silent — will retry
-        }
-
-        if (attempt < maxAttempts - 1) {
-          await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
-        }
+      const result = await verifyAdmin(user.id);
+      if (!cancelled) {
+        setIsAdmin(result);
+        setLoading(false);
       }
-
-      // All attempts failed
-      setIsAdmin(false);
-      setLoading(false);
     };
 
     if (!authLoading) {
-      checkAdminStatus();
+      run();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading]);
 
   return { isAdmin, loading: loading || authLoading };
