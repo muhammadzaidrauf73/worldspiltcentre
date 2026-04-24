@@ -214,7 +214,7 @@ const AdminProducts = () => {
     mutationFn: async ({ ids, updates }: { ids: string[]; updates: Record<string, any> }) => {
       const { error } = await supabase
         .from("products")
-        .update(updates)
+        .update(updates as any)
         .in("id", ids);
       if (error) throw error;
     },
@@ -436,7 +436,7 @@ const AdminProducts = () => {
         
         await supabase
           .from("products")
-          .update(updates)
+          .update(updates as any)
           .eq("id", product.id);
       }
       
