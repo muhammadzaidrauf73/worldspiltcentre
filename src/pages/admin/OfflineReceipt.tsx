@@ -151,7 +151,10 @@ const OfflineReceipt = () => {
     return { receiptNo, dateStr };
   };
 
-  const generatePDF = (info?: { receiptNo: string; dateStr: string }) => {
+  const generatePDF = (
+    info?: { receiptNo: string; dateStr: string },
+    options?: { skipDownload?: boolean; returnBlob?: boolean }
+  ): { receiptNo: string; dateStr: string; blob?: Blob; fileName: string } | null => {
     if (items.length === 0) {
       toast.error("Add at least one item");
       return null;
@@ -319,9 +322,13 @@ const OfflineReceipt = () => {
       { align: "center" }
     );
 
-    doc.save(`receipt-${receiptNo}.pdf`);
-    toast.success("Receipt generated");
-    return { receiptNo, dateStr };
+    const fileName = `receipt-${receiptNo}.pdf`;
+    const blob = options?.returnBlob ? doc.output("blob") : undefined;
+    if (!options?.skipDownload) {
+      doc.save(fileName);
+      toast.success("Receipt generated");
+    }
+    return { receiptNo, dateStr, blob, fileName };
   };
 
   const sendToWhatsApp = () => {
