@@ -141,24 +141,29 @@ const OfflineReceipt = () => {
   const formatCurrency = (n: number) =>
     `Rs. ${n.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`;
 
-  const generatePDF = () => {
-    if (items.length === 0) {
-      toast.error("Add at least one item");
-      return;
-    }
-    if (!customerName.trim()) {
-      toast.error("Enter customer name");
-      return;
-    }
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
+  const buildReceiptInfo = () => {
     const receiptNo = `R-${Date.now().toString().slice(-8)}`;
     const dateStr = new Date().toLocaleDateString("en-PK", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+    return { receiptNo, dateStr };
+  };
+
+  const generatePDF = (info?: { receiptNo: string; dateStr: string }) => {
+    if (items.length === 0) {
+      toast.error("Add at least one item");
+      return null;
+    }
+    if (!customerName.trim()) {
+      toast.error("Enter customer name");
+      return null;
+    }
+
+    const { receiptNo, dateStr } = info || buildReceiptInfo();
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
 
     // Header
     doc.setFontSize(22);
@@ -316,6 +321,70 @@ const OfflineReceipt = () => {
 
     doc.save(`receipt-${receiptNo}.pdf`);
     toast.success("Receipt generated");
+    return { receiptNo, dateStr };
+  };
+
+  const sendToWhatsApp = () => {
+    if (items.length === 0) {
+      toast.error("Add at least one item");
+      return;
+    }
+    if (!customerName.trim()) {
+      toast.error("Enter customer name");
+      return;
+    }
+
+    // Generate the PDF first so admin has a copy to attach in WhatsApp
+    const info = buildReceiptInfo();
+    generatePDF(info);
+
+    const companyName = company?.company_name || "World Spilt Centre";
+    const lines: string[] = [];
+    lines.push(`*${companyName}*`);
+    lines.push(`Sales Receipt #${info.receiptNo}`);
+    lines.push(`Date: ${info.dateStr}`);
+    lines.push("");
+    lines.push(`*Customer:* ${customerName}`);
+    if (customerPhone) lines.push(`Phone: ${customerPhone}`);
+    if (customerAddress) lines.push(`Address: ${customerAddress}`);
+    lines.push(`Payment: ${paymentMethod}`);
+    lines.push("");
+    lines.push("*Items:*");
+    items.forEach((it, idx) => {
+      lines.push(
+        `${idx + 1}. ${it.name} — ${it.quantity} x ${formatCurrency(it.price)} = ${formatCurrency(it.quantity * it.price)}`
+      );
+    });
+    lines.push("");
+    lines.push(`Subtotal: ${formatCurrency(subtotal)}`);
+    if (discount > 0) lines.push(`Discount: -${formatCurrency(discount)}`);
+    lines.push(`*Total: ${formatCurrency(total)}*`);
+    if (notes.trim()) {
+      lines.push("");
+      lines.push(`Notes: ${notes.trim()}`);
+    }
+    lines.push("");
+    lines.push("Thank you for your purchase!");
+    if (company?.phone) lines.push(`Contact: ${company.phone}`);
+
+    const message = encodeURIComponent(lines.join("\n"));
+
+    // Normalize PK phone for wa.me
+    let waPhone = "";
+    const raw = (customerPhone || "").replace(/[^\d]/g, "");
+    if (raw) {
+      if (raw.startsWith("92")) waPhone = raw;
+      else if (raw.startsWith("0")) waPhone = "92" + raw.slice(1);
+      else if (raw.length === 10) waPhone = "92" + raw;
+      else waPhone = raw;
+    }
+
+    const url = waPhone
+      ? `https://wa.me/${waPhone}?text=${message}`
+      : `https://wa.me/?text=${message}`;
+
+    window.open(url, "_blank", "noopener,noreferrer");
+    toast.success("Opening WhatsApp — attach the downloaded PDF");
   };
 
   const resetForm = () => {
