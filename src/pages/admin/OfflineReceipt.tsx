@@ -704,9 +704,18 @@ const OfflineReceipt = () => {
                     rows={3}
                   />
                 </div>
-                <Button onClick={generatePDF} className="w-full" size="lg">
+                <Button onClick={() => generatePDF()} className="w-full" size="lg">
                   <FileDown className="h-4 w-4 mr-2" />
                   Generate Receipt PDF
+                </Button>
+                <Button
+                  onClick={sendToWhatsApp}
+                  variant="outline"
+                  className="w-full border-green-600 text-green-700 hover:bg-green-50 hover:text-green-700"
+                  size="lg"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Send to WhatsApp
                 </Button>
               </CardContent>
             </Card>
