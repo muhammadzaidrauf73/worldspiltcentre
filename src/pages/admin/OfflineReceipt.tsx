@@ -20,7 +20,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
@@ -48,6 +56,19 @@ const OfflineReceipt = () => {
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // WhatsApp confirmation modal
+  const [waDialogOpen, setWaDialogOpen] = useState(false);
+  const [waPreview, setWaPreview] = useState<{
+    pdfUrl: string;
+    fileName: string;
+    receiptNo: string;
+    messageText: string;
+    blob: Blob;
+    waPhone: string;
+    canShareFiles: boolean;
+    platform: "ios" | "android" | "desktop";
+  } | null>(null);
 
   // Manual entry form
   const [manualName, setManualName] = useState("");
