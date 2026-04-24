@@ -20,7 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2, Plus, Search, FileDown, Receipt } from "lucide-react";
+import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
