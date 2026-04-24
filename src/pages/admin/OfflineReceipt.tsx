@@ -410,11 +410,19 @@ const OfflineReceipt = () => {
               Generate printable receipts for walk-in customers
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={resetForm}>
               Reset
             </Button>
-            <Button onClick={generatePDF}>
+            <Button
+              variant="outline"
+              onClick={sendToWhatsApp}
+              className="border-green-600 text-green-700 hover:bg-green-50 hover:text-green-700"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Send to WhatsApp
+            </Button>
+            <Button onClick={() => generatePDF()}>
               <FileDown className="h-4 w-4 mr-2" />
               Generate PDF
             </Button>
