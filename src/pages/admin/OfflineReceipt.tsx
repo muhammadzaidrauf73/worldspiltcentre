@@ -20,7 +20,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
@@ -48,6 +56,19 @@ const OfflineReceipt = () => {
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // WhatsApp confirmation modal
+  const [waDialogOpen, setWaDialogOpen] = useState(false);
+  const [waPreview, setWaPreview] = useState<{
+    pdfUrl: string;
+    fileName: string;
+    receiptNo: string;
+    messageText: string;
+    blob: Blob;
+    waPhone: string;
+    canShareFiles: boolean;
+    platform: "ios" | "android" | "desktop";
+  } | null>(null);
 
   // Manual entry form
   const [manualName, setManualName] = useState("");
@@ -372,7 +393,14 @@ const OfflineReceipt = () => {
     return raw;
   };
 
-  const sendToWhatsApp = async () => {
+  const detectPlatform = (): "ios" | "android" | "desktop" => {
+    const ua = navigator.userAgent || "";
+    if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+    if (/Android/i.test(ua)) return "android";
+    return "desktop";
+  };
+
+  const sendToWhatsApp = () => {
     if (items.length === 0) {
       toast.error("Add at least one item");
       return;
@@ -383,62 +411,86 @@ const OfflineReceipt = () => {
     }
 
     const info = buildReceiptInfo();
+    const result = generatePDF(info, { skipDownload: true, returnBlob: true });
+    if (!result?.blob) return;
+
     const messageText = buildWhatsAppMessage(info);
     const waPhone = normalizeWaPhone();
+    const file = new File([result.blob], result.fileName, {
+      type: "application/pdf",
+    });
+    const navAny = navigator as any;
+    const canShareFiles = !!(
+      navAny.canShare &&
+      navAny.canShare({ files: [file] }) &&
+      typeof navAny.share === "function"
+    );
 
-    // 1) Try the Web Share API with the PDF file attached.
-    // On Android/iOS this opens the native share sheet → user taps WhatsApp
-    // and the PDF is attached automatically along with the message text.
-    try {
-      const result = generatePDF(info, { skipDownload: true, returnBlob: true });
-      if (result?.blob) {
-        const file = new File([result.blob], result.fileName, {
-          type: "application/pdf",
+    setWaPreview({
+      pdfUrl: URL.createObjectURL(result.blob),
+      fileName: result.fileName,
+      receiptNo: info.receiptNo,
+      messageText,
+      blob: result.blob,
+      waPhone,
+      canShareFiles,
+      platform: detectPlatform(),
+    });
+    setWaDialogOpen(true);
+  };
+
+  const confirmSendToWhatsApp = async () => {
+    if (!waPreview) return;
+    const { blob, fileName, receiptNo, messageText, waPhone, canShareFiles } =
+      waPreview;
+
+    // 1) Web Share API path (mobile / supported browsers): attaches PDF directly
+    if (canShareFiles) {
+      try {
+        const file = new File([blob], fileName, { type: "application/pdf" });
+        await (navigator as any).share({
+          files: [file],
+          title: `Receipt ${receiptNo}`,
+          text: messageText,
         });
-        const navAny = navigator as any;
-        if (
-          navAny.canShare &&
-          navAny.canShare({ files: [file] }) &&
-          typeof navAny.share === "function"
-        ) {
-          await navAny.share({
-            files: [file],
-            title: `Receipt ${info.receiptNo}`,
-            text: messageText,
-          });
-          toast.success("Shared receipt — pick WhatsApp from the share sheet");
-          // Also save a local copy for the admin's records
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(result.blob);
-          a.download = result.fileName;
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-          return;
-        }
-        // Web Share unavailable → fall through to wa.me. Still download the PDF.
+        // Also save a local copy
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(result.blob);
-        a.download = result.fileName;
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        toast.success("Shared receipt — pick WhatsApp from the share sheet");
+        closeWaDialog();
+        return;
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+        // fall through to wa.me fallback
       }
-    } catch (err: any) {
-      // User cancelled the share sheet — stop silently.
-      if (err?.name === "AbortError") return;
-      // Otherwise continue to wa.me fallback.
     }
 
-    // 2) Desktop fallback: open WhatsApp Web/Desktop pre-filled with the message
-    //    + show actionable instructions for attaching the downloaded PDF.
+    // 2) Desktop fallback: download PDF + open WhatsApp Web prefilled
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+
     const url = waPhone
       ? `https://wa.me/${waPhone}?text=${encodeURIComponent(messageText)}`
       : `https://wa.me/?text=${encodeURIComponent(messageText)}`;
     window.open(url, "_blank", "noopener,noreferrer");
 
     toast.success(
-      `PDF "receipt-${info.receiptNo}.pdf" downloaded. In WhatsApp: click 📎 → Document → select the file from your Downloads folder.`,
-      { duration: 8000 }
+      `PDF "${fileName}" downloaded. In WhatsApp: click 📎 → Document → select "${fileName}" from your Downloads folder.`,
+      { duration: 10000 }
     );
+    closeWaDialog();
+  };
+
+  const closeWaDialog = () => {
+    if (waPreview?.pdfUrl) URL.revokeObjectURL(waPreview.pdfUrl);
+    setWaPreview(null);
+    setWaDialogOpen(false);
   };
 
   const resetForm = () => {
@@ -776,6 +828,131 @@ const OfflineReceipt = () => {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={waDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeWaDialog();
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-green-600" />
+              Send Receipt to WhatsApp
+            </DialogTitle>
+            <DialogDescription>
+              Review the generated receipt and follow the steps below to attach it.
+            </DialogDescription>
+          </DialogHeader>
+
+          {waPreview && (
+            <div className="space-y-4">
+              {/* File summary */}
+              <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Paperclip className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-xs text-muted-foreground">
+                      Generated PDF
+                    </div>
+                    <div className="font-mono text-sm font-semibold truncate">
+                      {waPreview.fileName}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={waPreview.pdfUrl}
+                  download={waPreview.fileName}
+                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
+                >
+                  Download
+                </a>
+              </div>
+
+              {/* PDF preview */}
+              <div className="rounded-lg border overflow-hidden bg-muted">
+                <iframe
+                  src={waPreview.pdfUrl}
+                  title="Receipt preview"
+                  className="w-full h-[50vh]"
+                />
+              </div>
+
+              {/* Device-specific instructions */}
+              <div className="rounded-lg border border-green-600/30 bg-green-50/50 p-4">
+                <div className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  How to attach on{" "}
+                  {waPreview.platform === "ios"
+                    ? "iPhone / iPad"
+                    : waPreview.platform === "android"
+                    ? "Android"
+                    : "Desktop"}
+                </div>
+                {waPreview.canShareFiles ? (
+                  <ol className="text-sm text-green-900 space-y-1.5 list-decimal list-inside">
+                    <li>Click <strong>Send via WhatsApp</strong> below.</li>
+                    <li>
+                      The system share sheet opens — choose{" "}
+                      <strong>WhatsApp</strong>.
+                    </li>
+                    <li>
+                      Select the chat (or {waPreview.waPhone ? "the customer's chat opens automatically" : "any contact"}).
+                    </li>
+                    <li>
+                      The PDF{" "}
+                      <code className="px-1 py-0.5 rounded bg-white border text-xs">
+                        {waPreview.fileName}
+                      </code>{" "}
+                      is attached automatically — tap <strong>Send</strong>.
+                    </li>
+                  </ol>
+                ) : (
+                  <ol className="text-sm text-green-900 space-y-1.5 list-decimal list-inside">
+                    <li>Click <strong>Send via WhatsApp</strong> below.</li>
+                    <li>
+                      The PDF{" "}
+                      <code className="px-1 py-0.5 rounded bg-white border text-xs">
+                        {waPreview.fileName}
+                      </code>{" "}
+                      will download to your <strong>Downloads</strong> folder.
+                    </li>
+                    <li>
+                      WhatsApp Web opens with the receipt summary
+                      {waPreview.waPhone ? " in the customer's chat" : ""}.
+                    </li>
+                    <li>
+                      In WhatsApp, click the <strong>📎 attach</strong> icon →{" "}
+                      <strong>Document</strong>.
+                    </li>
+                    <li>
+                      Select{" "}
+                      <code className="px-1 py-0.5 rounded bg-white border text-xs">
+                        {waPreview.fileName}
+                      </code>{" "}
+                      from Downloads and press <strong>Send</strong>.
+                    </li>
+                  </ol>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={closeWaDialog}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmSendToWhatsApp}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Send via WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
