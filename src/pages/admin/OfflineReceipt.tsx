@@ -151,7 +151,10 @@ const OfflineReceipt = () => {
     return { receiptNo, dateStr };
   };
 
-  const generatePDF = (info?: { receiptNo: string; dateStr: string }) => {
+  const generatePDF = (
+    info?: { receiptNo: string; dateStr: string },
+    options?: { skipDownload?: boolean; returnBlob?: boolean }
+  ): { receiptNo: string; dateStr: string; blob?: Blob; fileName: string } | null => {
     if (items.length === 0) {
       toast.error("Add at least one item");
       return null;
@@ -319,25 +322,16 @@ const OfflineReceipt = () => {
       { align: "center" }
     );
 
-    doc.save(`receipt-${receiptNo}.pdf`);
-    toast.success("Receipt generated");
-    return { receiptNo, dateStr };
+    const fileName = `receipt-${receiptNo}.pdf`;
+    const blob = options?.returnBlob ? doc.output("blob") : undefined;
+    if (!options?.skipDownload) {
+      doc.save(fileName);
+      toast.success("Receipt generated");
+    }
+    return { receiptNo, dateStr, blob, fileName };
   };
 
-  const sendToWhatsApp = () => {
-    if (items.length === 0) {
-      toast.error("Add at least one item");
-      return;
-    }
-    if (!customerName.trim()) {
-      toast.error("Enter customer name");
-      return;
-    }
-
-    // Generate the PDF first so admin has a copy to attach in WhatsApp
-    const info = buildReceiptInfo();
-    generatePDF(info);
-
+  const buildWhatsAppMessage = (info: { receiptNo: string; dateStr: string }) => {
     const companyName = company?.company_name || "World Spilt Centre";
     const lines: string[] = [];
     lines.push(`*${companyName}*`);
@@ -366,25 +360,85 @@ const OfflineReceipt = () => {
     lines.push("");
     lines.push("Thank you for your purchase!");
     if (company?.phone) lines.push(`Contact: ${company.phone}`);
+    return lines.join("\n");
+  };
 
-    const message = encodeURIComponent(lines.join("\n"));
-
-    // Normalize PK phone for wa.me
-    let waPhone = "";
+  const normalizeWaPhone = () => {
     const raw = (customerPhone || "").replace(/[^\d]/g, "");
-    if (raw) {
-      if (raw.startsWith("92")) waPhone = raw;
-      else if (raw.startsWith("0")) waPhone = "92" + raw.slice(1);
-      else if (raw.length === 10) waPhone = "92" + raw;
-      else waPhone = raw;
+    if (!raw) return "";
+    if (raw.startsWith("92")) return raw;
+    if (raw.startsWith("0")) return "92" + raw.slice(1);
+    if (raw.length === 10) return "92" + raw;
+    return raw;
+  };
+
+  const sendToWhatsApp = async () => {
+    if (items.length === 0) {
+      toast.error("Add at least one item");
+      return;
+    }
+    if (!customerName.trim()) {
+      toast.error("Enter customer name");
+      return;
     }
 
-    const url = waPhone
-      ? `https://wa.me/${waPhone}?text=${message}`
-      : `https://wa.me/?text=${message}`;
+    const info = buildReceiptInfo();
+    const messageText = buildWhatsAppMessage(info);
+    const waPhone = normalizeWaPhone();
 
+    // 1) Try the Web Share API with the PDF file attached.
+    // On Android/iOS this opens the native share sheet → user taps WhatsApp
+    // and the PDF is attached automatically along with the message text.
+    try {
+      const result = generatePDF(info, { skipDownload: true, returnBlob: true });
+      if (result?.blob) {
+        const file = new File([result.blob], result.fileName, {
+          type: "application/pdf",
+        });
+        const navAny = navigator as any;
+        if (
+          navAny.canShare &&
+          navAny.canShare({ files: [file] }) &&
+          typeof navAny.share === "function"
+        ) {
+          await navAny.share({
+            files: [file],
+            title: `Receipt ${info.receiptNo}`,
+            text: messageText,
+          });
+          toast.success("Shared receipt — pick WhatsApp from the share sheet");
+          // Also save a local copy for the admin's records
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(result.blob);
+          a.download = result.fileName;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+          return;
+        }
+        // Web Share unavailable → fall through to wa.me. Still download the PDF.
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(result.blob);
+        a.download = result.fileName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }
+    } catch (err: any) {
+      // User cancelled the share sheet — stop silently.
+      if (err?.name === "AbortError") return;
+      // Otherwise continue to wa.me fallback.
+    }
+
+    // 2) Desktop fallback: open WhatsApp Web/Desktop pre-filled with the message
+    //    + show actionable instructions for attaching the downloaded PDF.
+    const url = waPhone
+      ? `https://wa.me/${waPhone}?text=${encodeURIComponent(messageText)}`
+      : `https://wa.me/?text=${encodeURIComponent(messageText)}`;
     window.open(url, "_blank", "noopener,noreferrer");
-    toast.success("Opening WhatsApp — attach the downloaded PDF");
+
+    toast.success(
+      `PDF "receipt-${info.receiptNo}.pdf" downloaded. In WhatsApp: click 📎 → Document → select the file from your Downloads folder.`,
+      { duration: 8000 }
+    );
   };
 
   const resetForm = () => {
