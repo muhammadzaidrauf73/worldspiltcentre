@@ -828,6 +828,131 @@ const OfflineReceipt = () => {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={waDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeWaDialog();
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-green-600" />
+              Send Receipt to WhatsApp
+            </DialogTitle>
+            <DialogDescription>
+              Review the generated receipt and follow the steps below to attach it.
+            </DialogDescription>
+          </DialogHeader>
+
+          {waPreview && (
+            <div className="space-y-4">
+              {/* File summary */}
+              <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Paperclip className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-xs text-muted-foreground">
+                      Generated PDF
+                    </div>
+                    <div className="font-mono text-sm font-semibold truncate">
+                      {waPreview.fileName}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={waPreview.pdfUrl}
+                  download={waPreview.fileName}
+                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
+                >
+                  Download
+                </a>
+              </div>
+
+              {/* PDF preview */}
+              <div className="rounded-lg border overflow-hidden bg-muted">
+                <iframe
+                  src={waPreview.pdfUrl}
+                  title="Receipt preview"
+                  className="w-full h-[50vh]"
+                />
+              </div>
+
+              {/* Device-specific instructions */}
+              <div className="rounded-lg border border-green-600/30 bg-green-50/50 p-4">
+                <div className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  How to attach on{" "}
+                  {waPreview.platform === "ios"
+                    ? "iPhone / iPad"
+                    : waPreview.platform === "android"
+                    ? "Android"
+                    : "Desktop"}
+                </div>
+                {waPreview.canShareFiles ? (
+                  <ol className="text-sm text-green-900 space-y-1.5 list-decimal list-inside">
+                    <li>Click <strong>Send via WhatsApp</strong> below.</li>
+                    <li>
+                      The system share sheet opens — choose{" "}
+                      <strong>WhatsApp</strong>.
+                    </li>
+                    <li>
+                      Select the chat (or {waPreview.waPhone ? "the customer's chat opens automatically" : "any contact"}).
+                    </li>
+                    <li>
+                      The PDF{" "}
+                      <code className="px-1 py-0.5 rounded bg-white border text-xs">
+                        {waPreview.fileName}
+                      </code>{" "}
+                      is attached automatically — tap <strong>Send</strong>.
+                    </li>
+                  </ol>
+                ) : (
+                  <ol className="text-sm text-green-900 space-y-1.5 list-decimal list-inside">
+                    <li>Click <strong>Send via WhatsApp</strong> below.</li>
+                    <li>
+                      The PDF{" "}
+                      <code className="px-1 py-0.5 rounded bg-white border text-xs">
+                        {waPreview.fileName}
+                      </code>{" "}
+                      will download to your <strong>Downloads</strong> folder.
+                    </li>
+                    <li>
+                      WhatsApp Web opens with the receipt summary
+                      {waPreview.waPhone ? " in the customer's chat" : ""}.
+                    </li>
+                    <li>
+                      In WhatsApp, click the <strong>📎 attach</strong> icon →{" "}
+                      <strong>Document</strong>.
+                    </li>
+                    <li>
+                      Select{" "}
+                      <code className="px-1 py-0.5 rounded bg-white border text-xs">
+                        {waPreview.fileName}
+                      </code>{" "}
+                      from Downloads and press <strong>Send</strong>.
+                    </li>
+                  </ol>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={closeWaDialog}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmSendToWhatsApp}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Send via WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
