@@ -584,6 +584,12 @@ const OfflineReceipt = () => {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" asChild>
+              <Link to="/admin/receipt-history">
+                <History className="h-4 w-4 mr-2" />
+                Receipt History
+              </Link>
+            </Button>
             <Button variant="outline" onClick={resetForm}>
               Reset
             </Button>
