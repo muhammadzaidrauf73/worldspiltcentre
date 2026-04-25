@@ -498,17 +498,40 @@ const OfflineReceipt = () => {
       typeof navAny.share === "function"
     );
 
-    setWaPreview({
-      pdfUrl: URL.createObjectURL(result.blob),
-      fileName: result.fileName,
-      receiptNo: info.receiptNo,
-      messageText,
-      blob: result.blob,
-      waPhone,
-      canShareFiles,
-      platform: detectPlatform(),
-    });
-    setWaDialogOpen(true);
+    // Build a data URL for inline preview (more reliable in iframes than blob URLs).
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      setWaPreview({
+        pdfUrl: dataUrl,
+        downloadUrl: URL.createObjectURL(result.blob!),
+        fileName: result.fileName,
+        receiptNo: info.receiptNo,
+        messageText,
+        blob: result.blob!,
+        waPhone,
+        canShareFiles,
+        platform: detectPlatform(),
+      });
+      setWaDialogOpen(true);
+    };
+    reader.onerror = () => {
+      // Fallback to blob URL if FileReader fails
+      const blobUrl = URL.createObjectURL(result.blob!);
+      setWaPreview({
+        pdfUrl: blobUrl,
+        downloadUrl: blobUrl,
+        fileName: result.fileName,
+        receiptNo: info.receiptNo,
+        messageText,
+        blob: result.blob!,
+        waPhone,
+        canShareFiles,
+        platform: detectPlatform(),
+      });
+      setWaDialogOpen(true);
+    };
+    reader.readAsDataURL(result.blob);
   };
 
   const confirmSendToWhatsApp = async () => {
