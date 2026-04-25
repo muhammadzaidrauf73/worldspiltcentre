@@ -182,6 +182,61 @@ const OfflineReceipt = () => {
     return { receiptNo, dateStr };
   };
 
+  // Track receipts already saved this session to avoid duplicate inserts
+  const savedReceiptsRef = useRef<Set<string>>(new Set());
+
+  const persistReceipt = async (receiptNo: string) => {
+    if (savedReceiptsRef.current.has(receiptNo)) return;
+    savedReceiptsRef.current.add(receiptNo);
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const itemsPayload = items.map((it) => ({
+        product_id: it.product_id || null,
+        name: it.name,
+        quantity: it.quantity,
+        price: it.price,
+      }));
+
+      const { error: insertError } = await supabase.from("offline_receipts").insert({
+        receipt_no: receiptNo,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim() || null,
+        customer_address: customerAddress.trim() || null,
+        payment_method: paymentMethod || null,
+        notes: notes.trim() || null,
+        items: itemsPayload,
+        subtotal,
+        discount: Number(discount) || 0,
+        total,
+        created_by: userData.user?.id || null,
+      });
+      if (insertError) {
+        console.error("Receipt save error:", insertError);
+        // Allow retry on next call
+        savedReceiptsRef.current.delete(receiptNo);
+        return;
+      }
+
+      // Decrement stock only for catalog items
+      const stockItems = items
+        .filter((it) => !!it.product_id)
+        .map((it) => ({
+          product_id: it.product_id as string,
+          quantity: it.quantity,
+        }));
+      if (stockItems.length > 0) {
+        const { error: stockErr } = await supabase.rpc("decrement_product_stock", {
+          _items: stockItems,
+        });
+        if (stockErr) console.error("Stock decrement error:", stockErr);
+      }
+    } catch (e) {
+      console.error("Persist receipt exception:", e);
+      savedReceiptsRef.current.delete(receiptNo);
+    }
+  };
+
   const generatePDF = (
     info?: { receiptNo: string; dateStr: string },
     options?: { skipDownload?: boolean; returnBlob?: boolean }
