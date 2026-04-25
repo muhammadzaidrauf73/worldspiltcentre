@@ -258,7 +258,11 @@ const OfflineReceipt = () => {
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(51, 51, 51);
-    doc.text(company?.company_name || "World Spilt Centre", 20, 25);
+    const headerName = (company?.company_name || "World Spilt Centre").trim();
+    const displayName = /electronics/i.test(headerName)
+      ? headerName
+      : `${headerName} Electronics`;
+    doc.text(displayName, 20, 25);
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
@@ -420,7 +424,8 @@ const OfflineReceipt = () => {
   };
 
   const buildWhatsAppMessage = (info: { receiptNo: string; dateStr: string }) => {
-    const companyName = company?.company_name || "World Spilt Centre";
+    const baseName = (company?.company_name || "World Spilt Centre").trim();
+    const companyName = /electronics/i.test(baseName) ? baseName : `${baseName} Electronics`;
     const lines: string[] = [];
     lines.push(`*${companyName}*`);
     lines.push(`Sales Receipt #${info.receiptNo}`);
