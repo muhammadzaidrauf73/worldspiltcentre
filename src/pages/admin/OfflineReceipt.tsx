@@ -63,7 +63,8 @@ const OfflineReceipt = () => {
   // WhatsApp confirmation modal
   const [waDialogOpen, setWaDialogOpen] = useState(false);
   const [waPreview, setWaPreview] = useState<{
-    pdfUrl: string;
+    pdfUrl: string; // data: URL for inline preview
+    downloadUrl: string; // blob: URL for download/open-in-new-tab
     fileName: string;
     receiptNo: string;
     messageText: string;
