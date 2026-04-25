@@ -59,6 +59,25 @@ serve(async (req) => {
       );
     }
 
+    // Auto-deduct stock for catalog items in this order
+    try {
+      const products = Array.isArray(items?.products) ? items.products : [];
+      const stockItems = products
+        .filter((p: any) => p?.product_id)
+        .map((p: any) => ({
+          product_id: p.product_id,
+          quantity: Number(p.quantity) || 0,
+        }));
+      if (stockItems.length > 0) {
+        const { error: stockError } = await supabase.rpc("decrement_product_stock", {
+          _items: stockItems,
+        });
+        if (stockError) console.error("Stock decrement error:", stockError);
+      }
+    } catch (e) {
+      console.error("Stock decrement exception:", e);
+    }
+
     return new Response(
       JSON.stringify({ id: order.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
