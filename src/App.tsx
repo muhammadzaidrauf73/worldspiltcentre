@@ -91,6 +91,7 @@ const AdminBlog = lazy(() => import("./pages/admin/Blog"));
 const AdminNotifications = lazy(() => import("./pages/admin/Notifications"));
 const AdminPaymentMethods = lazy(() => import("./pages/admin/PaymentMethods"));
 const AdminOfflineReceipt = lazy(() => import("./pages/admin/OfflineReceipt"));
+const AdminReceiptHistory = lazy(() => import("./pages/admin/ReceiptHistory"));
 const AdminStockManager = lazy(() => import("./pages/admin/StockManager"));
 
 const queryClient = new QueryClient({
@@ -187,6 +188,7 @@ const App = () => (
               <Route path="/admin/notifications" element={<AdminNotifications />} />
               <Route path="/admin/payment-methods" element={<AdminPaymentMethods />} />
               <Route path="/admin/offline-receipt" element={<AdminOfflineReceipt />} />
+              <Route path="/admin/receipt-history" element={<AdminReceiptHistory />} />
               <Route path="/admin/stock-manager" element={<AdminStockManager />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

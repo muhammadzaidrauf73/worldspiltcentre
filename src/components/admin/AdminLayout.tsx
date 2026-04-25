@@ -49,6 +49,7 @@ const navItems = [
   { href: "/admin/homepage-sections", label: "Homepage Sections", icon: LayoutGrid },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/offline-receipt", label: "Offline Receipt", icon: Receipt },
+  { href: "/admin/receipt-history", label: "Receipt History", icon: FileText },
   { href: "/admin/cancellation-requests", label: "Cancellations", icon: XCircle },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
