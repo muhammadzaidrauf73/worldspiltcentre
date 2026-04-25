@@ -28,9 +28,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip } from "lucide-react";
+import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip, History } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
+import { Link } from "react-router-dom";
+import { enrichWithPearlModel } from "@/lib/pearlModels";
 
 interface ReceiptItem {
   id: string;
