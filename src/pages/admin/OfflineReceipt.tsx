@@ -584,7 +584,7 @@ const OfflineReceipt = () => {
   };
 
   const closeWaDialog = () => {
-    if (waPreview?.pdfUrl) URL.revokeObjectURL(waPreview.pdfUrl);
+    if (waPreview?.downloadUrl) URL.revokeObjectURL(waPreview.downloadUrl);
     setWaPreview(null);
     setWaDialogOpen(false);
   };
@@ -963,22 +963,46 @@ const OfflineReceipt = () => {
                     </div>
                   </div>
                 </div>
-                <a
-                  href={waPreview.pdfUrl}
-                  download={waPreview.fileName}
-                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
-                >
-                  Download
-                </a>
+                <div className="flex items-center gap-3 whitespace-nowrap">
+                  <a
+                    href={waPreview.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    Open
+                  </a>
+                  <a
+                    href={waPreview.downloadUrl}
+                    download={waPreview.fileName}
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    Download
+                  </a>
+                </div>
               </div>
 
               {/* PDF preview */}
               <div className="rounded-lg border overflow-hidden bg-muted">
-                <iframe
-                  src={waPreview.pdfUrl}
-                  title="Receipt preview"
+                <object
+                  data={waPreview.pdfUrl}
+                  type="application/pdf"
                   className="w-full h-[50vh]"
-                />
+                  aria-label="Receipt preview"
+                >
+                  <div className="p-6 text-center text-sm text-muted-foreground">
+                    Your browser can't display the PDF inline.{" "}
+                    <a
+                      href={waPreview.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline font-medium"
+                    >
+                      Open the receipt in a new tab
+                    </a>
+                    .
+                  </div>
+                </object>
               </div>
 
               {/* Device-specific instructions */}
