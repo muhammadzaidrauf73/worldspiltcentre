@@ -38,7 +38,11 @@ export const renderReceiptPdf = (data: ReceiptPdfData): jsPDF => {
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(51, 51, 51);
-  doc.text(data.companyName || "World Spilt Centre", 20, 25);
+  const headerName = (data.companyName || "World Spilt Centre").trim();
+  const displayName = /electronics/i.test(headerName)
+    ? headerName
+    : `${headerName} Electronics`;
+  doc.text(displayName, 20, 25);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
