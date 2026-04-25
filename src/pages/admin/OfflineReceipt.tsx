@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -28,15 +28,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip } from "lucide-react";
+import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip, History } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
+import { Link } from "react-router-dom";
+import { enrichWithPearlModel } from "@/lib/pearlModels";
 
 interface ReceiptItem {
   id: string;
   name: string;
   quantity: number;
   price: number;
+  product_id?: string; // present only for catalog items (used for stock decrement)
 }
 
 interface ProductRow {
@@ -116,16 +119,23 @@ const OfflineReceipt = () => {
   const total = Math.max(0, subtotal - (Number(discount) || 0));
 
   const addProduct = (p: ProductRow) => {
+    const enrichedName = enrichWithPearlModel(p.name);
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === p.id);
+      const existing = prev.find((i) => i.product_id === p.id);
       if (existing) {
         return prev.map((i) =>
-          i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.product_id === p.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [
         ...prev,
-        { id: p.id, name: p.name, quantity: 1, price: Number(p.price) },
+        {
+          id: `cat_${p.id}_${Date.now()}`,
+          product_id: p.id,
+          name: enrichedName,
+          quantity: 1,
+          price: Number(p.price),
+        },
       ];
     });
     setSearchOpen(false);
@@ -141,7 +151,7 @@ const OfflineReceipt = () => {
       ...prev,
       {
         id: `manual_${Date.now()}`,
-        name: manualName.trim(),
+        name: enrichWithPearlModel(manualName.trim()),
         quantity: manualQty,
         price: manualPrice,
       },
@@ -170,6 +180,61 @@ const OfflineReceipt = () => {
       day: "numeric",
     });
     return { receiptNo, dateStr };
+  };
+
+  // Track receipts already saved this session to avoid duplicate inserts
+  const savedReceiptsRef = useRef<Set<string>>(new Set());
+
+  const persistReceipt = async (receiptNo: string) => {
+    if (savedReceiptsRef.current.has(receiptNo)) return;
+    savedReceiptsRef.current.add(receiptNo);
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const itemsPayload = items.map((it) => ({
+        product_id: it.product_id || null,
+        name: it.name,
+        quantity: it.quantity,
+        price: it.price,
+      }));
+
+      const { error: insertError } = await supabase.from("offline_receipts").insert({
+        receipt_no: receiptNo,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim() || null,
+        customer_address: customerAddress.trim() || null,
+        payment_method: paymentMethod || null,
+        notes: notes.trim() || null,
+        items: itemsPayload,
+        subtotal,
+        discount: Number(discount) || 0,
+        total,
+        created_by: userData.user?.id || null,
+      });
+      if (insertError) {
+        console.error("Receipt save error:", insertError);
+        // Allow retry on next call
+        savedReceiptsRef.current.delete(receiptNo);
+        return;
+      }
+
+      // Decrement stock only for catalog items
+      const stockItems = items
+        .filter((it) => !!it.product_id)
+        .map((it) => ({
+          product_id: it.product_id as string,
+          quantity: it.quantity,
+        }));
+      if (stockItems.length > 0) {
+        const { error: stockErr } = await supabase.rpc("decrement_product_stock", {
+          _items: stockItems,
+        });
+        if (stockErr) console.error("Stock decrement error:", stockErr);
+      }
+    } catch (e) {
+      console.error("Persist receipt exception:", e);
+      savedReceiptsRef.current.delete(receiptNo);
+    }
   };
 
   const generatePDF = (
@@ -349,6 +414,8 @@ const OfflineReceipt = () => {
       doc.save(fileName);
       toast.success("Receipt generated");
     }
+    // Save receipt + decrement stock (idempotent per receiptNo)
+    persistReceipt(receiptNo);
     return { receiptNo, dateStr, blob, fileName };
   };
 
@@ -517,6 +584,12 @@ const OfflineReceipt = () => {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" asChild>
+              <Link to="/admin/receipt-history">
+                <History className="h-4 w-4 mr-2" />
+                Receipt History
+              </Link>
+            </Button>
             <Button variant="outline" onClick={resetForm}>
               Reset
             </Button>

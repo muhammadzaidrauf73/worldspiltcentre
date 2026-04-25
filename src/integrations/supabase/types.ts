@@ -546,6 +546,57 @@ export type Database = {
         }
         Relationships: []
       }
+      offline_receipts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_address: string | null
+          customer_name: string
+          customer_phone: string | null
+          discount: number
+          id: string
+          items: Json
+          notes: string | null
+          payment_method: string | null
+          receipt_no: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_address?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          discount?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          payment_method?: string | null
+          receipt_no: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_address?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          discount?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          payment_method?: string | null
+          receipt_no?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_cancellation_requests: {
         Row: {
           admin_notes: string | null
@@ -1106,6 +1157,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_product_stock: { Args: { _items: Json }; Returns: undefined }
       get_guest_order_history: {
         Args: { email_param: string; order_id_param: string }
         Returns: {
