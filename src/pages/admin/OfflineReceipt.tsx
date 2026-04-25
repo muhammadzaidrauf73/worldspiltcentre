@@ -39,6 +39,7 @@ interface ReceiptItem {
   name: string;
   quantity: number;
   price: number;
+  product_id?: string; // present only for catalog items (used for stock decrement)
 }
 
 interface ProductRow {
@@ -118,16 +119,23 @@ const OfflineReceipt = () => {
   const total = Math.max(0, subtotal - (Number(discount) || 0));
 
   const addProduct = (p: ProductRow) => {
+    const enrichedName = enrichWithPearlModel(p.name);
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === p.id);
+      const existing = prev.find((i) => i.product_id === p.id);
       if (existing) {
         return prev.map((i) =>
-          i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.product_id === p.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [
         ...prev,
-        { id: p.id, name: p.name, quantity: 1, price: Number(p.price) },
+        {
+          id: `cat_${p.id}_${Date.now()}`,
+          product_id: p.id,
+          name: enrichedName,
+          quantity: 1,
+          price: Number(p.price),
+        },
       ];
     });
     setSearchOpen(false);
@@ -143,7 +151,7 @@ const OfflineReceipt = () => {
       ...prev,
       {
         id: `manual_${Date.now()}`,
-        name: manualName.trim(),
+        name: enrichWithPearlModel(manualName.trim()),
         quantity: manualQty,
         price: manualPrice,
       },
