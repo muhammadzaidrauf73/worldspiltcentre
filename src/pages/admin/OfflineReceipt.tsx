@@ -414,6 +414,8 @@ const OfflineReceipt = () => {
       doc.save(fileName);
       toast.success("Receipt generated");
     }
+    // Save receipt + decrement stock (idempotent per receiptNo)
+    persistReceipt(receiptNo);
     return { receiptNo, dateStr, blob, fileName };
   };
 
