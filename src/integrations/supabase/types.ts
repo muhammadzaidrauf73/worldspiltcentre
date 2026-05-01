@@ -1175,6 +1175,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_receipt_number: { Args: never; Returns: number }
       verify_guest_order: {
         Args: { email_param: string; order_id_param: string }
         Returns: {
