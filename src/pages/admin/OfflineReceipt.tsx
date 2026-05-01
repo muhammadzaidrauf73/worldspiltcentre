@@ -285,7 +285,7 @@ const OfflineReceipt = () => {
       notes,
     });
 
-    const fileName = `receipt-${receiptNo}.pdf`;
+    const fileName = `World Split Centre Electronics - REC #${receiptNo}.pdf`;
     const blob = options?.returnBlob ? doc.output("blob") : undefined;
     if (!options?.skipDownload) {
       doc.save(fileName);
@@ -297,11 +297,11 @@ const OfflineReceipt = () => {
   };
 
   const buildWhatsAppMessage = (info: { receiptNo: string; dateStr: string }) => {
-    const baseName = (company?.company_name || "World Spilt Centre").trim();
+    const baseName = (company?.company_name || "World Split Centre").trim();
     const companyName = /electronics/i.test(baseName) ? baseName : `${baseName} Electronics`;
     const lines: string[] = [];
-    lines.push(`*${companyName}*`);
-    lines.push(`Sales Receipt #${info.receiptNo}`);
+    lines.push(`*${companyName.toUpperCase()}*`);
+    lines.push(`*REC # ${info.receiptNo}*`);
     lines.push(`Date: ${info.dateStr}`);
     lines.push("");
     lines.push(`*Customer:* ${customerName}`);

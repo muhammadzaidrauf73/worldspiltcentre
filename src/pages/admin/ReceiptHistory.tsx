@@ -117,7 +117,7 @@ const ReceiptHistory = () => {
         total: Number(r.total) || 0,
         notes: r.notes || undefined,
       });
-      doc.save(`receipt-${r.receipt_no}.pdf`);
+      doc.save(`World Split Centre Electronics - REC #${r.receipt_no}.pdf`);
       toast.success(`Downloaded receipt ${r.receipt_no}`);
     } catch (e) {
       console.error(e);
