@@ -285,7 +285,7 @@ const OfflineReceipt = () => {
       notes,
     });
 
-    const fileName = `receipt-${receiptNo}.pdf`;
+    const fileName = `World Split Centre Electronics - REC #${receiptNo}.pdf`;
     const blob = options?.returnBlob ? doc.output("blob") : undefined;
     if (!options?.skipDownload) {
       doc.save(fileName);
