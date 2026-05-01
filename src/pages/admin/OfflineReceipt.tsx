@@ -355,8 +355,8 @@ const OfflineReceipt = () => {
       return;
     }
 
-    const info = buildReceiptInfo();
-    const result = generatePDF(info, { skipDownload: true, returnBlob: true });
+    const info = await buildReceiptInfo();
+    const result = await generatePDF(info, { skipDownload: true, returnBlob: true });
     if (!result?.blob) return;
 
     const messageText = buildWhatsAppMessage(info);
