@@ -173,8 +173,18 @@ const OfflineReceipt = () => {
   const formatCurrency = (n: number) =>
     `Rs. ${n.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`;
 
-  const buildReceiptInfo = () => {
-    const receiptNo = `R-${Date.now().toString().slice(-8)}`;
+  const buildReceiptInfo = async () => {
+    // Allocate a sequential receipt number from the backend (starts at 108).
+    // Fall back to a timestamp-based id only if the RPC fails (offline / network error).
+    let receiptNo = `R-${Date.now().toString().slice(-8)}`;
+    try {
+      const { data, error } = await supabase.rpc("next_receipt_number");
+      if (!error && data != null) {
+        receiptNo = String(data);
+      }
+    } catch {
+      // keep fallback
+    }
     const dateStr = new Date().toLocaleDateString("en-PK", {
       year: "numeric",
       month: "long",
