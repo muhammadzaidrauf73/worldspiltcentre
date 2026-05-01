@@ -345,7 +345,7 @@ const OfflineReceipt = () => {
     return "desktop";
   };
 
-  const sendToWhatsApp = () => {
+  const sendToWhatsApp = async () => {
     if (items.length === 0) {
       toast.error("Add at least one item");
       return;
