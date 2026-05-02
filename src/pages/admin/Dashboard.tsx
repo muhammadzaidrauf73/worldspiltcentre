@@ -21,6 +21,7 @@ import { AreaChart, Area, XAxis, YAxis, BarChart, Bar, PieChart, Pie, Cell, Resp
 import { format, subDays, startOfDay, isWithinInterval, differenceInHours } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
