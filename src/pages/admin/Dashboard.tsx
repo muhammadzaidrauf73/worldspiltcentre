@@ -12,7 +12,7 @@ import {
   Package, ShoppingCart, Users, TrendingUp, DollarSign, CalendarIcon, 
   ArrowUpRight, ArrowDownRight, Heart, Eye, Activity, Zap, Target,
   Clock, Star, TrendingDown, ShoppingBag, Sparkles, Crown, UserCheck,
-  Repeat, Award, Gem, Bell, Send, Loader2, Mail
+  Repeat, Award, Gem, Bell, Send, Loader2, Mail, Receipt, Wallet, PiggyBank, Store
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
