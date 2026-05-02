@@ -44,6 +44,7 @@ interface ProductForm {
   brand: string;
   price: string;
   original_price: string;
+  cost_price: string;
   category_id: string;
   image_url: string;
   gallery_images: string[];
@@ -63,6 +64,7 @@ const emptyForm: ProductForm = {
   brand: "",
   price: "",
   original_price: "",
+  cost_price: "",
   category_id: "",
   image_url: "",
   gallery_images: [],
@@ -146,6 +148,7 @@ const AdminProducts = () => {
         brand: data.brand,
         price: parseFloat(data.price),
         original_price: data.original_price ? parseFloat(data.original_price) : null,
+        cost_price: data.cost_price ? parseFloat(data.cost_price) : 0,
         category_id: data.category_id || null,
         image_url: data.image_url,
         gallery_images: data.gallery_images,
@@ -291,6 +294,7 @@ const AdminProducts = () => {
       brand: product.brand,
       price: product.price.toString(),
       original_price: product.original_price?.toString() || "",
+      cost_price: product.cost_price?.toString() || "",
       category_id: product.category_id || "",
       image_url: product.image_url || "",
       gallery_images: product.gallery_images || [],
@@ -741,9 +745,9 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price *</Label>
+                      <Label htmlFor="price">Sale Price *</Label>
                       <Input
                         id="price"
                         type="number"
@@ -759,6 +763,19 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                         type="number"
                         value={form.original_price}
                         onChange={(e) => setForm({ ...form, original_price: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cost_price" className="flex items-center gap-1">
+                        Cost Price
+                        <span className="text-xs text-muted-foreground">(profit calc)</span>
+                      </Label>
+                      <Input
+                        id="cost_price"
+                        type="number"
+                        placeholder="0"
+                        value={form.cost_price}
+                        onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
