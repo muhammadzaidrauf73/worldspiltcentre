@@ -125,7 +125,81 @@ const Dashboard = () => {
     },
   });
 
-  // Wishlist insights
+  // Sales Performance: combine online orders + walk-in (offline) receipts with cost/profit
+  const { data: salesPerf, isLoading: salesPerfLoading } = useQuery({
+    queryKey: ["admin-sales-performance", dateRange],
+    queryFn: async () => {
+      const inRange = (d: string) => {
+        if (!dateRange?.from) return true;
+        const date = new Date(d);
+        return isWithinInterval(date, {
+          start: startOfDay(dateRange.from),
+          end: dateRange.to ? startOfDay(subDays(dateRange.to, -1)) : startOfDay(subDays(dateRange.from, -1)),
+        });
+      };
+
+      const [receiptsRes, ordersRes, productsRes] = await Promise.all([
+        supabase.from("offline_receipts").select("id, items, total, discount, subtotal, created_at"),
+        supabase.from("orders").select("id, items, total, status, created_at"),
+        supabase.from("products").select("id, cost_price"),
+      ]);
+
+      const costMap = new Map<string, number>();
+      (productsRes.data || []).forEach((p: any) => {
+        costMap.set(p.id, Number(p.cost_price) || 0);
+      });
+
+      // Helper: calculate cost from a flexible items shape
+      const calcCost = (rawItems: any): number => {
+        if (!rawItems) return 0;
+        // Online order items shape: { products: [{product_id, quantity, ...}] } OR array
+        let arr: any[] = [];
+        if (Array.isArray(rawItems)) arr = rawItems;
+        else if (Array.isArray(rawItems?.products)) arr = rawItems.products;
+        else if (Array.isArray(rawItems?.items)) arr = rawItems.items;
+        return arr.reduce((sum, it) => {
+          const pid = it?.product_id;
+          const qty = Number(it?.quantity) || 0;
+          const unitCost = pid ? (costMap.get(pid) || 0) : 0;
+          return sum + unitCost * qty;
+        }, 0);
+      };
+
+      // Walk-in receipts (offline)
+      const filteredReceipts = (receiptsRes.data || []).filter((r: any) => inRange(r.created_at));
+      const walkinRevenue = filteredReceipts.reduce((s, r: any) => s + Number(r.total || 0), 0);
+      const walkinCost = filteredReceipts.reduce((s, r: any) => s + calcCost(r.items), 0);
+      const walkinCount = filteredReceipts.length;
+
+      // Online orders (exclude cancelled)
+      const filteredOrders = (ordersRes.data || []).filter(
+        (o: any) => inRange(o.created_at) && o.status !== "cancelled"
+      );
+      const onlineRevenue = filteredOrders.reduce((s, o: any) => s + Number(o.total || 0), 0);
+      const onlineCost = filteredOrders.reduce((s, o: any) => s + calcCost(o.items), 0);
+      const onlineCount = filteredOrders.length;
+
+      const totalRevenue = walkinRevenue + onlineRevenue;
+      const totalCost = walkinCost + onlineCost;
+      const totalProfit = totalRevenue - totalCost;
+      const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+      return {
+        walkinRevenue,
+        walkinCost,
+        walkinProfit: walkinRevenue - walkinCost,
+        walkinCount,
+        onlineRevenue,
+        onlineCost,
+        onlineProfit: onlineRevenue - onlineCost,
+        onlineCount,
+        totalRevenue,
+        totalCost,
+        totalProfit,
+        margin,
+      };
+    },
+  });
   const { data: wishlistStats } = useQuery({
     queryKey: ["admin-wishlist-stats"],
     queryFn: async () => {
