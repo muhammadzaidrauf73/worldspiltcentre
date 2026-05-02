@@ -658,6 +658,169 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Sales Performance — Online + Walk-in (Cost vs Revenue vs Profit) */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-emerald-500/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <PiggyBank className="h-5 w-5 text-emerald-600" />
+                  Sales Performance
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Combined online orders & walk-in receipts. Profit = Revenue − Cost.
+                </p>
+              </div>
+              {!salesPerfLoading && salesPerf && (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 border-0">
+                  Margin: {salesPerf.margin.toFixed(1)}%
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {salesPerfLoading ? (
+              <div className="grid gap-4 md:grid-cols-3">
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+              </div>
+            ) : (
+              <>
+                {/* Totals row */}
+                <div className="grid gap-4 md:grid-cols-3 mb-6">
+                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
+                      Total Revenue
+                    </div>
+                    <div className="text-2xl font-bold text-emerald-600">
+                      Rs.{Math.round(salesPerf?.totalRevenue || 0).toLocaleString()}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      What customers paid (online + walk-in)
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <Wallet className="h-3.5 w-3.5 text-amber-600" />
+                      Total Cost
+                    </div>
+                    <div className="text-2xl font-bold text-amber-600">
+                      Rs.{Math.round(salesPerf?.totalCost || 0).toLocaleString()}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Sum of product cost prices × qty sold
+                    </p>
+                  </div>
+
+                  <div className={cn(
+                    "rounded-lg border p-4",
+                    (salesPerf?.totalProfit || 0) >= 0
+                      ? "border-primary/30 bg-primary/5"
+                      : "border-red-500/30 bg-red-500/5"
+                  )}>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                      <PiggyBank className={cn(
+                        "h-3.5 w-3.5",
+                        (salesPerf?.totalProfit || 0) >= 0 ? "text-primary" : "text-red-600"
+                      )} />
+                      Net Profit
+                    </div>
+                    <div className={cn(
+                      "text-2xl font-bold",
+                      (salesPerf?.totalProfit || 0) >= 0 ? "text-primary" : "text-red-600"
+                    )}>
+                      Rs.{Math.round(salesPerf?.totalProfit || 0).toLocaleString()}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Revenue minus cost
+                    </p>
+                  </div>
+                </div>
+
+                {/* Breakdown: Online vs Walk-in */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-lg border bg-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-blue-600" />
+                        <h4 className="text-sm font-semibold">Online Orders</h4>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {salesPerf?.onlineCount || 0} orders
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Revenue</p>
+                        <p className="text-sm font-bold text-emerald-600">
+                          Rs.{Math.round(salesPerf?.onlineRevenue || 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Cost</p>
+                        <p className="text-sm font-bold text-amber-600">
+                          Rs.{Math.round(salesPerf?.onlineCost || 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Profit</p>
+                        <p className={cn(
+                          "text-sm font-bold",
+                          (salesPerf?.onlineProfit || 0) >= 0 ? "text-primary" : "text-red-600"
+                        )}>
+                          Rs.{Math.round(salesPerf?.onlineProfit || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border bg-card p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Store className="h-4 w-4 text-orange-600" />
+                        <h4 className="text-sm font-semibold">Walk-in (Offline Receipts)</h4>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {salesPerf?.walkinCount || 0} receipts
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Revenue</p>
+                        <p className="text-sm font-bold text-emerald-600">
+                          Rs.{Math.round(salesPerf?.walkinRevenue || 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Cost</p>
+                        <p className="text-sm font-bold text-amber-600">
+                          Rs.{Math.round(salesPerf?.walkinCost || 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Profit</p>
+                        <p className={cn(
+                          "text-sm font-bold",
+                          (salesPerf?.walkinProfit || 0) >= 0 ? "text-primary" : "text-red-600"
+                        )}>
+                          Rs.{Math.round(salesPerf?.walkinProfit || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground mt-4">
+                  💡 Tip: Set each product's <strong>Cost Price</strong> in <Link to="/admin/products" className="text-primary underline underline-offset-2">Products</Link> for accurate profit numbers. Manual (non-catalog) walk-in items count toward revenue but not cost.
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Insight Cards Row */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent">
