@@ -108,6 +108,8 @@ const AdminProducts = () => {
   const [priceUpdateCategory, setPriceUpdateCategory] = useState<string>("selected");
   const [priceUpdateMode, setPriceUpdateMode] = useState<"adjust" | "discount">("adjust");
   const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [bulkMarginDialogOpen, setBulkMarginDialogOpen] = useState(false);
+  const [bulkMarginPercent, setBulkMarginPercent] = useState<number>(20);
   const [bulkCsvData, setBulkCsvData] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -375,6 +377,9 @@ const AdminProducts = () => {
       case "update-prices":
         setBulkPriceDialogOpen(true);
         break;
+      case "set-margin":
+        setBulkMarginDialogOpen(true);
+        break;
     }
   };
 
@@ -385,6 +390,30 @@ const AdminProducts = () => {
       updates: { category_id: categoryId || null } 
     });
     setBulkCategoryDialogOpen(false);
+  };
+
+  const handleBulkSetMargin = async () => {
+    if (selectedProducts.length === 0) return;
+    if (bulkMarginPercent < 0 || bulkMarginPercent >= 100) {
+      toast.error("Margin must be between 0 and 99");
+      return;
+    }
+    try {
+      const targets = products.filter((p: any) => selectedProducts.includes(p.id));
+      await Promise.all(
+        targets.map((p: any) => {
+          const price = Number(p.price) || 0;
+          const cost = +(price * (1 - bulkMarginPercent / 100)).toFixed(2);
+          return supabase.from("products").update({ cost_price: cost } as any).eq("id", p.id);
+        })
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success(`Cost set on ${targets.length} products at ${bulkMarginPercent}% margin`);
+      setBulkMarginDialogOpen(false);
+      setSelectedProducts([]);
+    } catch (e: any) {
+      toast.error("Failed to set margin: " + (e?.message || "unknown"));
+    }
   };
 
   const handleBulkPriceUpdate = async () => {
@@ -777,6 +806,18 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                         value={form.cost_price}
                         onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
                       />
+                      {(() => {
+                        const price = parseFloat(form.price) || 0;
+                        const cost = parseFloat(form.cost_price) || 0;
+                        if (price <= 0 || cost <= 0) return null;
+                        const profit = price - cost;
+                        const margin = (profit / price) * 100;
+                        return (
+                          <p className={`text-xs ${profit >= 0 ? "text-green-600" : "text-red-500"}`}>
+                            Profit: Rs.{profit.toLocaleString()} • Margin: {margin.toFixed(1)}%
+                          </p>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stock">Stock</Label>
@@ -1089,6 +1130,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   <SelectItem value="change-category">Change Category</SelectItem>
                   <SelectItem value="remove-category">Remove Category</SelectItem>
                   <SelectItem value="update-prices">Update Prices (%)</SelectItem>
+                  <SelectItem value="set-margin">Set Cost from Margin %</SelectItem>
                   <SelectItem value="delete">Delete Selected</SelectItem>
                 </SelectContent>
               </Select>
@@ -1102,6 +1144,38 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
             </div>
           )}
         </div>
+
+        {/* Bulk Margin Dialog */}
+        <Dialog open={bulkMarginDialogOpen} onOpenChange={setBulkMarginDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Set Cost from Profit Margin</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Apply a profit margin % to {selectedProducts.length} selected products.
+                Cost price will be set to: <strong>price × (1 − margin%)</strong>.
+              </p>
+              <div className="space-y-2">
+                <Label>Profit Margin (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={bulkMarginPercent}
+                  onChange={(e) => setBulkMarginPercent(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Example: price Rs.10,000 at 20% → cost Rs.8,000, profit Rs.2,000
+                </p>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setBulkMarginDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleBulkSetMargin}>Apply Margin</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Bulk Category Change Dialog */}
         <Dialog open={bulkCategoryDialogOpen} onOpenChange={setBulkCategoryDialogOpen}>
@@ -1288,6 +1362,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                 <TableHead>Brand</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
+                <TableHead>Cost / Margin</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Flags</TableHead>
@@ -1304,6 +1379,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                     <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
@@ -1312,7 +1388,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                 ))
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                     No products found
                   </TableCell>
                 </TableRow>
@@ -1343,6 +1419,23 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                     <TableCell>{product.brand}</TableCell>
                     <TableCell>{product.categories?.name || "-"}</TableCell>
                     <TableCell>Rs.{Number(product.price).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const price = Number(product.price) || 0;
+                        const cost = Number(product.cost_price) || 0;
+                        if (cost <= 0) return <span className="text-xs text-muted-foreground">—</span>;
+                        const profit = price - cost;
+                        const margin = price > 0 ? (profit / price) * 100 : 0;
+                        return (
+                          <div className="text-xs leading-tight">
+                            <div>Rs.{cost.toLocaleString()}</div>
+                            <div className={profit >= 0 ? "text-green-600" : "text-red-500"}>
+                              {margin.toFixed(1)}%
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>{product.stock_quantity}</TableCell>
                     <TableCell>
                       <span
