@@ -32,7 +32,14 @@ import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip, Hist
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { enrichWithPearlModel } from "@/lib/pearlModels";
-import { renderReceiptPdf } from "@/lib/receiptPdf";
+import { renderReceiptPdf, renderSalesReturnPdf, type ReceiptType } from "@/lib/receiptPdf";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ReceiptItem {
   id: string;
@@ -59,6 +66,11 @@ const OfflineReceipt = () => {
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [receiptType, setReceiptType] = useState<ReceiptType>("sale");
+  const [partyName, setPartyName] = useState("");
+  const [partyAddress, setPartyAddress] = useState("");
+  const [partyContactPerson, setPartyContactPerson] = useState("");
+  const [partyContactNo, setPartyContactNo] = useState("");
 
   // WhatsApp confirmation modal
   const [waDialogOpen, setWaDialogOpen] = useState(false);
@@ -263,7 +275,7 @@ const OfflineReceipt = () => {
 
     const { receiptNo, dateStr } = info || (await buildReceiptInfo());
 
-    const doc = renderReceiptPdf({
+    const pdfData = {
       receiptNo,
       dateStr,
       companyName: company?.company_name,
@@ -283,9 +295,21 @@ const OfflineReceipt = () => {
       discount: Number(discount) || 0,
       total,
       notes,
-    });
+      receiptType,
+      partyName: partyName.trim() || undefined,
+      partyAddress: partyAddress.trim() || undefined,
+      partyContactPerson: partyContactPerson.trim() || undefined,
+      partyContactNo: partyContactNo.trim() || undefined,
+    };
+    const doc = receiptType === "sale" ? renderReceiptPdf(pdfData) : renderSalesReturnPdf(pdfData);
 
-    const fileName = `World Split Centre Electronics - REC #${receiptNo}.pdf`;
+    const docLabel =
+      receiptType === "return_company"
+        ? "SALES RETURN to Company"
+        : receiptType === "return_customer"
+        ? "SALES RETURN from Customer"
+        : "REC";
+    const fileName = `World Split Centre Electronics - ${docLabel} #${receiptNo}.pdf`;
     const blob = options?.returnBlob ? doc.output("blob") : undefined;
     if (!options?.skipDownload) {
       doc.save(fileName);
@@ -469,6 +493,11 @@ const OfflineReceipt = () => {
     setNotes("");
     setDiscount(0);
     setItems([]);
+    setReceiptType("sale");
+    setPartyName("");
+    setPartyAddress("");
+    setPartyContactPerson("");
+    setPartyContactNo("");
   };
 
   return (
@@ -711,6 +740,58 @@ const OfflineReceipt = () => {
                 <CardTitle className="text-lg">Customer Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-xs">Receipt Type</Label>
+                  <Select value={receiptType} onValueChange={(v) => setReceiptType(v as ReceiptType)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sale">Sale Receipt (Invoice)</SelectItem>
+                      <SelectItem value="return_customer">Sales Return — From Customer</SelectItem>
+                      <SelectItem value="return_company">Sales Return — To Company</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {receiptType !== "sale" && (
+                  <div className="space-y-3 rounded-md border border-dashed p-3 bg-muted/30">
+                    <div className="text-xs font-semibold text-muted-foreground">
+                      {receiptType === "return_company" ? "Company (returning to)" : "Customer (returning from)"}
+                    </div>
+                    <div>
+                      <Label className="text-xs">Party / Company Name</Label>
+                      <Input
+                        value={partyName}
+                        onChange={(e) => setPartyName(e.target.value)}
+                        placeholder={receiptType === "return_company" ? "e.g. Pearl Pakistan (Pvt) Ltd" : "Customer / company name"}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Party Address</Label>
+                      <Textarea
+                        value={partyAddress}
+                        onChange={(e) => setPartyAddress(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Contact Person</Label>
+                        <Input
+                          value={partyContactPerson}
+                          onChange={(e) => setPartyContactPerson(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Contact No</Label>
+                        <Input
+                          value={partyContactNo}
+                          onChange={(e) => setPartyContactNo(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs">Name *</Label>
                   <Input
