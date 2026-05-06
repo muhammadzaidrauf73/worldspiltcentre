@@ -275,7 +275,7 @@ const OfflineReceipt = () => {
 
     const { receiptNo, dateStr } = info || (await buildReceiptInfo());
 
-    const doc = renderReceiptPdf({
+    const pdfData = {
       receiptNo,
       dateStr,
       companyName: company?.company_name,
@@ -295,7 +295,13 @@ const OfflineReceipt = () => {
       discount: Number(discount) || 0,
       total,
       notes,
-    });
+      receiptType,
+      partyName: partyName.trim() || undefined,
+      partyAddress: partyAddress.trim() || undefined,
+      partyContactPerson: partyContactPerson.trim() || undefined,
+      partyContactNo: partyContactNo.trim() || undefined,
+    };
+    const doc = receiptType === "sale" ? renderReceiptPdf(pdfData) : renderSalesReturnPdf(pdfData);
 
     const fileName = `World Split Centre Electronics - REC #${receiptNo}.pdf`;
     const blob = options?.returnBlob ? doc.output("blob") : undefined;
