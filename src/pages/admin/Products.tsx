@@ -1145,6 +1145,38 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
           )}
         </div>
 
+        {/* Bulk Margin Dialog */}
+        <Dialog open={bulkMarginDialogOpen} onOpenChange={setBulkMarginDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Set Cost from Profit Margin</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Apply a profit margin % to {selectedProducts.length} selected products.
+                Cost price will be set to: <strong>price × (1 − margin%)</strong>.
+              </p>
+              <div className="space-y-2">
+                <Label>Profit Margin (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={bulkMarginPercent}
+                  onChange={(e) => setBulkMarginPercent(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Example: price Rs.10,000 at 20% → cost Rs.8,000, profit Rs.2,000
+                </p>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setBulkMarginDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleBulkSetMargin}>Apply Margin</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Bulk Category Change Dialog */}
         <Dialog open={bulkCategoryDialogOpen} onOpenChange={setBulkCategoryDialogOpen}>
           <DialogContent>
