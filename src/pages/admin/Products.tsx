@@ -377,6 +377,9 @@ const AdminProducts = () => {
       case "update-prices":
         setBulkPriceDialogOpen(true);
         break;
+      case "set-margin":
+        setBulkMarginDialogOpen(true);
+        break;
     }
   };
 
