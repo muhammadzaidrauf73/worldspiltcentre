@@ -1357,6 +1357,23 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                     <TableCell>{product.brand}</TableCell>
                     <TableCell>{product.categories?.name || "-"}</TableCell>
                     <TableCell>Rs.{Number(product.price).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const price = Number(product.price) || 0;
+                        const cost = Number(product.cost_price) || 0;
+                        if (cost <= 0) return <span className="text-xs text-muted-foreground">—</span>;
+                        const profit = price - cost;
+                        const margin = price > 0 ? (profit / price) * 100 : 0;
+                        return (
+                          <div className="text-xs leading-tight">
+                            <div>Rs.{cost.toLocaleString()}</div>
+                            <div className={profit >= 0 ? "text-green-600" : "text-red-500"}>
+                              {margin.toFixed(1)}%
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>{product.stock_quantity}</TableCell>
                     <TableCell>
                       <span
