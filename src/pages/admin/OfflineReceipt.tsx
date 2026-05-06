@@ -66,6 +66,11 @@ const OfflineReceipt = () => {
   const [items, setItems] = useState<ReceiptItem[]>([]);
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [receiptType, setReceiptType] = useState<ReceiptType>("sale");
+  const [partyName, setPartyName] = useState("");
+  const [partyAddress, setPartyAddress] = useState("");
+  const [partyContactPerson, setPartyContactPerson] = useState("");
+  const [partyContactNo, setPartyContactNo] = useState("");
 
   // WhatsApp confirmation modal
   const [waDialogOpen, setWaDialogOpen] = useState(false);
