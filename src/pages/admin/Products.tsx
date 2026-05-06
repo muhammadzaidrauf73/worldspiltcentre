@@ -108,6 +108,8 @@ const AdminProducts = () => {
   const [priceUpdateCategory, setPriceUpdateCategory] = useState<string>("selected");
   const [priceUpdateMode, setPriceUpdateMode] = useState<"adjust" | "discount">("adjust");
   const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [bulkMarginDialogOpen, setBulkMarginDialogOpen] = useState(false);
+  const [bulkMarginPercent, setBulkMarginPercent] = useState<number>(20);
   const [bulkCsvData, setBulkCsvData] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
