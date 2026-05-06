@@ -303,7 +303,13 @@ const OfflineReceipt = () => {
     };
     const doc = receiptType === "sale" ? renderReceiptPdf(pdfData) : renderSalesReturnPdf(pdfData);
 
-    const fileName = `World Split Centre Electronics - REC #${receiptNo}.pdf`;
+    const docLabel =
+      receiptType === "return_company"
+        ? "SALES RETURN to Company"
+        : receiptType === "return_customer"
+        ? "SALES RETURN from Customer"
+        : "REC";
+    const fileName = `World Split Centre Electronics - ${docLabel} #${receiptNo}.pdf`;
     const blob = options?.returnBlob ? doc.output("blob") : undefined;
     if (!options?.skipDownload) {
       doc.save(fileName);
