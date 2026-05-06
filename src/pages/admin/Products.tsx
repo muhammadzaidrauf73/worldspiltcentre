@@ -1326,7 +1326,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                 ))
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                     No products found
                   </TableCell>
                 </TableRow>
