@@ -392,6 +392,30 @@ const AdminProducts = () => {
     setBulkCategoryDialogOpen(false);
   };
 
+  const handleBulkSetMargin = async () => {
+    if (selectedProducts.length === 0) return;
+    if (bulkMarginPercent < 0 || bulkMarginPercent >= 100) {
+      toast.error("Margin must be between 0 and 99");
+      return;
+    }
+    try {
+      const targets = products.filter((p: any) => selectedProducts.includes(p.id));
+      await Promise.all(
+        targets.map((p: any) => {
+          const price = Number(p.price) || 0;
+          const cost = +(price * (1 - bulkMarginPercent / 100)).toFixed(2);
+          return supabase.from("products").update({ cost_price: cost } as any).eq("id", p.id);
+        })
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success(`Cost set on ${targets.length} products at ${bulkMarginPercent}% margin`);
+      setBulkMarginDialogOpen(false);
+      setSelectedProducts([]);
+    } catch (e: any) {
+      toast.error("Failed to set margin: " + (e?.message || "unknown"));
+    }
+  };
+
   const handleBulkPriceUpdate = async () => {
     // Validation based on mode
     if (priceUpdateMode === "adjust" && priceUpdatePercent === 0) {
