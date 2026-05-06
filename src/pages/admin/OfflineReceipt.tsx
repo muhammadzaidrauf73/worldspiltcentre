@@ -493,6 +493,11 @@ const OfflineReceipt = () => {
     setNotes("");
     setDiscount(0);
     setItems([]);
+    setReceiptType("sale");
+    setPartyName("");
+    setPartyAddress("");
+    setPartyContactPerson("");
+    setPartyContactNo("");
   };
 
   return (
