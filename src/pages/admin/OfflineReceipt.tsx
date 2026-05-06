@@ -32,7 +32,14 @@ import { Trash2, Plus, Search, FileDown, Receipt, MessageCircle, Paperclip, Hist
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { enrichWithPearlModel } from "@/lib/pearlModels";
-import { renderReceiptPdf } from "@/lib/receiptPdf";
+import { renderReceiptPdf, renderSalesReturnPdf, type ReceiptType } from "@/lib/receiptPdf";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ReceiptItem {
   id: string;
