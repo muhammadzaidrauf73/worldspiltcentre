@@ -777,6 +777,18 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                         value={form.cost_price}
                         onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
                       />
+                      {(() => {
+                        const price = parseFloat(form.price) || 0;
+                        const cost = parseFloat(form.cost_price) || 0;
+                        if (price <= 0 || cost <= 0) return null;
+                        const profit = price - cost;
+                        const margin = (profit / price) * 100;
+                        return (
+                          <p className={`text-xs ${profit >= 0 ? "text-green-600" : "text-red-500"}`}>
+                            Profit: Rs.{profit.toLocaleString()} • Margin: {margin.toFixed(1)}%
+                          </p>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stock">Stock</Label>
