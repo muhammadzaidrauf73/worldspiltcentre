@@ -1101,6 +1101,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                   <SelectItem value="change-category">Change Category</SelectItem>
                   <SelectItem value="remove-category">Remove Category</SelectItem>
                   <SelectItem value="update-prices">Update Prices (%)</SelectItem>
+                  <SelectItem value="set-margin">Set Cost from Margin %</SelectItem>
                   <SelectItem value="delete">Delete Selected</SelectItem>
                 </SelectContent>
               </Select>
