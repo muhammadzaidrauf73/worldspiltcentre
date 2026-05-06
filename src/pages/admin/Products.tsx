@@ -1300,6 +1300,7 @@ LG OLED TV 55",LG,299999,349999,4K OLED display,https://...,20,LED TVs`}
                 <TableHead>Brand</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
+                <TableHead>Cost / Margin</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Flags</TableHead>
