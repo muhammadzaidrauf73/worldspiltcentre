@@ -97,46 +97,80 @@ export const renderSalesReturnPdf = (data: ReceiptPdfData): jsPDF => {
   doc.text("SALES RETURN", pageWidth / 2, 50, { align: "center" });
 
   // === Customer / Shipping bordered box ===
+  // Labels stack vertically above their values so long names never collide
+  // with the label column.
   const boxTop = 56;
-  const boxH = 48;
+  const boxH = 56;
   const colW = contentW / 2;
+  const innerPad = 3;
+  const valW = colW - innerPad * 2;
   doc.setDrawColor(0);
   doc.setLineWidth(0.4);
   doc.rect(leftX, boxTop, contentW, boxH);
   doc.line(leftX + colW, boxTop, leftX + colW, boxTop + boxH);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(80, 80, 80);
-  doc.text("Company Name", leftX + 2, boxTop + 6);
-  doc.text("Address", leftX + 2, boxTop + 18);
-  doc.text("Shipping Address", leftX + colW + 2, boxTop + 6);
-  doc.text("Contact Person :", leftX + colW + 2, boxTop + 28);
-  doc.text("Contact No :", leftX + colW + 2, boxTop + 36);
+  const drawField = (
+    label: string,
+    value: string,
+    x: number,
+    y: number,
+    width: number,
+    maxLines = 2
+  ) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(110, 110, 110);
+    doc.text(label, x, y);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(20, 20, 20);
+    const lines = doc.splitTextToSize(value || "-", width).slice(0, maxLines);
+    doc.text(lines, x, y + 5);
+  };
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(20, 20, 20);
-  const partyName = (data.partyName || data.customerName || "").toUpperCase();
-  doc.text(partyName, leftX + 30, boxTop + 6);
-
-  const addrLines = doc.splitTextToSize(
-    (data.partyAddress || data.customerAddress || "").toUpperCase(),
-    colW - 32
+  // Left column — Company (party) name + address
+  drawField(
+    "COMPANY NAME",
+    (data.partyName || data.customerName || "").toUpperCase(),
+    leftX + innerPad,
+    boxTop + 6,
+    valW,
+    2
   );
-  doc.text(addrLines, leftX + 30, boxTop + 18);
-
-  // Right column values
-  doc.text((data.customerAddress || data.partyAddress || "Lahore").toUpperCase().split("\n")[0], leftX + colW + 32, boxTop + 6);
-  const shipLines = doc.splitTextToSize(
+  drawField(
+    "ADDRESS",
     (data.partyAddress || data.customerAddress || "").toUpperCase(),
-    colW - 4
+    leftX + innerPad,
+    boxTop + 26,
+    valW,
+    3
   );
-  doc.setFontSize(9);
-  doc.text(shipLines, leftX + colW + 2, boxTop + 14);
-  doc.setFontSize(10);
-  doc.text(data.partyContactPerson || data.customerName || "", leftX + colW + 38, boxTop + 28);
-  doc.text(data.partyContactNo || data.customerPhone || "", leftX + colW + 38, boxTop + 36);
+
+  // Right column — Shipping address + contact
+  drawField(
+    "SHIPPING ADDRESS",
+    (data.customerAddress || data.partyAddress || "").toUpperCase(),
+    leftX + colW + innerPad,
+    boxTop + 6,
+    valW,
+    3
+  );
+  drawField(
+    "CONTACT PERSON",
+    data.partyContactPerson || data.customerName || "",
+    leftX + colW + innerPad,
+    boxTop + 32,
+    valW / 2 - 2,
+    1
+  );
+  drawField(
+    "CONTACT NO",
+    data.partyContactNo || data.customerPhone || "",
+    leftX + colW + innerPad + valW / 2,
+    boxTop + 32,
+    valW / 2 - 2,
+    1
+  );
 
   // === Return Invoice No / Date small box ===
   const ribTop = boxTop + boxH + 4;
