@@ -1155,6 +1155,51 @@ export type Database = {
           },
         ]
       }
+      wsc_documents: {
+        Row: {
+          body_text: string | null
+          created_at: string
+          created_by: string | null
+          customer_address: string | null
+          customer_name: string
+          doc_date: string | null
+          doc_type: string
+          id: string
+          items: Json
+          ref_no: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          body_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_address?: string | null
+          customer_name: string
+          doc_date?: string | null
+          doc_type: string
+          id?: string
+          items?: Json
+          ref_no: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          body_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_address?: string | null
+          customer_name?: string
+          doc_date?: string | null
+          doc_type?: string
+          id?: string
+          items?: Json
+          ref_no?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1179,6 +1224,7 @@ export type Database = {
         Returns: boolean
       }
       next_receipt_number: { Args: never; Returns: number }
+      next_wsc_document_number: { Args: never; Returns: number }
       verify_guest_order: {
         Args: { email_param: string; order_id_param: string }
         Returns: {
