@@ -93,6 +93,7 @@ const AdminPaymentMethods = lazy(() => import("./pages/admin/PaymentMethods"));
 const AdminOfflineReceipt = lazy(() => import("./pages/admin/OfflineReceipt"));
 const AdminReceiptHistory = lazy(() => import("./pages/admin/ReceiptHistory"));
 const AdminStockManager = lazy(() => import("./pages/admin/StockManager"));
+const AdminWSCReceipt = lazy(() => import("./pages/admin/WSCReceipt"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -190,6 +191,7 @@ const App = () => (
               <Route path="/admin/offline-receipt" element={<AdminOfflineReceipt />} />
               <Route path="/admin/receipt-history" element={<AdminReceiptHistory />} />
               <Route path="/admin/stock-manager" element={<AdminStockManager />} />
+              <Route path="/admin/wsc-receipt" element={<AdminWSCReceipt />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
