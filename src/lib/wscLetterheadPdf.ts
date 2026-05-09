@@ -14,13 +14,11 @@ export interface WSCItem {
 export interface WSCDocData {
   docType: WSCDocType;
   refNo: string;
-  date: string; // formatted
-  customerName: string; // M/S line
+  date: string;
+  customerName: string;
   customerAddress?: string;
-  // Receipt only:
   items?: WSCItem[];
   totalAmount?: string;
-  // Quotation only:
   bodyText?: string;
 }
 
@@ -40,56 +38,69 @@ export async function generateWSCPdf(data: WSCDocData): Promise<jsPDF> {
 
   const bgSrc = data.docType === "quotation" ? quotationLetterhead : receiptLetterhead;
   const img = await loadImg(bgSrc);
-  // Draw letterhead background full page
   doc.addImage(img, "JPEG", 0, 0, W, H, undefined, "FAST");
 
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
 
-  // Ref + Date row (around y=80pt based on image)
+  // --- Ref + Date (over the printed "Ref:" / "Date:" labels) ---
   doc.setFontSize(11);
-  doc.text(data.refNo || "", 60, 82);
-  doc.text(data.date || "", 480, 82);
+  // Ref value goes right of "Ref:" label
+  doc.text(String(data.refNo || ""), 70, 235);
+  // Date value goes right of "Date:" label
+  doc.text(String(data.date || ""), 500, 235);
 
   if (data.docType === "receipt") {
-    // M/S line
+    // --- M/S customer name on first dotted line, address on second ---
     doc.setFontSize(11);
-    const ms = data.customerName || "";
-    const msLines = doc.splitTextToSize(ms, 470);
-    doc.text(msLines.slice(0, 1), 55, 102);
+    const ms = doc.splitTextToSize(data.customerName || "", 470);
+    doc.text(ms.slice(0, 1), 75, 263);
     if (data.customerAddress) {
-      const addrLines = doc.splitTextToSize(data.customerAddress, 520);
-      doc.text(addrLines.slice(0, 1), 35, 122);
+      const addr = doc.splitTextToSize(data.customerAddress, 520);
+      doc.text(addr.slice(0, 1), 40, 293);
     }
 
-    // Table area (matches printed grid roughly)
-    // Columns: Sr# 32-78, Qty 78-130, Description 130-420, Rate 420-500, Amount 500-575
-    const rowTop = 152;
-    const rowH = 22;
+    // --- Table area (must stay INSIDE the printed grid) ---
+    // Column x ranges (pt): Sr# 22-50 | Qty 50-97 | Desc 97-474 | Rate 474-534 | Amount 534-582
+    const TABLE_TOP = 355;        // first row baseline (just below header divider)
+    const ROW_H = 20;
+    const TABLE_BOTTOM = 730;     // do not draw rows past this Y
+
     const items = data.items || [];
     doc.setFontSize(10);
     items.forEach((it, idx) => {
-      const y = rowTop + idx * rowH;
-      if (y > 670) return; // stop before O&E line
-      doc.text(String(idx + 1), 50, y, { align: "center" });
-      doc.text(it.qty || "", 104, y, { align: "center" });
-      const descLines = doc.splitTextToSize(it.description || "", 280);
-      doc.text(descLines.slice(0, 1), 135, y);
-      doc.text(it.rate || "", 495, y, { align: "right" });
-      doc.text(it.amount || "", 570, y, { align: "right" });
+      const y = TABLE_TOP + idx * ROW_H;
+      if (y > TABLE_BOTTOM) return;
+      // Sr# centered in narrow column
+      doc.text(String(idx + 1), 36, y, { align: "center" });
+      // Qty centered
+      doc.text(String(it.qty || ""), 73, y, { align: "center" });
+      // Description left-aligned with wrapping (1 line per row)
+      const desc = doc.splitTextToSize(it.description || "", 370);
+      doc.text(desc.slice(0, 1), 105, y);
+      // Rate right-aligned to right edge of Rate column
+      doc.text(String(it.rate || ""), 530, y, { align: "right" });
+      // Amount right-aligned to right edge of Amount column
+      doc.text(String(it.amount || ""), 578, y, { align: "right" });
     });
 
-    // Total amount (row above bottom border, near "Total Amount" label at ~y=695)
+    // --- Total amount on the bottom "Total Amount" row ---
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text(data.totalAmount || "", 570, 698, { align: "right" });
+    doc.text(String(data.totalAmount || ""), 578, 755, { align: "right" });
   } else {
-    // Quotation - free body text area below ref/date
+    // --- Quotation: free body text below the Ref/Date row ---
     doc.setFontSize(11);
-    const startY = 120;
+    const startY = 285;
+    // M/S line if provided
+    if (data.customerName) {
+      doc.setFont("helvetica", "bold");
+      doc.text(`M/S: ${data.customerName}`, 40, startY);
+      doc.setFont("helvetica", "normal");
+    }
     const body = data.bodyText || "";
     const lines = doc.splitTextToSize(body, W - 80);
-    doc.text(lines, 40, startY);
+    doc.text(lines, 40, startY + (data.customerName ? 22 : 0));
   }
 
   return doc;
