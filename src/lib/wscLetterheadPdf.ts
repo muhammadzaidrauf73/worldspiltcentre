@@ -17,7 +17,12 @@ export interface WSCDocData {
   date: string;
   customerName: string;
   customerAddress?: string;
+  customerPhone?: string;
   items?: WSCItem[];
+  subTotal?: string;
+  discount?: string;
+  paidAmount?: string;
+  balance?: string;
   totalAmount?: string;
   bodyText?: string;
 }
@@ -43,56 +48,65 @@ export async function generateWSCPdf(data: WSCDocData): Promise<jsPDF> {
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "normal");
 
-  // --- Ref + Date (over the printed "Ref:" / "Date:" labels) ---
-  doc.setFontSize(11);
-  // Ref value goes right of "Ref:" label
-  doc.text(String(data.refNo || ""), 70, 235);
-  // Date value goes right of "Date:" label
-  doc.text(String(data.date || ""), 500, 235);
-
   if (data.docType === "receipt") {
-    // --- M/S customer name on first dotted line, address on second ---
+    // ===== Receipt layout (image 1055x1491 → pt scale ~0.564) =====
     doc.setFontSize(11);
-    const ms = doc.splitTextToSize(data.customerName || "", 470);
-    doc.text(ms.slice(0, 1), 75, 263);
-    if (data.customerAddress) {
-      const addr = doc.splitTextToSize(data.customerAddress, 520);
-      doc.text(addr.slice(0, 1), 40, 293);
-    }
+    // Date (left) and Ref (right) — values written on the printed dotted lines
+    doc.text(String(data.date || ""), 95, 142);
+    doc.text(String(data.refNo || ""), 395, 142);
 
-    // --- Table area (must stay INSIDE the printed grid) ---
-    // Column x ranges (pt): Sr# 22-50 | Qty 50-97 | Desc 97-474 | Rate 474-534 | Amount 534-582
-    const TABLE_TOP = 355;        // first row baseline (just below header divider)
-    const ROW_H = 20;
-    const TABLE_BOTTOM = 730;     // do not draw rows past this Y
+    // M/S Customer Name (inline after the printed label)
+    const ms = doc.splitTextToSize(data.customerName || "", 400);
+    doc.text(ms.slice(0, 1), 175, 170);
 
-    const items = data.items || [];
+    // Address (inline after the printed label)
+    const addr = doc.splitTextToSize(data.customerAddress || "", 470);
+    doc.text(addr.slice(0, 1), 100, 200);
+
+    // Phone (inline after the printed label)
+    doc.text(String(data.customerPhone || ""), 95, 245);
+
+    // ----- Items table (10 rows max) -----
+    // Column centers / right edges (pt)
+    const COL_SR_C = 37;
+    const COL_QTY_C = 80;
+    const COL_DESC_X = 105;
+    const COL_DESC_W = 305;
+    const COL_RATE_R = 495;
+    const COL_AMT_R = 572;
+
+    const TABLE_TOP = 305;
+    const ROW_H = 28;
+    const MAX_ROWS = 10;
+
+    const items = (data.items || []).slice(0, MAX_ROWS);
     doc.setFontSize(10);
     items.forEach((it, idx) => {
       const y = TABLE_TOP + idx * ROW_H;
-      if (y > TABLE_BOTTOM) return;
-      // Sr# centered in narrow column
-      doc.text(String(idx + 1), 36, y, { align: "center" });
-      // Qty centered
-      doc.text(String(it.qty || ""), 73, y, { align: "center" });
-      // Description left-aligned with wrapping (1 line per row)
-      const desc = doc.splitTextToSize(it.description || "", 370);
-      doc.text(desc.slice(0, 1), 105, y);
-      // Rate right-aligned to right edge of Rate column
-      doc.text(String(it.rate || ""), 530, y, { align: "right" });
-      // Amount right-aligned to right edge of Amount column
-      doc.text(String(it.amount || ""), 578, y, { align: "right" });
+      doc.text(String(idx + 1), COL_SR_C, y, { align: "center" });
+      doc.text(String(it.qty || ""), COL_QTY_C, y, { align: "center" });
+      const desc = doc.splitTextToSize(it.description || "", COL_DESC_W);
+      doc.text(desc.slice(0, 1), COL_DESC_X, y);
+      doc.text(String(it.rate || ""), COL_RATE_R, y, { align: "right" });
+      doc.text(String(it.amount || ""), COL_AMT_R, y, { align: "right" });
     });
 
-    // --- Total amount on the bottom "Total Amount" row ---
+    // ----- Totals box (right side) -----
+    doc.setFontSize(11);
+    const TOTAL_X = 568;
+    doc.text(String(data.subTotal || ""), TOTAL_X, 622, { align: "right" });
+    doc.text(String(data.discount || ""), TOTAL_X, 644, { align: "right" });
+    doc.text(String(data.paidAmount || ""), TOTAL_X, 666, { align: "right" });
+    doc.text(String(data.balance || ""), TOTAL_X, 688, { align: "right" });
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(String(data.totalAmount || ""), 578, 755, { align: "right" });
+    doc.text(String(data.totalAmount || ""), TOTAL_X, 712, { align: "right" });
   } else {
-    // --- Quotation: free body text below the Ref/Date row ---
+    // ===== Quotation =====
     doc.setFontSize(11);
+    doc.text(String(data.refNo || ""), 70, 235);
+    doc.text(String(data.date || ""), 500, 235);
+
     const startY = 285;
-    // M/S line if provided
     if (data.customerName) {
       doc.setFont("helvetica", "bold");
       doc.text(`M/S: ${data.customerName}`, 40, startY);
