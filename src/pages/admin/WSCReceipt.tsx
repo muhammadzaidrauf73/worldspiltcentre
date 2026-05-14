@@ -18,6 +18,12 @@ const todayStr = () => {
 
 const emptyItem = (): WSCItem => ({ qty: "", description: "", rate: "", amount: "" });
 
+const fmt = (n: number) => (n ? n.toLocaleString("en-PK") : "");
+const num = (s: string) => {
+  const n = parseFloat((s || "0").replace(/,/g, ""));
+  return isNaN(n) ? 0 : n;
+};
+
 interface HistoryRow {
   id: string;
   doc_type: WSCDocType;
@@ -25,8 +31,13 @@ interface HistoryRow {
   doc_date: string | null;
   customer_name: string;
   customer_address: string | null;
+  customer_phone: string | null;
   body_text: string | null;
   items: WSCItem[];
+  sub_total: number;
+  discount: number;
+  paid_amount: number;
+  balance: number;
   total_amount: number;
   created_at: string;
 }
@@ -38,9 +49,13 @@ const WSCReceipt = () => {
   const [date, setDate] = useState(todayStr());
   const [customerName, setCustomerName] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   const [items, setItems] = useState<WSCItem[]>([emptyItem()]);
   const [quotationBody, setQuotationBody] = useState("");
+
+  const [discount, setDiscount] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -49,12 +64,18 @@ const WSCReceipt = () => {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
-  const totalAmount = useMemo(() => {
-    return items.reduce((sum, it) => {
-      const n = parseFloat((it.amount || "0").replace(/,/g, ""));
-      return sum + (isNaN(n) ? 0 : n);
-    }, 0);
-  }, [items]);
+  const subTotal = useMemo(
+    () => items.reduce((s, it) => s + num(it.amount), 0),
+    [items]
+  );
+  const totalAmount = useMemo(
+    () => Math.max(0, subTotal - num(discount)),
+    [subTotal, discount]
+  );
+  const balance = useMemo(
+    () => totalAmount - num(paidAmount),
+    [totalAmount, paidAmount]
+  );
 
   const fetchNextRef = useCallback(async () => {
     setLoadingRef(true);
@@ -88,11 +109,9 @@ const WSCReceipt = () => {
       const next = [...prev];
       next[idx] = { ...next[idx], [field]: value };
       if (field === "qty" || field === "rate") {
-        const q = parseFloat(next[idx].qty.replace(/,/g, ""));
-        const r = parseFloat(next[idx].rate.replace(/,/g, ""));
-        if (!isNaN(q) && !isNaN(r)) {
-          next[idx].amount = (q * r).toFixed(0);
-        }
+        const q = num(next[idx].qty);
+        const r = num(next[idx].rate);
+        if (q && r) next[idx].amount = (q * r).toFixed(0);
       }
       return next;
     });
@@ -104,8 +123,13 @@ const WSCReceipt = () => {
     date,
     customerName,
     customerAddress,
+    customerPhone,
     items,
-    totalAmount: totalAmount ? totalAmount.toLocaleString("en-PK") : "",
+    subTotal: fmt(subTotal),
+    discount: discount ? fmt(num(discount)) : "",
+    paidAmount: paidAmount ? fmt(num(paidAmount)) : "",
+    balance: fmt(balance),
+    totalAmount: fmt(totalAmount),
     bodyText: quotationBody,
   });
 
@@ -117,8 +141,13 @@ const WSCReceipt = () => {
         doc_date: date,
         customer_name: customerName,
         customer_address: customerAddress || null,
+        customer_phone: customerPhone || null,
         body_text: tab === "quotation" ? quotationBody : null,
         items: tab === "receipt" ? (items as any) : [],
+        sub_total: subTotal,
+        discount: num(discount),
+        paid_amount: num(paidAmount),
+        balance,
         total_amount: totalAmount,
       });
       loadHistory();
@@ -130,8 +159,7 @@ const WSCReceipt = () => {
   const handlePreview = async () => {
     setGenerating(true);
     try {
-      const url = await previewWSCPdf(buildData());
-      setPreviewUrl(url);
+      setPreviewUrl(await previewWSCPdf(buildData()));
     } catch {
       toast.error("Failed to generate preview");
     } finally {
@@ -155,24 +183,31 @@ const WSCReceipt = () => {
   const handleNewDocument = async () => {
     setCustomerName("");
     setCustomerAddress("");
+    setCustomerPhone("");
     setItems([emptyItem()]);
     setQuotationBody("");
+    setDiscount("");
+    setPaidAmount("");
     setDate(todayStr());
     setPreviewUrl(null);
     await fetchNextRef();
   };
 
   const downloadFromHistory = async (row: HistoryRow) => {
-    const items = Array.isArray(row.items) ? row.items : [];
-    const total = Number(row.total_amount || 0);
+    const its = Array.isArray(row.items) ? row.items : [];
     await downloadWSCPdf({
       docType: row.doc_type,
       refNo: row.ref_no,
       date: row.doc_date || "",
       customerName: row.customer_name,
       customerAddress: row.customer_address || "",
-      items,
-      totalAmount: total ? total.toLocaleString("en-PK") : "",
+      customerPhone: row.customer_phone || "",
+      items: its,
+      subTotal: fmt(Number(row.sub_total || 0)),
+      discount: row.discount ? fmt(Number(row.discount)) : "",
+      paidAmount: row.paid_amount ? fmt(Number(row.paid_amount)) : "",
+      balance: fmt(Number(row.balance || 0)),
+      totalAmount: fmt(Number(row.total_amount || 0)),
       bodyText: row.body_text || "",
     });
   };
@@ -212,6 +247,10 @@ const WSCReceipt = () => {
           <Card className="p-6 mt-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <Label>Date</Label>
+                <Input value={date} onChange={(e) => setDate(e.target.value)} placeholder="DD-MM-YYYY" />
+              </div>
+              <div>
                 <Label>Reference No. (auto)</Label>
                 <div className="flex gap-2">
                   <Input value={refNo} onChange={(e) => setRefNo(e.target.value)} placeholder="100" />
@@ -220,17 +259,17 @@ const WSCReceipt = () => {
                   </Button>
                 </div>
               </div>
-              <div>
-                <Label>Date</Label>
-                <Input value={date} onChange={(e) => setDate(e.target.value)} placeholder="DD-MM-YYYY" />
-              </div>
               <div className="md:col-span-2">
                 <Label>M/S (Customer / Company Name)</Label>
                 <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Customer or company name" />
               </div>
               <div className="md:col-span-2">
-                <Label>Address (optional)</Label>
+                <Label>Address</Label>
                 <Input value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="Address line" />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Phone</Label>
+                <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Phone number" />
               </div>
             </div>
 
@@ -246,7 +285,7 @@ const WSCReceipt = () => {
 
             <TabsContent value="receipt" className="mt-4 space-y-3">
               <div className="flex justify-between items-center">
-                <Label>Items</Label>
+                <Label>Items (max 10 rows)</Label>
                 <Button type="button" variant="outline" size="sm" onClick={() => setItems((p) => [...p, emptyItem()])}>
                   <Plus className="h-4 w-4 mr-1" /> Add Row
                 </Button>
@@ -273,8 +312,23 @@ const WSCReceipt = () => {
                 ))}
               </div>
 
-              <div className="flex justify-end font-bold text-lg pt-2 border-t">
-                Total: Rs. {totalAmount.toLocaleString("en-PK")}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t">
+                <div>
+                  <Label>Discount</Label>
+                  <Input value={discount} onChange={(e) => setDiscount(e.target.value)} placeholder="0" />
+                </div>
+                <div>
+                  <Label>Paid Amount</Label>
+                  <Input value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)} placeholder="0" />
+                </div>
+              </div>
+
+              <div className="rounded-md border p-3 space-y-1 text-sm">
+                <div className="flex justify-between"><span>Sub Total</span><span>Rs. {fmt(subTotal)}</span></div>
+                <div className="flex justify-between"><span>Discount</span><span>Rs. {fmt(num(discount))}</span></div>
+                <div className="flex justify-between"><span>Paid Amount</span><span>Rs. {fmt(num(paidAmount))}</span></div>
+                <div className="flex justify-between"><span>Balance</span><span>Rs. {fmt(balance)}</span></div>
+                <div className="flex justify-between font-bold text-base pt-1 border-t"><span>Total Amount</span><span>Rs. {fmt(totalAmount)}</span></div>
               </div>
             </TabsContent>
 
