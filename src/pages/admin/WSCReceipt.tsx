@@ -156,7 +156,33 @@ const WSCReceipt = () => {
     }
   };
 
+  const validate = (): string | null => {
+    if (!refNo.trim()) return "Reference No. is required";
+    if (!date.trim()) return "Date is required";
+    if (!customerName.trim()) return "Customer Name (M/S) is required";
+    if (tab === "quotation") {
+      if (!quotationBody.trim()) return "Quotation body is required";
+      return null;
+    }
+    if (!items.length) return "At least one item row is required";
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const sr = i + 1;
+      if (!it.qty.trim()) return `Row ${sr}: Qty is required`;
+      if (!it.description.trim()) return `Row ${sr}: Description is required`;
+      if (!it.rate.trim()) return `Row ${sr}: Rate is required`;
+      if (!it.amount.trim()) return `Row ${sr}: Amount is required`;
+      if (num(it.qty) <= 0) return `Row ${sr}: Qty must be greater than 0`;
+      if (num(it.rate) <= 0) return `Row ${sr}: Rate must be greater than 0`;
+      if (num(it.amount) <= 0) return `Row ${sr}: Amount must be greater than 0`;
+    }
+    if (totalAmount <= 0) return "Total amount must be greater than 0";
+    return null;
+  };
+
   const handlePreview = async () => {
+    const err = validate();
+    if (err) { toast.error(err); return; }
     setGenerating(true);
     try {
       setPreviewUrl(await previewWSCPdf(buildData()));
@@ -168,11 +194,15 @@ const WSCReceipt = () => {
   };
 
   const handleDownload = async () => {
+    const err = validate();
+    if (err) { toast.error(err); return; }
     setGenerating(true);
     try {
       await downloadWSCPdf(buildData());
       await saveToHistory();
       toast.success("PDF downloaded & saved to history");
+      // Roll the displayed Ref No. forward so the next document gets a new number.
+      await fetchNextRef();
     } catch {
       toast.error("Failed to download");
     } finally {
