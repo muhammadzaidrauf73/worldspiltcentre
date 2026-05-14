@@ -1157,44 +1157,59 @@ export type Database = {
       }
       wsc_documents: {
         Row: {
+          balance: number | null
           body_text: string | null
           created_at: string
           created_by: string | null
           customer_address: string | null
           customer_name: string
+          customer_phone: string | null
+          discount: number | null
           doc_date: string | null
           doc_type: string
           id: string
           items: Json
+          paid_amount: number | null
           ref_no: string
+          sub_total: number | null
           total_amount: number
           updated_at: string
         }
         Insert: {
+          balance?: number | null
           body_text?: string | null
           created_at?: string
           created_by?: string | null
           customer_address?: string | null
           customer_name: string
+          customer_phone?: string | null
+          discount?: number | null
           doc_date?: string | null
           doc_type: string
           id?: string
           items?: Json
+          paid_amount?: number | null
           ref_no: string
+          sub_total?: number | null
           total_amount?: number
           updated_at?: string
         }
         Update: {
+          balance?: number | null
           body_text?: string | null
           created_at?: string
           created_by?: string | null
           customer_address?: string | null
           customer_name?: string
+          customer_phone?: string | null
+          discount?: number | null
           doc_date?: string | null
           doc_type?: string
           id?: string
           items?: Json
+          paid_amount?: number | null
           ref_no?: string
+          sub_total?: number | null
           total_amount?: number
           updated_at?: string
         }
