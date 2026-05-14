@@ -49,34 +49,34 @@ export async function generateWSCPdf(data: WSCDocData): Promise<jsPDF> {
   doc.setFont("helvetica", "normal");
 
   if (data.docType === "receipt") {
-    // ===== Receipt layout (image 1055x1491 → pt scale ~0.564) =====
+    // ===== Receipt layout (image 1054x1492 → pt scale x≈0.5648 y≈0.5643) =====
     doc.setFontSize(11);
-    // Date (left) and Ref (right) — values written on the printed dotted lines
-    doc.text(String(data.date || ""), 95, 142);
-    doc.text(String(data.refNo || ""), 395, 142);
+    // Date (left) — value on the dotted line
+    doc.text(String(data.date || ""), 80, 145);
+    // Ref (right) — value on the dotted line
+    doc.text(String(data.refNo || ""), 342, 145);
 
     // M/S Customer Name (inline after the printed label)
-    const ms = doc.splitTextToSize(data.customerName || "", 400);
-    doc.text(ms.slice(0, 1), 175, 170);
+    const ms = doc.splitTextToSize(data.customerName || "", 420);
+    doc.text(ms.slice(0, 1), 136, 178);
 
     // Address (inline after the printed label)
     const addr = doc.splitTextToSize(data.customerAddress || "", 470);
-    doc.text(addr.slice(0, 1), 100, 200);
+    doc.text(addr.slice(0, 1), 90, 212);
 
     // Phone (inline after the printed label)
-    doc.text(String(data.customerPhone || ""), 95, 245);
+    doc.text(String(data.customerPhone || ""), 90, 263);
 
     // ----- Items table (10 rows max) -----
-    // Column centers / right edges (pt)
-    const COL_SR_C = 37;
-    const COL_QTY_C = 80;
-    const COL_DESC_X = 105;
-    const COL_DESC_W = 305;
-    const COL_RATE_R = 495;
-    const COL_AMT_R = 572;
+    const COL_SR_C = 36;
+    const COL_QTY_C = 78;
+    const COL_DESC_X = 102;
+    const COL_DESC_W = 300;
+    const COL_RATE_R = 480;
+    const COL_AMT_R = 565;
 
-    const TABLE_TOP = 305;
-    const ROW_H = 28;
+    const TABLE_TOP = 333;
+    const ROW_H = 36;
     const MAX_ROWS = 10;
 
     const items = (data.items || []).slice(0, MAX_ROWS);
@@ -91,15 +91,15 @@ export async function generateWSCPdf(data: WSCDocData): Promise<jsPDF> {
       doc.text(String(it.amount || ""), COL_AMT_R, y, { align: "right" });
     });
 
-    // ----- Totals box (right side) -----
+    // ----- Totals box (right side) — right edge aligned to Amount column -----
     doc.setFontSize(11);
-    const TOTAL_X = 568;
-    doc.text(String(data.subTotal || ""), TOTAL_X, 622, { align: "right" });
-    doc.text(String(data.discount || ""), TOTAL_X, 644, { align: "right" });
-    doc.text(String(data.paidAmount || ""), TOTAL_X, 666, { align: "right" });
-    doc.text(String(data.balance || ""), TOTAL_X, 688, { align: "right" });
+    const TOTAL_X = 562;
+    doc.text(String(data.subTotal || ""), TOTAL_X, 651, { align: "right" });
+    doc.text(String(data.discount || ""), TOTAL_X, 678, { align: "right" });
+    doc.text(String(data.paidAmount || ""), TOTAL_X, 703, { align: "right" });
+    doc.text(String(data.balance || ""), TOTAL_X, 729, { align: "right" });
     doc.setFont("helvetica", "bold");
-    doc.text(String(data.totalAmount || ""), TOTAL_X, 712, { align: "right" });
+    doc.text(String(data.totalAmount || ""), TOTAL_X, 755, { align: "right" });
   } else {
     // ===== Quotation =====
     doc.setFontSize(11);
